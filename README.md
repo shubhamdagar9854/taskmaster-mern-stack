@@ -128,87 +128,58 @@ open frontend/index.html
 ```
 POST /api/auth/register  - Create new user account
 POST /api/auth/login     - Authenticate user and get JWT token
-GET  /api/auth/profile   - Get authenticated user profile
-```
 
-### **Task Management Endpoints**
-```
-GET    /api/tasks           - Retrieve all tasks for authenticated user
-POST   /api/tasks           - Create new task
-PUT    /api/tasks/:id       - Update existing task
-DELETE /api/tasks/:id       - Delete task
-PATCH  /api/tasks/:id/toggle - Toggle task completion status
-```
+- Code splitting and lazy loading
+- Image optimization
+- API response caching
+- Database indexing
+- Component memoization
 
----
+## Testing
 
-## 🎯 **Project Architecture**
+- Unit tests with Jest
+- Integration tests
+- E2E testing with Cypress (planned)
 
-```
-taskmaster-mern-stack/
-├── 📁 backend/                    # Node.js + Express + MongoDB
-│   ├── 📁 src/
-│   │   ├── 📁 models/          # Database schemas
-│   │   │   ├── 📄 User.js     # User model with authentication
-│   │   │   └── 📄 Task.js     # Task model with relationships
-│   │   ├── 📁 routes/          # API route handlers
-│   │   │   ├── 📄 auth.js      # Authentication endpoints
-│   │   │   └── 📄 tasks.js     # Task CRUD endpoints
-│   │   └── 📄 app.js          # Main Express application
-│   ├── 📄 package.json           # Backend dependencies
-│   └── 📄 .env                 # Environment variables
-├── 📁 frontend/                  # HTML5 + CSS3 + JavaScript
-│   ├── 📄 index.html          # Single-page application
-│   ├── 📁 css/
-│   │   └── 📄 style.css       # Modern responsive styling
-│   └── 📁 js/
-│       ├── 📄 auth.js          # Authentication logic
-│       ├── 📄 tasks.js         # Task management functionality
-│       └── 📄 main.js          # Application controller
-└── 📄 README.md                 # This documentation
-```
+## Contributing
 
----
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-## 🔐 **Security Implementation**
+## License
 
-### **Authentication Security**
-- **JWT Tokens** - Secure authentication with expiration
-- **Password Hashing** - bcryptjs with salt rounds
-- **Token Validation** - Middleware for protected routes
-- **Session Management** - Secure token storage
+This project is licensed under the MIT License.
 
-### **Data Security**
-- **Input Validation** - Server-side validation for all inputs
-- **XSS Prevention** - HTML sanitization and escaping
-- **SQL Injection Protection** - MongoDB ODM prevents injection
-- **CORS Configuration** - Proper cross-origin handling
+## Key Demonstrations
 
-### **Best Practices**
-- **Environment Variables** - Secure configuration management
-- **Error Handling** - Graceful error responses
-- **Rate Limiting** - Prevent API abuse (can be added)
-- **HTTPS Ready** - Production deployment ready
+This project shows you can:
+- Build full-stack applications
+- Work with databases
+- Implement authentication
+- Create responsive designs
+- Write clean, maintainable code
+- Understand REST APIs
 
----
+## Mobile Friendly
 
-## 📱 **Responsive Design Features**
+The app works perfectly on:
+- Desktop computers
+- Tablets
+- Mobile phones
 
-### **Mobile Optimization**
-- **Touch-Friendly** - Large buttons and touch targets
-- **Swipe Gestures** - Natural mobile interactions
-- **Compact Layout** - Optimized for small screens
-- **Fast Loading** - Optimized for mobile networks
+## Easy to Customize
 
-### **Tablet Experience**
-- **Adaptive Layout** - Perfect tablet screen usage
-- **Gesture Support** - Touch and mouse interactions
-- **Readable Typography** - Comfortable reading experience
+You can easily add:
+- Task categories
+- Due dates
+- Priority levels
+- User profiles
+- Dark mode
 
-### **Desktop Enhancement**
-- **Full-Screen Layout** - Maximum screen utilization
-- **Keyboard Shortcuts** - Enhanced productivity
-- **Hover Effects** - Rich desktop interactions
+## Support
 - **Multi-Window Support** - Works across browser windows
 
 ---
