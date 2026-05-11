@@ -8,6 +8,21 @@ This project showcases **real-world development skills** that employers actively
 
 ---
 
+## 🎯 **Project Overview**
+
+**TaskMaster** is a comprehensive task management application that demonstrates proficiency in full-stack web development using the MERN stack. This project showcases the ability to build scalable, secure, and user-friendly web applications from scratch.
+
+### **Key Demonstrations:**
+- **Full-Stack Development** - Complete MERN implementation
+- **Authentication Systems** - JWT-based secure authentication
+- **Database Design** - MongoDB with Mongoose ODM
+- **API Development** - RESTful API design and implementation
+- **Frontend Development** - Modern JavaScript without frameworks
+- **Responsive Design** - Mobile-first approach
+- **Security Best Practices** - Modern security implementation
+
+---
+
 ## ✨ **Key Features**
 
 ### 🔐 **Authentication & Security**
