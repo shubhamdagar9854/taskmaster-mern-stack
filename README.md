@@ -31,6 +31,14 @@ This project showcases **real-world development skills** that employers actively
 - *"Optimized performance with efficient DOM manipulation and database queries"*
 - *"Followed security best practices including input sanitization and CORS configuration"*
 
+### **📊 Project Statistics:**
+- **Backend**: Node.js + Express.js + MongoDB
+- **Frontend**: HTML5 + CSS3 + Vanilla JavaScript
+- **API Endpoints**: 8 RESTful endpoints
+- **Database Models**: 2 (User, Task)
+- **Authentication**: JWT-based with bcryptjs
+- **Lines of Code**: ~2000+ lines
+
 ---
 
 ## ✨ **Key Features**
@@ -331,13 +339,97 @@ This project is licensed under the MIT License - feel free to use and modify!
 
 ---
 
-## 🏆 **Project Highlights**
+## 🔧 **Troubleshooting**
+
+### **Common Issues & Solutions**
+
+#### **MongoDB Connection Error**
+- **Issue**: Cannot connect to MongoDB
+- **Solution**: Ensure MongoDB is running on port 27017
+- **Command**: `mongod` to start MongoDB service
+
+#### **Port Already in Use**
+- **Issue**: EADDRINUSE error on port 5002
+- **Solution**: Change PORT in `.env` file or kill the process
+- **Command**: `netstat -ano | findstr :5002` then `taskkill /F /PID [PID]`
+
+#### **CORS Error**
+- **Issue**: CORS policy error in browser
+- **Solution**: Check CORS configuration in backend
+- **Verify**: Backend server is running on correct port
+
+#### **Authentication Token Error**
+- **Issue**: 401 Unauthorized error
+- **Solution**: Clear localStorage and login again
+- **Check**: JWT_SECRET in `.env` file
+
+---
+
+## 🚀 **Future Enhancements**
+
+### **Planned Features**
+- [ ] **Task Categories** - Organize tasks by categories
+- [ ] **Due Dates** - Add deadline functionality
+- [ ] **Priority Levels** - High, Medium, Low priority
+- [ ] **Task Search** - Search and filter tasks
+- [ ] **Dark Mode** - Theme switching capability
+- [ ] **Task Reminders** - Email notifications
+- [ ] **Task Sharing** - Share tasks with other users
+- [ ] **Export Tasks** - Export to CSV/PDF
+- [ ] **Mobile App** - React Native version
+- [ ] **Real-time Sync** - WebSocket integration
+
+### **Technical Improvements**
+- [ ] **Unit Testing** - Jest test suite
+- [ ] **E2E Testing** - Cypress integration
+- [ ] **Docker Support** - Containerization
+- [ ] **CI/CD Pipeline** - GitHub Actions
+- [ ] **Performance Monitoring** - Analytics integration
+- [ ] **Rate Limiting** - API rate limiting
+- [ ] **Caching** - Redis implementation
+- [ ] **Logging** - Winston logger integration
+
+---
+
+## 📞 **Support & Contact**
+
+### **Get Help**
+- **Issues**: Open an issue on GitHub
+- **Questions**: Check existing discussions
+- **Contributions**: Follow contributing guidelines
+
+### **Connect**
+- **GitHub**: https://github.com/shubhamdagar9854/taskmaster-mern-stack
+- **Portfolio**: Add your portfolio link here
+- **LinkedIn**: Add your LinkedIn profile here
+
+---
+
+## 🙏 **Acknowledgments**
+
+- **MongoDB** - For the excellent NoSQL database
+- **Express.js** - For the minimalist web framework
+- **Font Awesome** - For the beautiful icons
+- **MDN Web Docs** - For excellent documentation
+
+---
+
+## 🎉 **Thank You!**
+
+Thank you for checking out TaskMaster! This project was built with passion and attention to detail. Feel free to fork, modify, and use it for your own projects or learning purposes.
+
+**Happy Coding! 🚀**
+
+---
+
+**Built with ❤️ by Shubham Dagar**
+
+**🔗 Live Repository**: https://github.com/shubhamdagar9854/taskmaster-mern-stack
 
 ### **Why This Project Stands Out**
 - 🌟 **Beginner-Friendly** - Clean, readable code structure
 - 🚀 **Production-Ready** - Security and performance optimized
 - 🎯 **Interview-Perfect** - Demonstrates all required MERN skills
-- 📚 **Professionally Documented** - Comprehensive setup and usage guides
 - 💻 **Modern Tech Stack** - Latest versions and best practices
 - 📱 **Responsive Design** - Works perfectly on all devices
 - 🔐 **Security Focused** - Implements security best practices
