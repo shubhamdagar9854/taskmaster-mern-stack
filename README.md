@@ -212,9 +212,6 @@ You can easily add:
 - User profiles
 - Dark mode
 
-## Support
-- **Multi-Window Support** - Works across browser windows
-
 ---
 
 ## 🎨 **Design & UX Features**
@@ -312,31 +309,6 @@ You can easily add:
 - **Smooth Animations** - 60fps transitions
 - **Efficient API Calls** - Minimal requests
 - **Responsive Design** - All screen sizes
-
----
-
-## 📞 **Contributing Guidelines**
-
-### **How to Contribute**
-1. **🍴 Fork the Repository**
-2. **🌿 Create Feature Branch** - `git checkout -b feature/amazing-feature`
-3. **💾 Commit Changes** - `git commit -m 'Add amazing feature'`
-4. **📤 Push to Branch** - `git push origin feature/amazing-feature`
-5. **🔄 Open Pull Request** - Detailed description of changes
-
-### **Code Standards**
-- Follow existing code style
-- Add comments for complex logic
-- Test your changes
-- Update documentation
-- Ensure responsive design
-
----
-
-## 📝 **License**
-
-This project is licensed under the MIT License - feel free to use and modify!
-
 ---
 
 ## 🔧 **Troubleshooting**
@@ -389,22 +361,6 @@ This project is licensed under the MIT License - feel free to use and modify!
 - [ ] **Caching** - Redis implementation
 - [ ] **Logging** - Winston logger integration
 
----
-
-## 📞 **Support & Contact**
-
-### **Get Help**
-- **Issues**: Open an issue on GitHub
-- **Questions**: Check existing discussions
-- **Contributions**: Follow contributing guidelines
-
-### **Connect**
-- **GitHub**: https://github.com/shubhamdagar9854/taskmaster-mern-stack
-- **Portfolio**: Add your portfolio link here
-- **LinkedIn**: Add your LinkedIn profile here
-
----
-
 ## 🙏 **Acknowledgments**
 
 - **MongoDB** - For the excellent NoSQL database
@@ -412,17 +368,10 @@ This project is licensed under the MIT License - feel free to use and modify!
 - **Font Awesome** - For the beautiful icons
 - **MDN Web Docs** - For excellent documentation
 
----
 
-## 🎉 **Thank You!**
 
 Thank you for checking out TaskMaster! This project was built with passion and attention to detail. Feel free to fork, modify, and use it for your own projects or learning purposes.
 
-**Happy Coding! 🚀**
-
----
-
-**Built with ❤️ by Shubham Dagar**
 
 **🔗 Live Repository**: https://github.com/shubhamdagar9854/taskmaster-mern-stack
 
