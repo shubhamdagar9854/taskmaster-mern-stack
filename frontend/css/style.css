@@ -19,9 +19,112 @@ body {
     padding: 0 20px;
 }
 
+/* Dark Mode */
+.dark-mode {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+}
+
+.dark-mode .header,
+.dark-mode .auth-container,
+.dark-mode .task-section,
+.dark-mode .add-task-form,
+.dark-mode .toast,
+.dark-mode .empty-state {
+    background: rgba(15, 23, 42, 0.92);
+    color: #e2e8f0;
+}
+
+.dark-mode .header {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.dark-mode .logo {
+    color: #93c5fd;
+}
+
+.dark-mode .nav a,
+.dark-mode .user-info span,
+.dark-mode .task-title,
+.dark-mode .task-description,
+.dark-mode .task-meta,
+.dark-mode .task-date,
+.dark-mode .auth-switch,
+.dark-mode .toast,
+.dark-mode .empty-state h3 {
+    color: #e2e8f0;
+}
+
+.dark-mode .task-item {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
+.dark-mode .task-item.completed {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.dark-mode .task-checkbox {
+    border-color: #93c5fd;
+}
+
+.dark-mode .task-checkbox.checked {
+    background: #93c5fd;
+}
+
+.dark-mode .search-input,
+.dark-mode .form-group input,
+.dark-mode .form-group textarea {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+.dark-mode .search-input:focus,
+.dark-mode .form-group input:focus,
+.dark-mode .form-group textarea:focus {
+    background: rgba(30, 41, 59, 1);
+    border-color: #93c5fd;
+}
+
+.dark-mode .btn-outline {
+    color: #93c5fd;
+    border-color: #93c5fd;
+}
+
+.dark-mode .btn-outline:hover {
+    background: #93c5fd;
+    color: #0f172a;
+}
+
+.dark-mode .toast {
+    background: rgba(15, 23, 42, 0.98);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.dark-mode .loading {
+    background: rgba(15, 23, 42, 0.7);
+}
+
+.dark-mode .theme-toggle {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid #93c5fd;
+    background: rgba(15, 23, 42, 0.95);
+    color: #93c5fd;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dark-mode .theme-toggle:hover {
+    background: #93c5fd;
+    color: #0f172a;
+}
+
 /* Header Styles */
 .header {
     background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: sticky;
