@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskMaster - Simple Task Management</title>
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -19,7 +24,7 @@
                 <nav class="nav">
                     <button id="loginBtn" class="btn btn-outline">Login</button>
                     <button id="registerBtn" class="btn btn-primary">Register</button>
-                    <div id="userInfo" class="user-info" style="display: none;">
+                    <div id="userInfo" class="user-info hidden">
                         <span id="username"></span>
                         <button id="logoutBtn" class="btn btn-outline">Logout</button>
                     </div>
@@ -55,7 +60,7 @@
                     </div>
 
                     <!-- Register Form -->
-                    <div id="registerForm" class="auth-form" style="display: none;">
+                    <div id="registerForm" class="auth-form hidden">
                         <h2>Register</h2>
                         <form id="registerFormElement">
                             <div class="form-group">
@@ -81,7 +86,7 @@
             </div>
 
             <!-- Task Management Section -->
-            <div id="taskSection" class="task-section" style="display: none;">
+            <div id="taskSection" class="task-section hidden">
                 <div class="task-header">
                     <h2>My Tasks</h2>
                     <button id="addTaskBtn" class="btn btn-primary">
@@ -95,7 +100,7 @@
                 </div>
 
                 <!-- Add Task Form -->
-                <div id="addTaskForm" class="add-task-form" style="display: none;">
+                <div id="addTaskForm" class="add-task-form hidden">
                     <h3>Add New Task</h3>
                     <form id="taskFormElement">
                         <div class="form-group">
@@ -129,19 +134,19 @@
     </main>
 
     <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="loading" style="display: none;">
+    <div id="loadingSpinner" class="loading hidden">
         <div class="spinner"></div>
     </div>
 
     <!-- Message Toast -->
-    <div id="messageToast" class="toast" style="display: none;">
+    <div id="messageToast" class="toast" role="status" aria-live="polite">
         <span id="messageText"></span>
-        <button id="closeToast" class="toast-close">&times;</button>
+        <button id="closeToast" type="button" class="toast-close" aria-label="Close notification">&times;</button>
     </div>
 
     <!-- Scripts -->
-    <script src="js/auth.js"></script>
-    <script src="js/tasks.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/tasks.js" defer></script>
+    <script src="js/main.js" defer></script>
 </body>
 </html>
