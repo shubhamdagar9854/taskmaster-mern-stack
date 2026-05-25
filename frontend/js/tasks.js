@@ -2,6 +2,8 @@
 class TaskManager {
     constructor() {
         this.tasks = [];
+        this.searchQuery = '';
+        this.currentEditTaskId = null;
         this.init();
     }
 
@@ -15,15 +17,32 @@ class TaskManager {
             this.showAddTaskForm();
         });
 
-        // Cancel task button
+        // Cancel add task button
         document.getElementById('cancelTaskBtn').addEventListener('click', () => {
             this.hideAddTaskForm();
+        });
+
+        // Cancel edit task button
+        document.getElementById('cancelEditTaskBtn').addEventListener('click', () => {
+            this.hideEditTaskForm();
         });
 
         // Task form submission
         document.getElementById('taskFormElement').addEventListener('submit', (e) => {
             e.preventDefault();
             this.addTask();
+        });
+
+        // Edit task form submission
+        document.getElementById('editTaskFormElement').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveTaskUpdate();
+        });
+
+        // Search tasks
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            this.searchQuery = e.target.value.trim().toLowerCase();
+            this.renderTasks();
         });
 
         // Close toast
@@ -144,6 +163,118 @@ class TaskManager {
         }
     }
 
+    editTask(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        this.currentEditTaskId = taskId;
+        document.getElementById('editTaskTitle').value = task.title;
+        document.getElementById('editTaskDescription').value = task.description || '';
+        document.getElementById('editTaskForm').style.display = 'block';
+        document.getElementById('addTaskForm').style.display = 'none';
+        document.getElementById('editTaskTitle').focus();
+    }
+
+    hideEditTaskForm() {
+        this.currentEditTaskId = null;
+        document.getElementById('editTaskFormElement').reset();
+        document.getElementById('editTaskForm').style.display = 'none';
+    }
+
+    async saveTaskUpdate() {
+        if (!this.currentEditTaskId) return;
+
+        const title = document.getElementById('editTaskTitle').value.trim();
+        const description = document.getElementById('editTaskDescription').value.trim();
+
+        if (!title) {
+            this.showMessage('Task title is required', 'error');
+            return;
+        }
+
+        await this.updateTask(this.currentEditTaskId, { title, description });
+        this.hideEditTaskForm();
+    }
+
+    renderTasks() {
+        const taskList = document.getElementById('taskList');
+        const emptyState = document.getElementById('emptyState');
+
+        const filteredTasks = this.tasks.filter(task => {
+            if (!this.searchQuery) {
+                return true;
+            }
+
+            const titleMatch = task.title.toLowerCase().includes(this.searchQuery);
+            const descriptionMatch = (task.description || '').toLowerCase().includes(this.searchQuery);
+            return titleMatch || descriptionMatch;
+        });
+
+        if (filteredTasks.length === 0) {
+            taskList.style.display = 'none';
+            emptyState.style.display = 'block';
+            return;
+        }
+
+        taskList.style.display = 'grid';
+        emptyState.style.display = 'none';
+
+        // Clear existing content
+        taskList.innerHTML = '';
+
+        // Add tasks
+        filteredTasks.forEach(task => {
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
+            taskElement.dataset.taskId = task._id;
+            
+            taskElement.innerHTML = `
+                <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-action="toggle">
+                    ${task.completed ? '<i class="fas fa-check"></i>' : ''}
+                </div>
+                <div class="task-content">
+                    <div class="task-title">${this.escapeHtml(task.title)}</div>
+                    ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+                </div>
+                <div class="task-meta">
+                    <div class="task-date">Created: ${new Date(task.createdAt).toLocaleDateString()}</div>
+                    <div class="task-actions">
+                        <button class="btn btn-outline btn-sm" data-action="edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm" data-action="delete">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            taskList.appendChild(taskElement);
+        });
+
+        // Add single event listener to task list
+        taskList.onclick = (e) => {
+            const action = e.target.dataset.action || e.target.closest('[data-action]')?.dataset.action;
+            const taskItem = e.target.closest('.task-item');
+            
+            if (!action || !taskItem) return;
+            
+            const taskId = taskItem.dataset.taskId;
+            
+            switch(action) {
+                case 'toggle':
+                    this.toggleTask(taskId);
+                    break;
+                case 'edit':
+                    this.editTask(taskId);
+                    break;
+                case 'delete':
+                    this.deleteTask(taskId);
+                    break;
+            }
+        };
+    }
+
     async toggleTask(taskId) {
         const task = this.tasks.find(t => t._id === taskId);
         if (!task) return;
@@ -207,97 +338,6 @@ class TaskManager {
         } finally {
             this.showLoading(false);
         }
-    }
-
-    editTask(taskId) {
-        const task = this.tasks.find(t => t._id === taskId);
-        if (!task) return;
-
-        const newTitle = prompt('Edit task title:', task.title);
-        if (newTitle === null) return; // User cancelled
-
-        const trimmedTitle = newTitle.trim();
-        if (!trimmedTitle) {
-            this.showMessage('Task title cannot be empty', 'error');
-            return;
-        }
-
-        const newDescription = prompt('Edit task description:', task.description || '');
-        if (newDescription !== null) {
-            this.updateTask(taskId, {
-                title: trimmedTitle,
-                description: newDescription.trim()
-            });
-        }
-    }
-
-    renderTasks() {
-        const taskList = document.getElementById('taskList');
-        const emptyState = document.getElementById('emptyState');
-
-        if (this.tasks.length === 0) {
-            taskList.style.display = 'none';
-            emptyState.style.display = 'block';
-            return;
-        }
-
-        taskList.style.display = 'grid';
-        emptyState.style.display = 'none';
-
-        // Clear existing content
-        taskList.innerHTML = '';
-
-        // Add tasks
-        this.tasks.forEach(task => {
-            const taskElement = document.createElement('div');
-            taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
-            taskElement.dataset.taskId = task._id;
-            
-            taskElement.innerHTML = `
-                <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-action="toggle">
-                    ${task.completed ? '<i class="fas fa-check"></i>' : ''}
-                </div>
-                <div class="task-content">
-                    <div class="task-title">${this.escapeHtml(task.title)}</div>
-                    ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
-                </div>
-                <div class="task-meta">
-                    <div class="task-date">Created: ${new Date(task.createdAt).toLocaleDateString()}</div>
-                    <div class="task-actions">
-                        <button class="btn btn-outline btn-sm" data-action="edit">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="btn btn-danger btn-sm" data-action="delete">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            taskList.appendChild(taskElement);
-        });
-
-        // Add single event listener to task list
-        taskList.onclick = (e) => {
-            const action = e.target.dataset.action || e.target.closest('[data-action]')?.dataset.action;
-            const taskItem = e.target.closest('.task-item');
-            
-            if (!action || !taskItem) return;
-            
-            const taskId = taskItem.dataset.taskId;
-            
-            switch(action) {
-                case 'toggle':
-                    this.toggleTask(taskId);
-                    break;
-                case 'edit':
-                    this.editTask(taskId);
-                    break;
-                case 'delete':
-                    this.deleteTask(taskId);
-                    break;
-            }
-        };
     }
 
     escapeHtml(text) {

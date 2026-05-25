@@ -118,6 +118,25 @@
                     </form>
                 </div>
 
+                <!-- Edit Task Form -->
+                <div id="editTaskForm" class="add-task-form hidden">
+                    <h3>Edit Task</h3>
+                    <form id="editTaskFormElement">
+                        <div class="form-group">
+                            <label for="editTaskTitle">Task Title</label>
+                            <input type="text" id="editTaskTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTaskDescription">Description</label>
+                            <textarea id="editTaskDescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <button type="button" id="cancelEditTaskBtn" class="btn btn-outline">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
                 <!-- Task List -->
                 <div id="taskList" class="task-list">
                     <!-- Tasks will be dynamically added here -->
