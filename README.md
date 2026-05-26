@@ -127,10 +127,3 @@ PORT=5002
 MONGODB_URI=mongodb://localhost:27017/taskmaster
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
 NODE_ENV=development
-```
-
-#### **4. Start Backend Server**
-```bash
-npm start
-```
-✅ Server will run on http://localhost:5002
