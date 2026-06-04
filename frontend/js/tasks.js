@@ -3,6 +3,7 @@ class TaskManager {
     constructor() {
         this.tasks = [];
         this.searchQuery = '';
+        this.filter = 'all'; // all, active, completed
         this.currentEditTaskId = null;
         this.init();
     }
@@ -42,6 +43,12 @@ class TaskManager {
         // Search tasks
         document.getElementById('searchInput').addEventListener('input', (e) => {
             this.searchQuery = e.target.value.trim().toLowerCase();
+            this.renderTasks();
+        });
+
+        // Filter tasks
+        document.getElementById('taskFilter').addEventListener('change', (e) => {
+            this.filter = e.target.value;
             this.renderTasks();
         });
 
@@ -199,16 +206,27 @@ class TaskManager {
     renderTasks() {
         const taskList = document.getElementById('taskList');
         const emptyState = document.getElementById('emptyState');
+        const taskCounter = document.getElementById('taskCounter');
 
-        const filteredTasks = this.tasks.filter(task => {
-            if (!this.searchQuery) {
-                return true;
+        let filteredTasks = this.tasks.filter(task => {
+            // Apply search filter
+            if (this.searchQuery) {
+                const titleMatch = task.title.toLowerCase().includes(this.searchQuery);
+                const descriptionMatch = (task.description || '').toLowerCase().includes(this.searchQuery);
+                if (!titleMatch && !descriptionMatch) return false;
             }
 
-            const titleMatch = task.title.toLowerCase().includes(this.searchQuery);
-            const descriptionMatch = (task.description || '').toLowerCase().includes(this.searchQuery);
-            return titleMatch || descriptionMatch;
+            // Apply status filter
+            if (this.filter === 'active' && task.completed) return false;
+            if (this.filter === 'completed' && !task.completed) return false;
+
+            return true;
         });
+
+        // Update task counter
+        const totalTasks = this.tasks.length;
+        const completedTasks = this.tasks.filter(t => t.completed).length;
+        taskCounter.textContent = `${totalTasks} tasks (${completedTasks} completed)`;
 
         if (filteredTasks.length === 0) {
             taskList.style.display = 'none';
