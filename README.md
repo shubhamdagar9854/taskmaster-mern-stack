@@ -256,7 +256,65 @@ npx http-server -p 3000
 
 ---
 
-## 🐛 **Troubleshooting**
+## � **Screenshots**
+
+### **Login Page**
+- Clean and modern login interface
+- Email and password authentication
+- Link to registration page
+
+### **Dashboard**
+- Task list with all user tasks
+- Search bar for filtering tasks
+- Status filter dropdown (All/Active/Completed)
+- Task counter showing total and completed tasks
+
+### **Task Management**
+- Add new task form
+- Edit existing tasks
+- Mark tasks as complete/incomplete
+- Delete tasks with confirmation
+
+### **Responsive Design**
+- Mobile-friendly interface
+- Tablet-optimized layout
+- Desktop-enhanced experience
+
+---
+
+## 🚀 **Deployment**
+
+### **Local Deployment**
+Follow the installation steps above to run locally.
+
+### **Production Deployment**
+
+#### **Backend Deployment (Heroku/Railway/Render)**
+1. Push code to GitHub
+2. Connect repository to deployment platform
+3. Set environment variables:
+   - `MONGODB_URI` - Production MongoDB connection string
+   - `JWT_SECRET` - Strong secret key
+   - `NODE_ENV` - Set to `production`
+4. Deploy and get backend URL
+
+#### **Frontend Deployment (Netlify/Vercel/GitHub Pages)**
+1. Build frontend files
+2. Deploy to static hosting
+3. Update API base URL in frontend files
+4. Deploy and get frontend URL
+
+### **Environment Variables**
+```env
+PORT=5002
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/taskmaster
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+NODE_ENV=production
+```
+
+---
+
+## �🐛 **Troubleshooting**
 
 ### **Common Issues & Solutions**
 
