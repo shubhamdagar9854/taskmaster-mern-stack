@@ -314,28 +314,3 @@ NODE_ENV=production
 
 ---
 
-## �🐛 **Troubleshooting**
-
-### **Common Issues & Solutions**
-
-#### **MongoDB Connection Error**
-- **Issue**: Cannot connect to MongoDB
-- **Solution**: Ensure MongoDB is running on port 27017
-- **Command**: `mongod` to start MongoDB service
-
-#### **Port Already in Use**
-- **Issue**: EADDRINUSE error on port 5002
-- **Solution**: Change PORT in `.env` file or kill the process
-- **Command**: `netstat -ano | findstr :5002` then `taskkill /F /PID [PID]`
-
-#### **CORS Error**
-- **Issue**: CORS policy error in browser
-- **Solution**: Check CORS configuration in backend
-- **Verify**: Backend server is running on correct port
-
-#### **Authentication Token Error**
-- **Issue**: 401 Unauthorized error
-- **Solution**: Clear localStorage and login again
-- **Check**: JWT_SECRET in `.env` file
-
----
