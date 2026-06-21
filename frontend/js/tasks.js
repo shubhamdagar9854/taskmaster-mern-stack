@@ -101,6 +101,7 @@ class TaskManager {
     async addTask() {
         const title = document.getElementById('taskTitle').value.trim();
         const description = document.getElementById('taskDescription').value.trim();
+        const priority = document.getElementById('taskPriority').value;
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
@@ -116,7 +117,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description })
+                body: JSON.stringify({ title, description, priority })
             });
 
             const data = await response.json();
@@ -177,6 +178,7 @@ class TaskManager {
         this.currentEditTaskId = taskId;
         document.getElementById('editTaskTitle').value = task.title;
         document.getElementById('editTaskDescription').value = task.description || '';
+        document.getElementById('editTaskPriority').value = task.priority || 'medium';
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -193,13 +195,14 @@ class TaskManager {
 
         const title = document.getElementById('editTaskTitle').value.trim();
         const description = document.getElementById('editTaskDescription').value.trim();
+        const priority = document.getElementById('editTaskPriority').value;
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority });
         this.hideEditTaskForm();
     }
 
@@ -251,6 +254,7 @@ class TaskManager {
                     ${task.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
                 <div class="task-content">
+                    <span class="priority-badge ${task.priority || 'medium'}">${task.priority || 'medium'}</span>
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
                 </div>

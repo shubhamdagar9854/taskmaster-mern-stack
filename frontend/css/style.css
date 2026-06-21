@@ -281,6 +281,22 @@ body {
     border-color: #667eea;
 }
 
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    cursor: pointer;
+    background: white;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
 .auth-switch {
     text-align: center;
     margin-top: 1rem;
@@ -440,6 +456,32 @@ body {
 .task-item.completed .task-title {
     text-decoration: line-through;
     color: #718096;
+}
+
+/* Priority Badges */
+.priority-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.priority-badge.low {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.priority-badge.medium {
+    background: #feebc8;
+    color: #9c4221;
+}
+
+.priority-badge.high {
+    background: #fed7d7;
+    color: #c53030;
 }
 
 .task-checkbox {
