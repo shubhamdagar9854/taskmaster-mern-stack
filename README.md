@@ -1,10 +1,67 @@
 # 🚀 TaskMaster - Professional MERN Stack Task Management App
 
+[![MERN Stack](https://img.shields.io/badge/Stack-MERN-blue)](https://mongodb.com)
+[![Node.js](https://img.shields.io/badge/Node.js-14%2B-green)](https://nodejs.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/shubhamdagar9854/taskmaster-mern-stack?style=social)](https://github.com/shubhamdagar9854/taskmaster-mern-stack/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/shubhamdagar9854/taskmaster-mern-stack?style=social)](https://github.com/shubhamdagar9854/taskmaster-mern-stack/network/members)
+
 A complete full-stack task management application demonstrating modern web development practices with MERN stack. Built with Node.js, Express, MongoDB, HTML5, CSS3, and vanilla JavaScript.
+
+## 📑 **Table of Contents**
+
+- [Why This Project?](#-why-this-project)
+- [Project Overview](#-project-overview)
+- [Key Features](#-key-features)
+- [Tech Stack](#️-tech-stack)
+- [Project Structure](#-project-structure)
+- [Installation & Setup](#-installation--setup)
+- [API Endpoints](#-api-endpoints)
+- [Security Features](#-security-features)
+- [UI/UX Features](#-uiux-features)
+- [Responsive Design](#-responsive-design)
+- [Testing](#-testing)
+- [Screenshots](#-screenshots)
+- [Deployment](#-deployment)
+- [Troubleshooting](#-troubleshooting)
+- [Future Enhancements](#-future-enhancements)
+- [Support & Contact](#-support--contact)
+
+---
 
 ## 🌟 **Why This Project?**
 
 This project showcases **real-world development skills** that employers actively seek. Perfect for technical interviews, portfolio building, and demonstrating full-stack expertise.
+
+---
+
+## ⚡ **Quick Start**
+
+```bash
+# Clone the repository
+git clone https://github.com/shubhamdagar9854/taskmaster-mern-stack.git
+cd taskmaster-mern-stack
+
+# Install backend dependencies
+cd backend
+npm install
+
+# Configure environment variables
+# Create .env file with:
+# PORT=5002
+# MONGODB_URI=mongodb://localhost:27017/taskmaster
+# JWT_SECRET=your-secret-key
+# NODE_ENV=development
+
+# Start MongoDB
+mongod
+
+# Start backend server
+npm start
+
+# Open frontend in browser
+# Navigate to frontend/index.html
+```
 
 ---
 
