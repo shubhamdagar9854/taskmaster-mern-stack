@@ -15,6 +15,10 @@ const taskSchema = new mongoose.Schema({
     enum: ['low', 'medium', 'high'],
     default: 'medium'
   },
+  dueDate: {
+    type: Date,
+    default: null
+  },
   completed: {
     type: Boolean,
     default: false

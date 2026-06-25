@@ -484,6 +484,38 @@ body {
     color: #c53030;
 }
 
+/* Due Date Badge */
+.due-date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.due-date-badge.overdue {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.due-date-badge.today {
+    background: #feebc8;
+    color: #9c4221;
+}
+
+.due-date-badge.upcoming {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.due-date-badge.none {
+    background: #e2e8f0;
+    color: #718096;
+}
+
 .task-checkbox {
     width: 24px;
     height: 24px;

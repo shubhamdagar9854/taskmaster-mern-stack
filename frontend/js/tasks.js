@@ -102,6 +102,7 @@ class TaskManager {
         const title = document.getElementById('taskTitle').value.trim();
         const description = document.getElementById('taskDescription').value.trim();
         const priority = document.getElementById('taskPriority').value;
+        const dueDate = document.getElementById('taskDueDate').value;
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
@@ -117,7 +118,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null })
             });
 
             const data = await response.json();
@@ -179,6 +180,7 @@ class TaskManager {
         document.getElementById('editTaskTitle').value = task.title;
         document.getElementById('editTaskDescription').value = task.description || '';
         document.getElementById('editTaskPriority').value = task.priority || 'medium';
+        document.getElementById('editTaskDueDate').value = task.dueDate ? task.dueDate.split('T')[0] : '';
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -196,13 +198,14 @@ class TaskManager {
         const title = document.getElementById('editTaskTitle').value.trim();
         const description = document.getElementById('editTaskDescription').value.trim();
         const priority = document.getElementById('editTaskPriority').value;
+        const dueDate = document.getElementById('editTaskDueDate').value;
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null });
         this.hideEditTaskForm();
     }
 
@@ -257,6 +260,7 @@ class TaskManager {
                     <span class="priority-badge ${task.priority || 'medium'}">${task.priority || 'medium'}</span>
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+                    ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
                     <div class="task-date">Created: ${new Date(task.createdAt).toLocaleDateString()}</div>
@@ -366,6 +370,30 @@ class TaskManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    getDueDateBadge(dueDate) {
+        if (!dueDate) {
+            return '<span class="due-date-badge none"><i class="fas fa-calendar-times"></i> No due date</span>';
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        due.setHours(0, 0, 0, 0);
+        
+        const diffTime = due - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            return `<span class="due-date-badge overdue"><i class="fas fa-exclamation-circle"></i> Overdue by ${Math.abs(diffDays)} day(s)</span>`;
+        } else if (diffDays === 0) {
+            return '<span class="due-date-badge today"><i class="fas fa-clock"></i> Due today</span>';
+        } else if (diffDays === 1) {
+            return '<span class="due-date-badge upcoming"><i class="fas fa-calendar-day"></i> Due tomorrow</span>';
+        } else {
+            return `<span class="due-date-badge upcoming"><i class="fas fa-calendar"></i> Due in ${diffDays} days</span>`;
+        }
     }
 
     showLoading(show) {
