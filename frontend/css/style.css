@@ -516,6 +516,49 @@ body {
     color: #718096;
 }
 
+/* Category Badges */
+.category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.category-badge.work {
+    background: #bee3f8;
+    color: #2c5282;
+}
+
+.category-badge.personal {
+    background: #fbb6ce;
+    color: #97266d;
+}
+
+.category-badge.shopping {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.category-badge.health {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.category-badge.finance {
+    background: #fefcbf;
+    color: #975a16;
+}
+
+.category-badge.other {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
 .task-checkbox {
     width: 24px;
     height: 24px;

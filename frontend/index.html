@@ -123,6 +123,17 @@
                             <label for="taskDueDate">Due Date (Optional)</label>
                             <input type="date" id="taskDueDate" class="form-input">
                         </div>
+                        <div class="form-group">
+                            <label for="taskCategory">Category</label>
+                            <select id="taskCategory" class="form-select">
+                                <option value="work">💼 Work</option>
+                                <option value="personal">👤 Personal</option>
+                                <option value="shopping">🛒 Shopping</option>
+                                <option value="health">🏥 Health</option>
+                                <option value="finance">💰 Finance</option>
+                                <option value="other" selected>📌 Other</option>
+                            </select>
+                        </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Add Task</button>
                             <button type="button" id="cancelTaskBtn" class="btn btn-outline">Cancel</button>
@@ -153,6 +164,17 @@
                         <div class="form-group">
                             <label for="editTaskDueDate">Due Date (Optional)</label>
                             <input type="date" id="editTaskDueDate" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="editTaskCategory">Category</label>
+                            <select id="editTaskCategory" class="form-select">
+                                <option value="work">💼 Work</option>
+                                <option value="personal">👤 Personal</option>
+                                <option value="shopping">🛒 Shopping</option>
+                                <option value="health">🏥 Health</option>
+                                <option value="finance">💰 Finance</option>
+                                <option value="other">📌 Other</option>
+                            </select>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Save Changes</button>
