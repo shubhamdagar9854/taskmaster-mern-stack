@@ -237,6 +237,9 @@ class TaskManager {
         const completedTasks = this.tasks.filter(t => t.completed).length;
         taskCounter.textContent = `${totalTasks} tasks (${completedTasks} completed)`;
 
+        // Update statistics dashboard
+        this.updateStats();
+
         if (filteredTasks.length === 0) {
             taskList.style.display = 'none';
             emptyState.style.display = 'block';
@@ -410,6 +413,26 @@ class TaskManager {
             other: '📌'
         };
         return icons[category] || icons.other;
+    }
+
+    updateStats() {
+        const total = this.tasks.length;
+        const completed = this.tasks.filter(t => t.completed).length;
+        const pending = total - completed;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const overdue = this.tasks.filter(t => {
+            if (!t.dueDate || t.completed) return false;
+            const due = new Date(t.dueDate);
+            due.setHours(0, 0, 0, 0);
+            return due < today;
+        }).length;
+
+        document.getElementById('totalTasks').textContent = total;
+        document.getElementById('completedTasks').textContent = completed;
+        document.getElementById('pendingTasks').textContent = pending;
+        document.getElementById('overdueTasks').textContent = overdue;
     }
 
     showLoading(show) {

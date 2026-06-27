@@ -99,6 +99,38 @@
                     <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search tasks...">
                 </div>
 
+                <!-- Statistics Dashboard -->
+                <div id="statsDashboard" class="stats-dashboard">
+                    <div class="stat-card">
+                        <div class="stat-icon total">📊</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalTasks">0</div>
+                            <div class="stat-label">Total Tasks</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon completed">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="completedTasks">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon pending">⏳</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="pendingTasks">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon overdue">🔴</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="overdueTasks">0</div>
+                            <div class="stat-label">Overdue</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Add Task Form -->
                 <div id="addTaskForm" class="add-task-form hidden">
                     <h3>Add New Task</h3>
