@@ -99,6 +99,19 @@
                     <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search tasks...">
                 </div>
 
+                <!-- Sort Options -->
+                <div class="sort-container">
+                    <label for="taskSort" class="sort-label">Sort by:</label>
+                    <select id="taskSort" class="sort-select">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="dueDate">Due Date</option>
+                        <option value="priority">Priority (High to Low)</option>
+                        <option value="category">Category</option>
+                        <option value="title">Title (A-Z)</option>
+                    </select>
+                </div>
+
                 <!-- Statistics Dashboard -->
                 <div id="statsDashboard" class="stats-dashboard">
                     <div class="stat-card">

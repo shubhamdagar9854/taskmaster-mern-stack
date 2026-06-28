@@ -4,6 +4,7 @@ class TaskManager {
         this.tasks = [];
         this.searchQuery = '';
         this.filter = 'all'; // all, active, completed
+        this.sortBy = 'newest'; // newest, oldest, dueDate, priority, category, title
         this.currentEditTaskId = null;
         this.init();
     }
@@ -49,6 +50,12 @@ class TaskManager {
         // Filter tasks
         document.getElementById('taskFilter').addEventListener('change', (e) => {
             this.filter = e.target.value;
+            this.renderTasks();
+        });
+
+        // Sort tasks
+        document.getElementById('taskSort').addEventListener('change', (e) => {
+            this.sortBy = e.target.value;
             this.renderTasks();
         });
 
@@ -231,6 +238,9 @@ class TaskManager {
 
             return true;
         });
+
+        // Apply sorting
+        filteredTasks = this.sortTasks(filteredTasks);
 
         // Update task counter
         const totalTasks = this.tasks.length;
@@ -433,6 +443,44 @@ class TaskManager {
         document.getElementById('completedTasks').textContent = completed;
         document.getElementById('pendingTasks').textContent = pending;
         document.getElementById('overdueTasks').textContent = overdue;
+    }
+
+    sortTasks(tasks) {
+        const sorted = [...tasks];
+        
+        switch (this.sortBy) {
+            case 'newest':
+                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'oldest':
+                sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
+            case 'dueDate':
+                sorted.sort((a, b) => {
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                });
+                break;
+            case 'priority':
+                const priorityOrder = { high: 0, medium: 1, low: 2 };
+                sorted.sort((a, b) => {
+                    const aPriority = priorityOrder[a.priority] || 1;
+                    const bPriority = priorityOrder[b.priority] || 1;
+                    return aPriority - bPriority;
+                });
+                break;
+            case 'category':
+                sorted.sort((a, b) => (a.category || 'other').localeCompare(b.category || 'other'));
+                break;
+            case 'title':
+                sorted.sort((a, b) => a.title.localeCompare(b.title));
+                break;
+            default:
+                break;
+        }
+        
+        return sorted;
     }
 
     showLoading(show) {
