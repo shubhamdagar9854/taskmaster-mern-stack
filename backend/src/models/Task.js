@@ -24,6 +24,11 @@ const taskSchema = new mongoose.Schema({
     enum: ['work', 'personal', 'shopping', 'health', 'finance', 'other'],
     default: 'other'
   },
+  notes: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   completed: {
     type: Boolean,
     default: false

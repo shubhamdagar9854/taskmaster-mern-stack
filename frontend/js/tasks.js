@@ -111,6 +111,7 @@ class TaskManager {
         const priority = document.getElementById('taskPriority').value;
         const dueDate = document.getElementById('taskDueDate').value;
         const category = document.getElementById('taskCategory').value;
+        const notes = document.getElementById('taskNotes').value.trim();
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
@@ -126,7 +127,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes })
             });
 
             const data = await response.json();
@@ -190,6 +191,7 @@ class TaskManager {
         document.getElementById('editTaskPriority').value = task.priority || 'medium';
         document.getElementById('editTaskDueDate').value = task.dueDate ? task.dueDate.split('T')[0] : '';
         document.getElementById('editTaskCategory').value = task.category || 'other';
+        document.getElementById('editTaskNotes').value = task.notes || '';
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -209,13 +211,14 @@ class TaskManager {
         const priority = document.getElementById('editTaskPriority').value;
         const dueDate = document.getElementById('editTaskDueDate').value;
         const category = document.getElementById('editTaskCategory').value;
+        const notes = document.getElementById('editTaskNotes').value.trim();
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes });
         this.hideEditTaskForm();
     }
 
@@ -277,6 +280,7 @@ class TaskManager {
                     <span class="category-badge ${task.category || 'other'}">${this.getCategoryIcon(task.category)} ${task.category || 'other'}</span>
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+                    ${task.notes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${this.escapeHtml(task.notes)}</div>` : ''}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">

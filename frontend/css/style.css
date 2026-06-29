@@ -695,6 +695,22 @@ body {
     font-size: 0.9rem;
 }
 
+.task-notes {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+    line-height: 1.4;
+}
+
+.task-notes i {
+    color: #667eea;
+    margin-right: 0.25rem;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
