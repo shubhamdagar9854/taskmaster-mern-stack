@@ -711,6 +711,69 @@ body {
     margin-right: 0.25rem;
 }
 
+/* Subtasks Styling */
+.subtasks-container {
+    margin-bottom: 0.75rem;
+}
+
+.subtask-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.subtask-item input[type="text"] {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.subtask-item input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.subtask-item .btn-remove-subtask {
+    background: #fed7d7;
+    color: #c53030;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.subtask-item .btn-remove-subtask:hover {
+    background: #feb2b2;
+}
+
+.task-subtasks {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.task-subtask {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.task-subtask input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.task-subtask.completed span {
+    text-decoration: line-through;
+    color: #999;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

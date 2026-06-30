@@ -183,6 +183,15 @@
                             <label for="taskNotes">Notes (Optional)</label>
                             <textarea id="taskNotes" rows="4" placeholder="Add any additional notes or details..."></textarea>
                         </div>
+                        <div class="form-group">
+                            <label>Subtasks (Optional)</label>
+                            <div id="subtasksContainer" class="subtasks-container">
+                                <!-- Subtasks will be added dynamically -->
+                            </div>
+                            <button type="button" id="addSubtaskBtn" class="btn btn-outline btn-sm">
+                                <i class="fas fa-plus"></i> Add Subtask
+                            </button>
+                        </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Add Task</button>
                             <button type="button" id="cancelTaskBtn" class="btn btn-outline">Cancel</button>
@@ -228,6 +237,15 @@
                         <div class="form-group">
                             <label for="editTaskNotes">Notes (Optional)</label>
                             <textarea id="editTaskNotes" rows="4" placeholder="Add any additional notes or details..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Subtasks (Optional)</label>
+                            <div id="editSubtasksContainer" class="subtasks-container">
+                                <!-- Subtasks will be added dynamically -->
+                            </div>
+                            <button type="button" id="addEditSubtaskBtn" class="btn btn-outline btn-sm">
+                                <i class="fas fa-plus"></i> Add Subtask
+                            </button>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Save Changes</button>

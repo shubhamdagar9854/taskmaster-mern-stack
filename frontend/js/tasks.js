@@ -6,6 +6,8 @@ class TaskManager {
         this.filter = 'all'; // all, active, completed
         this.sortBy = 'newest'; // newest, oldest, dueDate, priority, category, title
         this.currentEditTaskId = null;
+        this.currentSubtasks = []; // For add form
+        this.currentEditSubtasks = []; // For edit form
         this.init();
     }
 
@@ -59,6 +61,15 @@ class TaskManager {
             this.renderTasks();
         });
 
+        // Add subtask buttons
+        document.getElementById('addSubtaskBtn').addEventListener('click', () => {
+            this.addSubtaskInput('subtasksContainer', this.currentSubtasks);
+        });
+
+        document.getElementById('addEditSubtaskBtn').addEventListener('click', () => {
+            this.addSubtaskInput('editSubtasksContainer', this.currentEditSubtasks);
+        });
+
         // Close toast
         document.getElementById('closeToast').addEventListener('click', () => {
             document.getElementById('messageToast').style.display = 'none';
@@ -73,6 +84,8 @@ class TaskManager {
     hideAddTaskForm() {
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('taskFormElement').reset();
+        document.getElementById('subtasksContainer').innerHTML = '';
+        this.currentSubtasks = [];
     }
 
     async loadTasks() {
@@ -112,6 +125,13 @@ class TaskManager {
         const dueDate = document.getElementById('taskDueDate').value;
         const category = document.getElementById('taskCategory').value;
         const notes = document.getElementById('taskNotes').value.trim();
+        
+        // Collect subtasks
+        const subtaskInputs = document.querySelectorAll('#subtasksContainer .subtask-item input[type="text"]');
+        const subtasks = Array.from(subtaskInputs)
+            .map(input => input.value.trim())
+            .filter(text => text)
+            .map(text => ({ title: text, completed: false }));
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
@@ -127,7 +147,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks })
             });
 
             const data = await response.json();
@@ -192,6 +212,11 @@ class TaskManager {
         document.getElementById('editTaskDueDate').value = task.dueDate ? task.dueDate.split('T')[0] : '';
         document.getElementById('editTaskCategory').value = task.category || 'other';
         document.getElementById('editTaskNotes').value = task.notes || '';
+        
+        // Load subtasks
+        this.currentEditSubtasks = task.subtasks ? [...task.subtasks] : [];
+        this.renderSubtasks('editSubtasksContainer', this.currentEditSubtasks);
+        
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -200,6 +225,8 @@ class TaskManager {
     hideEditTaskForm() {
         this.currentEditTaskId = null;
         document.getElementById('editTaskFormElement').reset();
+        document.getElementById('editSubtasksContainer').innerHTML = '';
+        this.currentEditSubtasks = [];
         document.getElementById('editTaskForm').style.display = 'none';
     }
 
@@ -212,13 +239,20 @@ class TaskManager {
         const dueDate = document.getElementById('editTaskDueDate').value;
         const category = document.getElementById('editTaskCategory').value;
         const notes = document.getElementById('editTaskNotes').value.trim();
+        
+        // Collect subtasks
+        const subtaskInputs = document.querySelectorAll('#editSubtasksContainer .subtask-item input[type="text"]');
+        const subtasks = Array.from(subtaskInputs)
+            .map(input => input.value.trim())
+            .filter(text => text)
+            .map(text => ({ title: text, completed: false }));
 
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks });
         this.hideEditTaskForm();
     }
 
@@ -281,6 +315,7 @@ class TaskManager {
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
                     ${task.notes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${this.escapeHtml(task.notes)}</div>` : ''}
+                    ${this.renderSubtasksDisplay(task.subtasks)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
@@ -427,6 +462,59 @@ class TaskManager {
             other: '📌'
         };
         return icons[category] || icons.other;
+    }
+
+    addSubtaskInput(containerId, subtasksArray) {
+        const container = document.getElementById(containerId);
+        const subtaskItem = document.createElement('div');
+        subtaskItem.className = 'subtask-item';
+        subtaskItem.innerHTML = `
+            <input type="text" placeholder="Enter subtask..." class="subtask-input">
+            <button type="button" class="btn-remove-subtask">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        subtaskItem.querySelector('.btn-remove-subtask').addEventListener('click', () => {
+            subtaskItem.remove();
+        });
+        
+        container.appendChild(subtaskItem);
+    }
+
+    renderSubtasks(containerId, subtasks) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        subtasks.forEach(subtask => {
+            const subtaskItem = document.createElement('div');
+            subtaskItem.className = 'subtask-item';
+            subtaskItem.innerHTML = `
+                <input type="text" value="${this.escapeHtml(subtask.title)}" placeholder="Enter subtask..." class="subtask-input">
+                <button type="button" class="btn-remove-subtask">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            subtaskItem.querySelector('.btn-remove-subtask').addEventListener('click', () => {
+                subtaskItem.remove();
+            });
+            
+            container.appendChild(subtaskItem);
+        });
+    }
+
+    renderSubtasksDisplay(subtasks) {
+        if (!subtasks || subtasks.length === 0) return '';
+        
+        const subtasksHtml = subtasks.map(subtask => `
+            <div class="task-subtask ${subtask.completed ? 'completed' : ''}">
+                <input type="checkbox" ${subtask.completed ? 'checked' : ''} disabled>
+                <span>${this.escapeHtml(subtask.title)}</span>
+            </div>
+        `).join('');
+        
+        return `<div class="task-subtasks">${subtasksHtml}</div>`;
     }
 
     updateStats() {
