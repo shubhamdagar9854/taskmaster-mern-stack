@@ -507,6 +507,10 @@ class TaskManager {
     renderSubtasksDisplay(subtasks) {
         if (!subtasks || subtasks.length === 0) return '';
         
+        const totalSubtasks = subtasks.length;
+        const completedSubtasks = subtasks.filter(s => s.completed).length;
+        const progressPercentage = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
+        
         const subtasksHtml = subtasks.map(subtask => `
             <div class="task-subtask ${subtask.completed ? 'completed' : ''}">
                 <input type="checkbox" ${subtask.completed ? 'checked' : ''} disabled>
@@ -514,7 +518,16 @@ class TaskManager {
             </div>
         `).join('');
         
-        return `<div class="task-subtasks">${subtasksHtml}</div>`;
+        const progressHtml = `
+            <div class="task-progress">
+                <div class="task-progress-bar">
+                    <div class="task-progress-fill" style="width: ${progressPercentage}%"></div>
+                </div>
+                <div class="task-progress-text">${completedSubtasks}/${totalSubtasks} subtasks completed (${progressPercentage}%)</div>
+            </div>
+        `;
+        
+        return `<div class="task-subtasks">${progressHtml}${subtasksHtml}</div>`;
     }
 
     updateStats() {

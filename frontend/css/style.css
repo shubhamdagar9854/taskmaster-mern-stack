@@ -774,6 +774,32 @@ body {
     color: #999;
 }
 
+/* Task Progress Bar */
+.task-progress {
+    margin-top: 0.75rem;
+}
+
+.task-progress-bar {
+    height: 8px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.task-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.task-progress-text {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: right;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
