@@ -8,6 +8,8 @@ class TaskManager {
         this.currentEditTaskId = null;
         this.currentSubtasks = []; // For add form
         this.currentEditSubtasks = []; // For edit form
+        this.currentTags = []; // For add form
+        this.currentEditTags = []; // For edit form
         this.init();
     }
 
@@ -79,6 +81,21 @@ class TaskManager {
             document.getElementById('editTaskReminderTime').style.display = e.target.checked ? 'block' : 'none';
         });
 
+        // Tag input listeners
+        document.getElementById('tagInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.addTag('tagInput', 'taskTags', this.currentTags);
+            }
+        });
+
+        document.getElementById('editTagInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.addTag('editTagInput', 'editTaskTags', this.currentEditTags);
+            }
+        });
+
         // Close toast
         document.getElementById('closeToast').addEventListener('click', () => {
             document.getElementById('messageToast').style.display = 'none';
@@ -97,6 +114,8 @@ class TaskManager {
         this.currentSubtasks = [];
         document.getElementById('taskReminderEnabled').checked = false;
         document.getElementById('taskReminderTime').style.display = 'none';
+        this.currentTags = [];
+        document.getElementById('taskTags').innerHTML = '';
     }
 
     async loadTasks() {
@@ -149,6 +168,9 @@ class TaskManager {
         const reminderTime = document.getElementById('taskReminderTime').value;
         const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null } : { enabled: false, time: null };
 
+        // Collect tags
+        const tags = [...this.currentTags];
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
@@ -163,7 +185,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags })
             });
 
             const data = await response.json();
@@ -243,6 +265,10 @@ class TaskManager {
             document.getElementById('editTaskReminderTime').style.display = 'none';
         }
         
+        // Load tags
+        this.currentEditTags = task.tags ? [...task.tags] : [];
+        this.renderTags('editTaskTags', this.currentEditTags);
+        
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -255,6 +281,8 @@ class TaskManager {
         this.currentEditSubtasks = [];
         document.getElementById('editTaskReminderEnabled').checked = false;
         document.getElementById('editTaskReminderTime').style.display = 'none';
+        this.currentEditTags = [];
+        document.getElementById('editTaskTags').innerHTML = '';
         document.getElementById('editTaskForm').style.display = 'none';
     }
 
@@ -280,12 +308,15 @@ class TaskManager {
         const reminderTime = document.getElementById('editTaskReminderTime').value;
         const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null } : { enabled: false, time: null };
 
+        // Collect tags
+        const tags = [...this.currentEditTags];
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags });
         this.hideEditTaskForm();
     }
 
@@ -350,6 +381,7 @@ class TaskManager {
                     ${task.notes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${this.escapeHtml(task.notes)}</div>` : ''}
                     ${this.renderSubtasksDisplay(task.subtasks)}
                     ${this.renderReminderBadge(task.reminder)}
+                    ${this.renderTagsDisplay(task.tags)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
@@ -571,6 +603,55 @@ class TaskManager {
         const formattedDate = reminderDate.toLocaleString();
         
         return `<span class="reminder-badge"><i class="fas fa-bell"></i> Reminder: ${formattedDate}</span>`;
+    }
+
+    addTag(inputId, displayId, tagsArray) {
+        const input = document.getElementById(inputId);
+        const tag = input.value.trim();
+        
+        if (tag && !tagsArray.includes(tag)) {
+            tagsArray.push(tag);
+            this.renderTags(displayId, tagsArray);
+            input.value = '';
+        }
+    }
+
+    removeTag(tag, tagsArray, displayId) {
+        const index = tagsArray.indexOf(tag);
+        if (index > -1) {
+            tagsArray.splice(index, 1);
+            this.renderTags(displayId, tagsArray);
+        }
+    }
+
+    renderTags(displayId, tagsArray) {
+        const display = document.getElementById(displayId);
+        display.innerHTML = '';
+        
+        tagsArray.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'tag';
+            tagElement.innerHTML = `
+                ${this.escapeHtml(tag)}
+                <span class="tag-remove" data-tag="${this.escapeHtml(tag)}">&times;</span>
+            `;
+            
+            tagElement.querySelector('.tag-remove').addEventListener('click', () => {
+                this.removeTag(tag, tagsArray, displayId);
+            });
+            
+            display.appendChild(tagElement);
+        });
+    }
+
+    renderTagsDisplay(tags) {
+        if (!tags || tags.length === 0) return '';
+        
+        const tagsHtml = tags.map(tag => `
+            <span class="tag">${this.escapeHtml(tag)}</span>
+        `).join('');
+        
+        return `<div class="task-tags" style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">${tagsHtml}</div>`;
     }
 
     updateStats() {

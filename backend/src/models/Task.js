@@ -50,6 +50,10 @@ const taskSchema = new mongoose.Schema({
       default: null
     }
   },
+  tags: [{
+    type: String,
+    trim: true
+  }],
   completed: {
     type: Boolean,
     default: false

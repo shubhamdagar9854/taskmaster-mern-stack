@@ -203,6 +203,14 @@
                             </div>
                             <input type="datetime-local" id="taskReminderTime" class="form-input" style="display: none;">
                         </div>
+                        <div class="form-group">
+                            <label>Tags (Optional)</label>
+                            <div class="tags-input-container">
+                                <div id="taskTags" class="tags-display"></div>
+                                <input type="text" id="tagInput" class="tag-input" placeholder="Type tag and press Enter">
+                            </div>
+                            <small class="form-hint">Press Enter to add a tag</small>
+                        </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Add Task</button>
                             <button type="button" id="cancelTaskBtn" class="btn btn-outline">Cancel</button>
@@ -265,6 +273,14 @@
                                 <label for="editTaskReminderEnabled">Enable Reminder</label>
                             </div>
                             <input type="datetime-local" id="editTaskReminderTime" class="form-input" style="display: none;">
+                        </div>
+                        <div class="form-group">
+                            <label>Tags (Optional)</label>
+                            <div class="tags-input-container">
+                                <div id="editTaskTags" class="tags-display"></div>
+                                <input type="text" id="editTagInput" class="tag-input" placeholder="Type tag and press Enter">
+                            </div>
+                            <small class="form-hint">Press Enter to add a tag</small>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Save Changes</button>

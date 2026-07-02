@@ -978,6 +978,78 @@ body {
     color: #92400e;
 }
 
+/* Tags Styling */
+.tags-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+}
+
+.tags-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: #667eea;
+    color: white;
+}
+
+.tag-remove {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.tag-remove:hover {
+    opacity: 1;
+}
+
+.tag-input {
+    flex: 1;
+    min-width: 150px;
+    border: none;
+    outline: none;
+    padding: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #718096;
+}
+
+.dark-mode .tags-input-container {
+    background: rgba(51, 65, 85, 0.9);
+    border-color: #475569;
+}
+
+.dark-mode .tag-input {
+    color: #e2e8f0;
+}
+
+.dark-mode .tag-input::placeholder {
+    color: #94a3b8;
+}
+
+.dark-mode .form-hint {
+    color: #94a3b8;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
