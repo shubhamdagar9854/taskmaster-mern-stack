@@ -800,6 +800,145 @@ body {
     text-align: right;
 }
 
+/* Dark Mode Toggle Button */
+.btn-icon {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: #fff;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* Dark Mode Styles */
+.dark-mode {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.dark-mode .header {
+    background: rgba(15, 23, 42, 0.95);
+}
+
+.dark-mode .logo {
+    color: #e2e8f0;
+}
+
+.dark-mode .nav a,
+.dark-mode .user-info span {
+    color: #e2e8f0;
+}
+
+.dark-mode .task-section {
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.dark-mode .task-header h2 {
+    color: #e2e8f0;
+}
+
+.dark-mode .search-input,
+.dark-mode .sort-select,
+.dark-mode .filter-select {
+    background: rgba(51, 65, 85, 0.9);
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+.dark-mode .search-input::placeholder {
+    color: #94a3b8;
+}
+
+.dark-mode .stat-card {
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.dark-mode .stat-value {
+    color: #e2e8f0;
+}
+
+.dark-mode .stat-label {
+    color: #94a3b8;
+}
+
+.dark-mode .task-item {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: #475569;
+}
+
+.dark-mode .task-title {
+    color: #e2e8f0;
+}
+
+.dark-mode .task-description,
+.dark-mode .task-notes,
+.dark-mode .task-date {
+    color: #94a3b8;
+}
+
+.dark-mode .task-meta {
+    color: #94a3b8;
+}
+
+.dark-mode .btn-outline {
+    background: rgba(51, 65, 85, 0.9);
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+.dark-mode .btn-outline:hover {
+    background: rgba(71, 85, 105, 0.9);
+}
+
+.dark-mode .form-input,
+.dark-mode textarea,
+.dark-mode .form-select {
+    background: rgba(51, 65, 85, 0.9);
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+.dark-mode .form-input::placeholder,
+.dark-mode textarea::placeholder {
+    color: #94a3b8;
+}
+
+.dark-mode .form-label {
+    color: #e2e8f0;
+}
+
+.dark-mode .sort-label {
+    color: #e2e8f0;
+}
+
+.dark-mode .task-subtasks {
+    border-top-color: rgba(148, 163, 184, 0.3);
+}
+
+.dark-mode .task-subtask span {
+    color: #e2e8f0;
+}
+
+.dark-mode .task-progress-text {
+    color: #94a3b8;
+}
+
+.dark-mode .subtask-item input[type="text"] {
+    background: rgba(51, 65, 85, 0.9);
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+.dark-mode .subtask-item input[type="text"]::placeholder {
+    color: #94a3b8;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
