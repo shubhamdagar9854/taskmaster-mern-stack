@@ -70,6 +70,15 @@ class TaskManager {
             this.addSubtaskInput('editSubtasksContainer', this.currentEditSubtasks);
         });
 
+        // Reminder toggle listeners
+        document.getElementById('taskReminderEnabled').addEventListener('change', (e) => {
+            document.getElementById('taskReminderTime').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('editTaskReminderEnabled').addEventListener('change', (e) => {
+            document.getElementById('editTaskReminderTime').style.display = e.target.checked ? 'block' : 'none';
+        });
+
         // Close toast
         document.getElementById('closeToast').addEventListener('click', () => {
             document.getElementById('messageToast').style.display = 'none';
@@ -86,6 +95,8 @@ class TaskManager {
         document.getElementById('taskFormElement').reset();
         document.getElementById('subtasksContainer').innerHTML = '';
         this.currentSubtasks = [];
+        document.getElementById('taskReminderEnabled').checked = false;
+        document.getElementById('taskReminderTime').style.display = 'none';
     }
 
     async loadTasks() {
@@ -133,6 +144,11 @@ class TaskManager {
             .filter(text => text)
             .map(text => ({ title: text, completed: false }));
 
+        // Collect reminder
+        const reminderEnabled = document.getElementById('taskReminderEnabled').checked;
+        const reminderTime = document.getElementById('taskReminderTime').value;
+        const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null } : { enabled: false, time: null };
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
@@ -147,7 +163,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder })
             });
 
             const data = await response.json();
@@ -217,6 +233,16 @@ class TaskManager {
         this.currentEditSubtasks = task.subtasks ? [...task.subtasks] : [];
         this.renderSubtasks('editSubtasksContainer', this.currentEditSubtasks);
         
+        // Load reminder
+        if (task.reminder && task.reminder.enabled) {
+            document.getElementById('editTaskReminderEnabled').checked = true;
+            document.getElementById('editTaskReminderTime').style.display = 'block';
+            document.getElementById('editTaskReminderTime').value = task.reminder.time ? task.reminder.time.slice(0, 16) : '';
+        } else {
+            document.getElementById('editTaskReminderEnabled').checked = false;
+            document.getElementById('editTaskReminderTime').style.display = 'none';
+        }
+        
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -227,6 +253,8 @@ class TaskManager {
         document.getElementById('editTaskFormElement').reset();
         document.getElementById('editSubtasksContainer').innerHTML = '';
         this.currentEditSubtasks = [];
+        document.getElementById('editTaskReminderEnabled').checked = false;
+        document.getElementById('editTaskReminderTime').style.display = 'none';
         document.getElementById('editTaskForm').style.display = 'none';
     }
 
@@ -247,12 +275,17 @@ class TaskManager {
             .filter(text => text)
             .map(text => ({ title: text, completed: false }));
 
+        // Collect reminder
+        const reminderEnabled = document.getElementById('editTaskReminderEnabled').checked;
+        const reminderTime = document.getElementById('editTaskReminderTime').value;
+        const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null } : { enabled: false, time: null };
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder });
         this.hideEditTaskForm();
     }
 
@@ -316,6 +349,7 @@ class TaskManager {
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
                     ${task.notes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${this.escapeHtml(task.notes)}</div>` : ''}
                     ${this.renderSubtasksDisplay(task.subtasks)}
+                    ${this.renderReminderBadge(task.reminder)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
@@ -528,6 +562,15 @@ class TaskManager {
         `;
         
         return `<div class="task-subtasks">${progressHtml}${subtasksHtml}</div>`;
+    }
+
+    renderReminderBadge(reminder) {
+        if (!reminder || !reminder.enabled || !reminder.time) return '';
+        
+        const reminderDate = new Date(reminder.time);
+        const formattedDate = reminderDate.toLocaleString();
+        
+        return `<span class="reminder-badge"><i class="fas fa-bell"></i> Reminder: ${formattedDate}</span>`;
     }
 
     updateStats() {

@@ -40,6 +40,16 @@ const taskSchema = new mongoose.Schema({
       default: false
     }
   }],
+  reminder: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    time: {
+      type: Date,
+      default: null
+    }
+  },
   completed: {
     type: Boolean,
     default: false
