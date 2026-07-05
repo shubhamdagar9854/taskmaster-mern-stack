@@ -1050,6 +1050,77 @@ body {
     color: #94a3b8;
 }
 
+/* Time Tracking Styling */
+.time-tracking {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.time-display {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #667eea;
+    min-width: 60px;
+}
+
+.timer-btn {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.timer-btn-start {
+    background: #667eea;
+    color: white;
+}
+
+.timer-btn-start:hover {
+    background: #5568d3;
+}
+
+.timer-btn-stop {
+    background: #ef4444;
+    color: white;
+}
+
+.timer-btn-stop:hover {
+    background: #dc2626;
+}
+
+.timer-btn-reset {
+    background: #6b7280;
+    color: white;
+}
+
+.timer-btn-reset:hover {
+    background: #4b5563;
+}
+
+.timer-running {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.dark-mode .time-tracking {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.dark-mode .time-display {
+    color: #a5b4fc;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

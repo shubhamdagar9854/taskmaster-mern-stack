@@ -10,6 +10,7 @@ class TaskManager {
         this.currentEditSubtasks = []; // For edit form
         this.currentTags = []; // For add form
         this.currentEditTags = []; // For edit form
+        this.timers = {}; // Store running timers
         this.init();
     }
 
@@ -116,6 +117,7 @@ class TaskManager {
         document.getElementById('taskReminderTime').style.display = 'none';
         this.currentTags = [];
         document.getElementById('taskTags').innerHTML = '';
+        document.getElementById('taskTimeTrackingEnabled').checked = false;
     }
 
     async loadTasks() {
@@ -171,6 +173,10 @@ class TaskManager {
         // Collect tags
         const tags = [...this.currentTags];
 
+        // Collect time tracking
+        const timeTrackingEnabled = document.getElementById('taskTimeTrackingEnabled').checked;
+        const timeTracking = timeTrackingEnabled ? { enabled: true, timeSpent: 0, timerRunning: false, startTime: null } : { enabled: false, timeSpent: 0, timerRunning: false, startTime: null };
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
@@ -185,7 +191,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking })
             });
 
             const data = await response.json();
@@ -269,6 +275,13 @@ class TaskManager {
         this.currentEditTags = task.tags ? [...task.tags] : [];
         this.renderTags('editTaskTags', this.currentEditTags);
         
+        // Load time tracking
+        if (task.timeTracking && task.timeTracking.enabled) {
+            document.getElementById('editTaskTimeTrackingEnabled').checked = true;
+        } else {
+            document.getElementById('editTaskTimeTrackingEnabled').checked = false;
+        }
+        
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -283,6 +296,7 @@ class TaskManager {
         document.getElementById('editTaskReminderTime').style.display = 'none';
         this.currentEditTags = [];
         document.getElementById('editTaskTags').innerHTML = '';
+        document.getElementById('editTaskTimeTrackingEnabled').checked = false;
         document.getElementById('editTaskForm').style.display = 'none';
     }
 
@@ -311,12 +325,16 @@ class TaskManager {
         // Collect tags
         const tags = [...this.currentEditTags];
 
+        // Collect time tracking
+        const timeTrackingEnabled = document.getElementById('editTaskTimeTrackingEnabled').checked;
+        const timeTracking = timeTrackingEnabled ? { enabled: true, timeSpent: 0, timerRunning: false, startTime: null } : { enabled: false, timeSpent: 0, timerRunning: false, startTime: null };
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking });
         this.hideEditTaskForm();
     }
 
@@ -382,6 +400,7 @@ class TaskManager {
                     ${this.renderSubtasksDisplay(task.subtasks)}
                     ${this.renderReminderBadge(task.reminder)}
                     ${this.renderTagsDisplay(task.tags)}
+                    ${this.renderTimeTracking(task.timeTracking, task._id)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
@@ -405,7 +424,26 @@ class TaskManager {
             const action = e.target.dataset.action || e.target.closest('[data-action]')?.dataset.action;
             const taskItem = e.target.closest('.task-item');
             
-            if (!action || !taskItem) return;
+            if (!action) return;
+            
+            // Handle timer actions (they have data-task-id directly on button)
+            const timerTaskId = e.target.dataset.taskId || e.target.closest('[data-task-id]')?.dataset.taskId;
+            if (timerTaskId && ['startTimer', 'stopTimer', 'resetTimer'].includes(action)) {
+                switch(action) {
+                    case 'startTimer':
+                        this.startTimer(timerTaskId);
+                        break;
+                    case 'stopTimer':
+                        this.stopTimer(timerTaskId);
+                        break;
+                    case 'resetTimer':
+                        this.resetTimer(timerTaskId);
+                        break;
+                }
+                return;
+            }
+            
+            if (!taskItem) return;
             
             const taskId = taskItem.dataset.taskId;
             
@@ -652,6 +690,141 @@ class TaskManager {
         `).join('');
         
         return `<div class="task-tags" style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">${tagsHtml}</div>`;
+    }
+
+    renderTimeTracking(timeTracking, taskId) {
+        if (!timeTracking || !timeTracking.enabled) return '';
+        
+        const isRunning = timeTracking.timerRunning;
+        const timeSpent = this.formatTime(timeTracking.timeSpent || 0);
+        
+        return `
+            <div class="time-tracking">
+                <span class="time-display ${isRunning ? 'timer-running' : ''}">${timeSpent}</span>
+                <button class="timer-btn ${isRunning ? 'timer-btn-stop' : 'timer-btn-start'}" 
+                        data-action="${isRunning ? 'stopTimer' : 'startTimer'}" 
+                        data-task-id="${taskId}">
+                    <i class="fas ${isRunning ? 'fa-stop' : 'fa-play'}"></i>
+                </button>
+                <button class="timer-btn timer-btn-reset" 
+                        data-action="resetTimer" 
+                        data-task-id="${taskId}">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    formatTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        
+        if (hours > 0) {
+            return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+        return `${minutes}:${String(secs).padStart(2, '0')}`;
+    }
+
+    async startTimer(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+        
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/timer/start`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderTasks();
+                    this.startLocalTimer(taskId);
+                }
+            }
+        } catch (error) {
+            console.error('Error starting timer:', error);
+        }
+    }
+
+    async stopTimer(taskId) {
+        this.stopLocalTimer(taskId);
+        
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/timer/stop`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderTasks();
+                }
+            }
+        } catch (error) {
+            console.error('Error stopping timer:', error);
+        }
+    }
+
+    async resetTimer(taskId) {
+        this.stopLocalTimer(taskId);
+        
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/timer/reset`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderTasks();
+                }
+            }
+        } catch (error) {
+            console.error('Error resetting timer:', error);
+        }
+    }
+
+    startLocalTimer(taskId) {
+        if (this.timers[taskId]) return;
+        
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task || !task.timeTracking || !task.timeTracking.startTime) return;
+        
+        const startTime = new Date(task.timeTracking.startTime).getTime();
+        
+        this.timers[taskId] = setInterval(() => {
+            const now = Date.now();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const totalSpent = (task.timeTracking.timeSpent || 0) + elapsed;
+            
+            const timeDisplay = document.querySelector(`[data-task-id="${taskId}"]`).closest('.time-tracking').querySelector('.time-display');
+            if (timeDisplay) {
+                timeDisplay.textContent = this.formatTime(totalSpent);
+            }
+        }, 1000);
+    }
+
+    stopLocalTimer(taskId) {
+        if (this.timers[taskId]) {
+            clearInterval(this.timers[taskId]);
+            delete this.timers[taskId];
+        }
     }
 
     updateStats() {

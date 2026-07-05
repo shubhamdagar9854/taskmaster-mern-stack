@@ -54,6 +54,24 @@ const taskSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  timeTracking: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    timeSpent: {
+      type: Number,
+      default: 0
+    },
+    timerRunning: {
+      type: Boolean,
+      default: false
+    },
+    startTime: {
+      type: Date,
+      default: null
+    }
+  },
   completed: {
     type: Boolean,
     default: false
