@@ -1,7 +1,43 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const Task = require('../models/Task');
 const router = express.Router();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|zip/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only images, PDFs, documents, and ZIP files are allowed'));
+    }
+  }
+});
 
 // Middleware to verify JWT token
 const authenticateToken = (req, res, next) => {
@@ -209,6 +245,68 @@ router.post('/:id/timer/reset', authenticateToken, async (req, res) => {
     res.json(task);
   } catch (error) {
     console.error('Reset timer error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Upload attachment
+router.post('/:id/attachments', authenticateToken, upload.single('file'), async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const attachment = {
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path,
+      uploadedAt: new Date()
+    };
+
+    task.attachments.push(attachment);
+    await task.save();
+
+    res.status(201).json(task);
+  } catch (error) {
+    console.error('Upload attachment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete attachment
+router.delete('/:id/attachments/:attachmentId', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const attachment = task.attachments.id(req.params.attachmentId);
+
+    if (!attachment) {
+      return res.status(404).json({ message: 'Attachment not found' });
+    }
+
+    // Delete file from filesystem
+    if (fs.existsSync(attachment.path)) {
+      fs.unlinkSync(attachment.path);
+    }
+
+    attachment.remove();
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Delete attachment error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

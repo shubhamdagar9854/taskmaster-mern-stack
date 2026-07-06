@@ -1121,6 +1121,110 @@ body {
     color: #a5b4fc;
 }
 
+/* Attachments Styling */
+.attachments-list {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.attachment-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.attachment-icon {
+    font-size: 1.2rem;
+    color: #667eea;
+}
+
+.attachment-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attachment-size {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-left: 0.5rem;
+}
+
+.attachment-remove {
+    padding: 0.25rem 0.5rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.attachment-remove:hover {
+    background: #dc2626;
+}
+
+.task-attachments {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.task-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+
+.task-attachment i {
+    color: #667eea;
+}
+
+.dark-mode .attachment-item {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: #475569;
+}
+
+.dark-mode .attachment-name {
+    color: #e2e8f0;
+}
+
+.dark-mode .attachment-size {
+    color: #94a3b8;
+}
+
+.dark-mode .task-attachment {
+    background: rgba(51, 65, 85, 0.9);
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

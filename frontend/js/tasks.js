@@ -118,6 +118,7 @@ class TaskManager {
         this.currentTags = [];
         document.getElementById('taskTags').innerHTML = '';
         document.getElementById('taskTimeTrackingEnabled').checked = false;
+        document.getElementById('taskAttachment').value = '';
     }
 
     async loadTasks() {
@@ -199,6 +200,16 @@ class TaskManager {
             if (response.ok) {
                 this.tasks.unshift(data);
                 this.renderTasks();
+                
+                // Handle file uploads after task creation
+                const fileInput = document.getElementById('taskAttachment');
+                if (fileInput.files.length > 0) {
+                    Array.from(fileInput.files).forEach(file => {
+                        this.uploadAttachment(data._id, file);
+                    });
+                    fileInput.value = '';
+                }
+                
                 this.hideAddTaskForm();
                 this.showMessage('Task added successfully!', 'success');
             } else {
@@ -282,6 +293,21 @@ class TaskManager {
             document.getElementById('editTaskTimeTrackingEnabled').checked = false;
         }
         
+        // Load attachments
+        this.renderAttachmentsList('editTaskAttachmentsList', task.attachments, taskId);
+        
+        // Setup file upload handler
+        const fileInput = document.getElementById('editTaskAttachment');
+        fileInput.onchange = (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                Array.from(files).forEach(file => {
+                    this.uploadAttachment(taskId, file);
+                });
+                fileInput.value = '';
+            }
+        };
+        
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
         document.getElementById('editTaskTitle').focus();
@@ -297,6 +323,7 @@ class TaskManager {
         this.currentEditTags = [];
         document.getElementById('editTaskTags').innerHTML = '';
         document.getElementById('editTaskTimeTrackingEnabled').checked = false;
+        document.getElementById('editTaskAttachmentsList').innerHTML = '';
         document.getElementById('editTaskForm').style.display = 'none';
     }
 
@@ -401,6 +428,7 @@ class TaskManager {
                     ${this.renderReminderBadge(task.reminder)}
                     ${this.renderTagsDisplay(task.tags)}
                     ${this.renderTimeTracking(task.timeTracking, task._id)}
+                    ${this.renderAttachmentsDisplay(task.attachments)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
@@ -825,6 +853,135 @@ class TaskManager {
             clearInterval(this.timers[taskId]);
             delete this.timers[taskId];
         }
+    }
+
+    renderAttachmentsDisplay(attachments) {
+        if (!attachments || attachments.length === 0) return '';
+        
+        const attachmentsHtml = attachments.map(attachment => {
+            const icon = this.getFileIcon(attachment.mimetype);
+            const size = this.formatFileSize(attachment.size);
+            return `
+                <span class="task-attachment">
+                    <i class="fas ${icon}"></i>
+                    ${this.escapeHtml(attachment.originalName)}
+                    <span class="attachment-size">(${size})</span>
+                </span>
+            `;
+        }).join('');
+        
+        return `<div class="task-attachments">${attachmentsHtml}</div>`;
+    }
+
+    getFileIcon(mimetype) {
+        const iconMap = {
+            'image/jpeg': 'fa-image',
+            'image/jpg': 'fa-image',
+            'image/png': 'fa-image',
+            'image/gif': 'fa-image',
+            'application/pdf': 'fa-file-pdf',
+            'application/msword': 'fa-file-word',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'fa-file-word',
+            'text/plain': 'fa-file-alt',
+            'application/zip': 'fa-file-archive',
+            'application/x-zip-compressed': 'fa-file-archive'
+        };
+        return iconMap[mimetype] || 'fa-file';
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    async uploadAttachment(taskId, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/attachments`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderTasks();
+                    this.renderAttachmentsList('editTaskAttachmentsList', data.attachments, taskId);
+                }
+            } else {
+                const error = await response.json();
+                this.showMessage(error.message || 'Failed to upload attachment', 'error');
+            }
+        } catch (error) {
+            console.error('Upload attachment error:', error);
+            this.showMessage('Failed to upload attachment', 'error');
+        }
+    }
+
+    async deleteAttachment(taskId, attachmentId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/attachments/${attachmentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderTasks();
+                    this.renderAttachmentsList('editTaskAttachmentsList', data.attachments, taskId);
+                }
+            } else {
+                this.showMessage('Failed to delete attachment', 'error');
+            }
+        } catch (error) {
+            console.error('Delete attachment error:', error);
+            this.showMessage('Failed to delete attachment', 'error');
+        }
+    }
+
+    renderAttachmentsList(containerId, attachments, taskId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (!attachments || attachments.length === 0) return;
+        
+        attachments.forEach(attachment => {
+            const item = document.createElement('div');
+            item.className = 'attachment-item';
+            item.innerHTML = `
+                <div class="attachment-info">
+                    <i class="fas ${this.getFileIcon(attachment.mimetype)} attachment-icon"></i>
+                    <span class="attachment-name">${this.escapeHtml(attachment.originalName)}</span>
+                    <span class="attachment-size">${this.formatFileSize(attachment.size)}</span>
+                </div>
+                <button class="attachment-remove" data-attachment-id="${attachment._id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            item.querySelector('.attachment-remove').addEventListener('click', () => {
+                this.deleteAttachment(taskId, attachment._id);
+            });
+            
+            container.appendChild(item);
+        });
     }
 
     updateStats() {
