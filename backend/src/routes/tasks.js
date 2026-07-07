@@ -311,4 +311,58 @@ router.delete('/:id/attachments/:attachmentId', authenticateToken, async (req, r
   }
 });
 
+// Add comment
+router.post('/:id/comments', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const { text, author } = req.body;
+
+    if (!text || !author) {
+      return res.status(400).json({ message: 'Text and author are required' });
+    }
+
+    task.comments.push({
+      text,
+      author,
+      createdAt: new Date()
+    });
+
+    await task.save();
+    res.status(201).json(task);
+  } catch (error) {
+    console.error('Add comment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete comment
+router.delete('/:id/comments/:commentId', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = task.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    comment.remove();
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

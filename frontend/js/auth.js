@@ -220,6 +220,10 @@ class AuthManager {
         return this.token;
     }
 
+    getUsername() {
+        return this.user ? this.user.username : null;
+    }
+
     isAuthenticated() {
         return !!this.token;
     }

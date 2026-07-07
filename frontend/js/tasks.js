@@ -11,6 +11,7 @@ class TaskManager {
         this.currentTags = []; // For add form
         this.currentEditTags = []; // For edit form
         this.timers = {}; // Store running timers
+        this.currentCommentTaskId = null; // Track current task for comments
         this.init();
     }
 
@@ -100,6 +101,15 @@ class TaskManager {
         // Close toast
         document.getElementById('closeToast').addEventListener('click', () => {
             document.getElementById('messageToast').style.display = 'none';
+        });
+
+        // Comments modal
+        document.getElementById('closeCommentsModal').addEventListener('click', () => {
+            this.hideCommentsModal();
+        });
+
+        document.getElementById('addCommentBtn').addEventListener('click', () => {
+            this.addComment();
         });
     }
 
@@ -437,6 +447,9 @@ class TaskManager {
                         <button class="btn btn-outline btn-sm" data-action="edit">
                             <i class="fas fa-edit"></i> Edit
                         </button>
+                        <button class="btn btn-outline btn-sm" data-action="comments">
+                            <i class="fas fa-comments"></i> Comments
+                        </button>
                         <button class="btn btn-danger btn-sm" data-action="delete">
                             <i class="fas fa-trash"></i> Delete
                         </button>
@@ -481,6 +494,9 @@ class TaskManager {
                     break;
                 case 'edit':
                     this.editTask(taskId);
+                    break;
+                case 'comments':
+                    this.showCommentsModal(taskId);
                     break;
                 case 'delete':
                     this.deleteTask(taskId);
@@ -982,6 +998,120 @@ class TaskManager {
             
             container.appendChild(item);
         });
+    }
+
+    showCommentsModal(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        this.currentCommentTaskId = taskId;
+        document.getElementById('commentsModal').classList.remove('hidden');
+        this.renderCommentsList(task.comments);
+        document.getElementById('commentText').value = '';
+        document.getElementById('commentText').focus();
+    }
+
+    hideCommentsModal() {
+        this.currentCommentTaskId = null;
+        document.getElementById('commentsModal').classList.add('hidden');
+    }
+
+    renderCommentsList(comments) {
+        const container = document.getElementById('commentsList');
+        container.innerHTML = '';
+
+        if (!comments || comments.length === 0) {
+            container.innerHTML = '<p style="color: #999; text-align: center; padding: 1rem;">No comments yet. Be the first to comment!</p>';
+            return;
+        }
+
+        comments.forEach(comment => {
+            const item = document.createElement('div');
+            item.className = 'comment-item';
+            item.innerHTML = `
+                <div class="comment-header">
+                    <span class="comment-author">${this.escapeHtml(comment.author)}</span>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+                        <button class="comment-delete" data-comment-id="${comment._id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="comment-text">${this.escapeHtml(comment.text)}</div>
+            `;
+
+            item.querySelector('.comment-delete').addEventListener('click', () => {
+                this.deleteComment(this.currentCommentTaskId, comment._id);
+            });
+
+            container.appendChild(item);
+        });
+    }
+
+    async addComment() {
+        const text = document.getElementById('commentText').value.trim();
+        if (!text) {
+            this.showMessage('Comment text is required', 'error');
+            return;
+        }
+
+        const author = window.authManager.getUsername() || 'Anonymous';
+        if (!this.currentCommentTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentCommentTaskId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ text, author })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentCommentTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderCommentsList(data.comments);
+                    document.getElementById('commentText').value = '';
+                    this.showMessage('Comment added successfully!', 'success');
+                }
+            } else {
+                const error = await response.json();
+                this.showMessage(error.message || 'Failed to add comment', 'error');
+            }
+        } catch (error) {
+            console.error('Add comment error:', error);
+            this.showMessage('Failed to add comment', 'error');
+        }
+    }
+
+    async deleteComment(taskId, commentId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderCommentsList(data.comments);
+                    this.showMessage('Comment deleted successfully!', 'success');
+                }
+            } else {
+                this.showMessage('Failed to delete comment', 'error');
+            }
+        } catch (error) {
+            console.error('Delete comment error:', error);
+            this.showMessage('Failed to delete comment', 'error');
+        }
     }
 
     updateStats() {

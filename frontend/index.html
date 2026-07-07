@@ -319,6 +319,25 @@
                     <!-- Tasks will be dynamically added here -->
                 </div>
 
+                <!-- Task Comments Modal -->
+                <div id="commentsModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Task Comments</h3>
+                            <button id="closeCommentsModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="commentsList" class="comments-list"></div>
+                            <div class="comment-form">
+                                <textarea id="commentText" class="form-input" rows="3" placeholder="Add a comment..."></textarea>
+                                <button id="addCommentBtn" class="btn btn-primary">Add Comment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Empty State -->
                 <div id="emptyState" class="empty-state">
                     <i class="fas fa-clipboard-list"></i>

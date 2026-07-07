@@ -98,6 +98,20 @@ const taskSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  comments: [{
+    text: {
+      type: String,
+      required: true
+    },
+    author: {
+      type: String,
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   completed: {
     type: Boolean,
     default: false
