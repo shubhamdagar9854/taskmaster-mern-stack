@@ -116,6 +116,7 @@ class TaskManager {
     showAddTaskForm() {
         document.getElementById('addTaskForm').style.display = 'block';
         document.getElementById('taskTitle').focus();
+        this.populateDependenciesSelect('taskDependencies');
     }
 
     hideAddTaskForm() {
@@ -188,6 +189,10 @@ class TaskManager {
         const timeTrackingEnabled = document.getElementById('taskTimeTrackingEnabled').checked;
         const timeTracking = timeTrackingEnabled ? { enabled: true, timeSpent: 0, timerRunning: false, startTime: null } : { enabled: false, timeSpent: 0, timerRunning: false, startTime: null };
 
+        // Collect dependencies
+        const dependencySelect = document.getElementById('taskDependencies');
+        const dependencies = Array.from(dependencySelect.selectedOptions).map(option => option.value);
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
@@ -202,7 +207,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies })
             });
 
             const data = await response.json();
@@ -306,6 +311,10 @@ class TaskManager {
         // Load attachments
         this.renderAttachmentsList('editTaskAttachmentsList', task.attachments, taskId);
         
+        // Load dependencies
+        this.populateDependenciesSelect('editTaskDependencies', taskId);
+        this.renderDependenciesList('editTaskDependenciesList', task.dependencies, taskId);
+        
         // Setup file upload handler
         const fileInput = document.getElementById('editTaskAttachment');
         fileInput.onchange = (e) => {
@@ -316,6 +325,18 @@ class TaskManager {
                 });
                 fileInput.value = '';
             }
+        };
+        
+        // Setup dependency selection handler
+        const dependencySelect = document.getElementById('editTaskDependencies');
+        dependencySelect.onchange = (e) => {
+            const selectedOptions = Array.from(dependencySelect.selectedOptions);
+            selectedOptions.forEach(option => {
+                if (option.value) {
+                    this.addDependency(taskId, option.value);
+                }
+            });
+            dependencySelect.selectedIndex = 0;
         };
         
         document.getElementById('editTaskForm').style.display = 'block';
@@ -334,6 +355,7 @@ class TaskManager {
         document.getElementById('editTaskTags').innerHTML = '';
         document.getElementById('editTaskTimeTrackingEnabled').checked = false;
         document.getElementById('editTaskAttachmentsList').innerHTML = '';
+        document.getElementById('editTaskDependenciesList').innerHTML = '';
         document.getElementById('editTaskForm').style.display = 'none';
     }
 
@@ -366,12 +388,16 @@ class TaskManager {
         const timeTrackingEnabled = document.getElementById('editTaskTimeTrackingEnabled').checked;
         const timeTracking = timeTrackingEnabled ? { enabled: true, timeSpent: 0, timerRunning: false, startTime: null } : { enabled: false, timeSpent: 0, timerRunning: false, startTime: null };
 
+        // Collect dependencies (from current task state since we add/remove dynamically)
+        const task = this.tasks.find(t => t._id === this.currentEditTaskId);
+        const dependencies = task ? task.dependencies.map(dep => dep._id) : [];
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies });
         this.hideEditTaskForm();
     }
 
@@ -439,6 +465,7 @@ class TaskManager {
                     ${this.renderTagsDisplay(task.tags)}
                     ${this.renderTimeTracking(task.timeTracking, task._id)}
                     ${this.renderAttachmentsDisplay(task.attachments)}
+                    ${this.renderDependenciesDisplay(task.dependencies)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
@@ -1112,6 +1139,126 @@ class TaskManager {
             console.error('Delete comment error:', error);
             this.showMessage('Failed to delete comment', 'error');
         }
+    }
+
+    renderDependenciesDisplay(dependencies) {
+        if (!dependencies || dependencies.length === 0) return '';
+        
+        const dependenciesHtml = dependencies.map(dep => {
+            const isCompleted = dep.completed;
+            const statusClass = isCompleted ? 'completed' : 'pending';
+            const icon = isCompleted ? 'fa-check-circle' : 'fa-clock';
+            return `
+                <span class="task-dependency ${statusClass}">
+                    <i class="fas ${icon}"></i>
+                    ${this.escapeHtml(dep.title)}
+                </span>
+            `;
+        }).join('');
+        
+        return `<div class="task-dependencies">${dependenciesHtml}</div>`;
+    }
+
+    populateDependenciesSelect(selectId, currentTaskId = null) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">Select tasks this depends on...</option>';
+        
+        this.tasks.forEach(task => {
+            if (task._id !== currentTaskId) {
+                const option = document.createElement('option');
+                option.value = task._id;
+                option.textContent = task.title;
+                select.appendChild(option);
+            }
+        });
+    }
+
+    async addDependency(taskId, dependencyId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/dependencies`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ dependencyId })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderTasks();
+                    this.renderDependenciesList('editTaskDependenciesList', data.dependencies, taskId);
+                }
+            } else {
+                const error = await response.json();
+                this.showMessage(error.message || 'Failed to add dependency', 'error');
+            }
+        } catch (error) {
+            console.error('Add dependency error:', error);
+            this.showMessage('Failed to add dependency', 'error');
+        }
+    }
+
+    async removeDependency(taskId, dependencyId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/dependencies/${dependencyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderTasks();
+                    this.renderDependenciesList('editTaskDependenciesList', data.dependencies, taskId);
+                }
+            } else {
+                this.showMessage('Failed to remove dependency', 'error');
+            }
+        } catch (error) {
+            console.error('Remove dependency error:', error);
+            this.showMessage('Failed to remove dependency', 'error');
+        }
+    }
+
+    renderDependenciesList(containerId, dependencies, taskId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (!dependencies || dependencies.length === 0) return;
+        
+        dependencies.forEach(dep => {
+            const item = document.createElement('div');
+            const isCompleted = dep.completed;
+            const statusClass = isCompleted ? 'completed' : 'pending';
+            const icon = isCompleted ? 'fa-check-circle' : 'fa-clock';
+            
+            item.className = `dependency-item ${statusClass}`;
+            item.innerHTML = `
+                <i class="fas ${icon}"></i>
+                ${this.escapeHtml(dep.title)}
+                <button class="dependency-remove" data-dependency-id="${dep._id}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            item.querySelector('.dependency-remove').addEventListener('click', () => {
+                this.removeDependency(taskId, dep._id);
+            });
+            
+            container.appendChild(item);
+        });
     }
 
     updateStats() {

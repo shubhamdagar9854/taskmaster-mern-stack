@@ -223,6 +223,13 @@
                             <input type="file" id="taskAttachment" class="form-input" multiple>
                             <small class="form-hint">Max file size: 10MB. Allowed: Images, PDFs, Documents, ZIP</small>
                         </div>
+                        <div class="form-group">
+                            <label>Dependencies (Optional)</label>
+                            <select id="taskDependencies" class="form-input" multiple>
+                                <option value="">Select tasks this depends on...</option>
+                            </select>
+                            <small class="form-hint">Hold Ctrl/Cmd to select multiple tasks</small>
+                        </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Add Task</button>
                             <button type="button" id="cancelTaskBtn" class="btn btn-outline">Cancel</button>
@@ -306,6 +313,14 @@
                             <input type="file" id="editTaskAttachment" class="form-input" multiple>
                             <small class="form-hint">Max file size: 10MB. Allowed: Images, PDFs, Documents, ZIP</small>
                             <div id="editTaskAttachmentsList" class="attachments-list"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Dependencies (Optional)</label>
+                            <select id="editTaskDependencies" class="form-input" multiple>
+                                <option value="">Select tasks this depends on...</option>
+                            </select>
+                            <small class="form-hint">Hold Ctrl/Cmd to select multiple tasks</small>
+                            <div id="editTaskDependenciesList" class="dependencies-list"></div>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Save Changes</button>

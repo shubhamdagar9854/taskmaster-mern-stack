@@ -60,6 +60,7 @@ const authenticateToken = (req, res, next) => {
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const tasks = await Task.find({ user: req.userId })
+      .populate('dependencies')
       .sort({ createdAt: -1 });
     
     res.json(tasks);
@@ -72,7 +73,7 @@ router.get('/', authenticateToken, async (req, res) => {
 // Create a new task
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking } = req.body;
+    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
@@ -89,10 +90,12 @@ router.post('/', authenticateToken, async (req, res) => {
       reminder,
       tags,
       timeTracking,
+      dependencies,
       user: req.userId
     });
 
     await task.save();
+    await task.populate('dependencies');
     res.status(201).json(task);
   } catch (error) {
     console.error('Create task error:', error);
@@ -103,13 +106,13 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update a task
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking } = req.body;
+    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies } = req.body;
 
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
-      { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking },
+      { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies },
       { new: true }
-    );
+    ).populate('dependencies');
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -361,6 +364,73 @@ router.delete('/:id/comments/:commentId', authenticateToken, async (req, res) =>
     res.json(task);
   } catch (error) {
     console.error('Delete comment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add dependency
+router.post('/:id/dependencies', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const { dependencyId } = req.body;
+
+    if (!dependencyId) {
+      return res.status(400).json({ message: 'Dependency ID is required' });
+    }
+
+    // Check if dependency exists and belongs to the same user
+    const dependencyTask = await Task.findOne({ _id: dependencyId, user: req.userId });
+
+    if (!dependencyTask) {
+      return res.status(404).json({ message: 'Dependency task not found' });
+    }
+
+    // Check if already exists
+    if (task.dependencies.includes(dependencyId)) {
+      return res.status(400).json({ message: 'Dependency already exists' });
+    }
+
+    // Check for circular dependency
+    if (dependencyTask.dependencies.includes(task._id)) {
+      return res.status(400).json({ message: 'Circular dependency detected' });
+    }
+
+    task.dependencies.push(dependencyId);
+    await task.save();
+
+    // Populate dependencies for response
+    await task.populate('dependencies');
+
+    res.status(201).json(task);
+  } catch (error) {
+    console.error('Add dependency error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove dependency
+router.delete('/:id/dependencies/:dependencyId', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    task.dependencies = task.dependencies.filter(dep => dep.toString() !== req.params.dependencyId);
+    await task.save();
+
+    // Populate dependencies for response
+    await task.populate('dependencies');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Remove dependency error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

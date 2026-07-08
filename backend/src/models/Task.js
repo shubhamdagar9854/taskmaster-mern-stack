@@ -112,6 +112,10 @@ const taskSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  dependencies: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Task'
+  }],
   completed: {
     type: Boolean,
     default: false
