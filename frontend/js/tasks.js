@@ -12,6 +12,7 @@ class TaskManager {
         this.currentEditTags = []; // For edit form
         this.timers = {}; // Store running timers
         this.currentCommentTaskId = null; // Track current task for comments
+        this.templates = []; // Store templates
         this.init();
     }
 
@@ -111,6 +112,25 @@ class TaskManager {
         document.getElementById('addCommentBtn').addEventListener('click', () => {
             this.addComment();
         });
+
+        // Templates modal
+        document.getElementById('showTemplatesBtn').addEventListener('click', () => {
+            this.showTemplatesModal();
+        });
+
+        document.getElementById('closeTemplatesModal').addEventListener('click', () => {
+            this.hideTemplatesModal();
+        });
+
+        document.getElementById('createTemplateBtn').addEventListener('click', () => {
+            this.hideTemplatesModal();
+            this.showAddTaskForm();
+        });
+
+        // Template toggle
+        document.getElementById('taskIsTemplate').addEventListener('change', (e) => {
+            document.getElementById('templateNameGroup').style.display = e.target.checked ? 'block' : 'none';
+        });
     }
 
     showAddTaskForm() {
@@ -130,6 +150,8 @@ class TaskManager {
         document.getElementById('taskTags').innerHTML = '';
         document.getElementById('taskTimeTrackingEnabled').checked = false;
         document.getElementById('taskAttachment').value = '';
+        document.getElementById('taskIsTemplate').checked = false;
+        document.getElementById('templateNameGroup').style.display = 'none';
     }
 
     async loadTasks() {
@@ -193,8 +215,17 @@ class TaskManager {
         const dependencySelect = document.getElementById('taskDependencies');
         const dependencies = Array.from(dependencySelect.selectedOptions).map(option => option.value);
 
+        // Collect template info
+        const isTemplate = document.getElementById('taskIsTemplate').checked;
+        const templateName = document.getElementById('taskTemplateName').value.trim();
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
+            return;
+        }
+
+        if (isTemplate && !templateName) {
+            this.showMessage('Template name is required', 'error');
             return;
         }
 
@@ -207,7 +238,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName })
             });
 
             const data = await response.json();
@@ -1259,6 +1290,133 @@ class TaskManager {
             
             container.appendChild(item);
         });
+    }
+
+    showTemplatesModal() {
+        this.loadTemplates();
+        document.getElementById('templatesModal').classList.remove('hidden');
+    }
+
+    hideTemplatesModal() {
+        document.getElementById('templatesModal').classList.add('hidden');
+    }
+
+    async loadTemplates() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/templates', {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.templates = await response.json();
+                this.renderTemplatesList();
+            }
+        } catch (error) {
+            console.error('Load templates error:', error);
+        }
+    }
+
+    renderTemplatesList() {
+        const container = document.getElementById('templatesList');
+        container.innerHTML = '';
+
+        if (!this.templates || this.templates.length === 0) {
+            container.innerHTML = '<p style="color: #999; text-align: center; padding: 1rem;">No templates yet. Create your first template!</p>';
+            return;
+        }
+
+        this.templates.forEach(template => {
+            const item = document.createElement('div');
+            item.className = 'template-item';
+            item.innerHTML = `
+                <div class="template-info">
+                    <div class="template-name">${this.escapeHtml(template.templateName)}</div>
+                    <div class="template-details">
+                        <span class="template-detail">
+                            <i class="fas fa-tasks"></i>
+                            ${template.subtasks?.length || 0} subtasks
+                        </span>
+                        <span class="template-detail">
+                            <i class="fas fa-tag"></i>
+                            ${template.tags?.length || 0} tags
+                        </span>
+                        <span class="template-detail">
+                            <i class="fas fa-flag"></i>
+                            ${template.priority}
+                        </span>
+                    </div>
+                </div>
+                <div class="template-actions">
+                    <button class="template-btn template-btn-use" data-template-id="${template._id}">
+                        <i class="fas fa-plus"></i> Use
+                    </button>
+                    <button class="template-btn template-btn-delete" data-template-id="${template._id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            item.querySelector('.template-btn-use').addEventListener('click', () => {
+                this.useTemplate(template._id);
+            });
+
+            item.querySelector('.template-btn-delete').addEventListener('click', () => {
+                this.deleteTemplate(template._id);
+            });
+
+            container.appendChild(item);
+        });
+    }
+
+    async useTemplate(templateId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/from-template/${templateId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.tasks.unshift(data);
+                this.renderTasks();
+                this.hideTemplatesModal();
+                this.showMessage('Task created from template!', 'success');
+            } else {
+                const error = await response.json();
+                this.showMessage(error.message || 'Failed to create task from template', 'error');
+            }
+        } catch (error) {
+            console.error('Use template error:', error);
+            this.showMessage('Failed to create task from template', 'error');
+        }
+    }
+
+    async deleteTemplate(templateId) {
+        if (!confirm('Are you sure you want to delete this template?')) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${templateId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.templates = this.templates.filter(t => t._id !== templateId);
+                this.renderTemplatesList();
+                this.showMessage('Template deleted successfully!', 'success');
+            } else {
+                this.showMessage('Failed to delete template', 'error');
+            }
+        } catch (error) {
+            console.error('Delete template error:', error);
+            this.showMessage('Failed to delete template', 'error');
+        }
     }
 
     updateStats() {

@@ -92,9 +92,14 @@
             <div id="taskSection" class="task-section hidden">
                 <div class="task-header">
                     <h2>My Tasks</h2>
-                    <button id="addTaskBtn" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Task
-                    </button>
+                    <div class="header-actions">
+                        <button id="showTemplatesBtn" class="btn btn-outline">
+                            <i class="fas fa-layer-group"></i> Templates
+                        </button>
+                        <button id="addTaskBtn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Search Bar -->
@@ -230,6 +235,17 @@
                             </select>
                             <small class="form-hint">Hold Ctrl/Cmd to select multiple tasks</small>
                         </div>
+                        <div class="form-group">
+                            <label>Save as Template</label>
+                            <div class="reminder-toggle">
+                                <input type="checkbox" id="taskIsTemplate">
+                                <label for="taskIsTemplate">Save as Template</label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="templateNameGroup" style="display: none;">
+                            <label>Template Name</label>
+                            <input type="text" id="taskTemplateName" class="form-input" placeholder="Enter template name">
+                        </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Add Task</button>
                             <button type="button" id="cancelTaskBtn" class="btn btn-outline">Cancel</button>
@@ -349,6 +365,24 @@
                                 <textarea id="commentText" class="form-input" rows="3" placeholder="Add a comment..."></textarea>
                                 <button id="addCommentBtn" class="btn btn-primary">Add Comment</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates Modal -->
+                <div id="templatesModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Task Templates</h3>
+                            <button id="closeTemplatesModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="templatesList" class="templates-list"></div>
+                            <button id="createTemplateBtn" class="btn btn-primary" style="margin-top: 1rem;">
+                                <i class="fas fa-plus"></i> Create New Template
+                            </button>
                         </div>
                     </div>
                 </div>

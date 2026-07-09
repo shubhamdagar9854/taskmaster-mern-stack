@@ -116,6 +116,14 @@ const taskSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Task'
   }],
+  isTemplate: {
+    type: Boolean,
+    default: false
+  },
+  templateName: {
+    type: String,
+    trim: true
+  },
   completed: {
     type: Boolean,
     default: false

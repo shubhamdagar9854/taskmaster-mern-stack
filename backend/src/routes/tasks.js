@@ -59,7 +59,7 @@ const authenticateToken = (req, res, next) => {
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const tasks = await Task.find({ user: req.userId })
+    const tasks = await Task.find({ user: req.userId, isTemplate: false })
       .populate('dependencies')
       .sort({ createdAt: -1 });
     
@@ -70,13 +70,30 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
+// Get all templates for a user
+router.get('/templates', authenticateToken, async (req, res) => {
+  try {
+    const templates = await Task.find({ user: req.userId, isTemplate: true })
+      .sort({ createdAt: -1 });
+    
+    res.json(templates);
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Create a new task
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies } = req.body;
+    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
+    }
+
+    if (isTemplate && !templateName) {
+      return res.status(400).json({ message: 'Template name is required for templates' });
     }
 
     const task = new Task({
@@ -91,6 +108,8 @@ router.post('/', authenticateToken, async (req, res) => {
       tags,
       timeTracking,
       dependencies,
+      isTemplate: isTemplate || false,
+      templateName,
       user: req.userId
     });
 
@@ -431,6 +450,41 @@ router.delete('/:id/dependencies/:dependencyId', authenticateToken, async (req, 
     res.json(task);
   } catch (error) {
     console.error('Remove dependency error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create task from template
+router.post('/from-template/:templateId', authenticateToken, async (req, res) => {
+  try {
+    const template = await Task.findOne({ _id: req.params.templateId, user: req.userId, isTemplate: true });
+
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    const newTask = new Task({
+      title: template.title,
+      description: template.description,
+      priority: template.priority,
+      category: template.category,
+      notes: template.notes,
+      subtasks: template.subtasks,
+      reminder: template.reminder,
+      tags: template.tags,
+      timeTracking: template.timeTracking,
+      dependencies: [],
+      isTemplate: false,
+      templateName: null,
+      user: req.userId
+    });
+
+    await newTask.save();
+    await newTask.populate('dependencies');
+
+    res.status(201).json(newTask);
+  } catch (error) {
+    console.error('Create from template error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

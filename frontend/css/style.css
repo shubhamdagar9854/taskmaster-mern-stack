@@ -1508,6 +1508,111 @@ body {
     border-color: #ef4444;
 }
 
+/* Templates Styling */
+.templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.template-item:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.template-info {
+    flex: 1;
+}
+
+.template-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.template-details {
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.template-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.template-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.template-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.template-btn-use {
+    background: #667eea;
+    color: white;
+}
+
+.template-btn-use:hover {
+    background: #5568d3;
+}
+
+.template-btn-delete {
+    background: #ef4444;
+    color: white;
+}
+
+.template-btn-delete:hover {
+    background: #dc2626;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.dark-mode .template-item {
+    background: rgba(51, 65, 85, 0.5);
+    border-color: #475569;
+}
+
+.dark-mode .template-item:hover {
+    background: rgba(51, 65, 85, 0.7);
+    border-color: #64748b;
+}
+
+.dark-mode .template-name {
+    color: #e2e8f0;
+}
+
+.dark-mode .template-details {
+    color: #94a3b8;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
