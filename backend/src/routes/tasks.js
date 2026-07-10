@@ -86,7 +86,7 @@ router.get('/templates', authenticateToken, async (req, res) => {
 // Create a new task
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName } = req.body;
+    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
@@ -110,6 +110,7 @@ router.post('/', authenticateToken, async (req, res) => {
       dependencies,
       isTemplate: isTemplate || false,
       templateName,
+      recurring,
       user: req.userId
     });
 
@@ -125,11 +126,11 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update a task
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies } = req.body;
+    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring } = req.body;
 
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
-      { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies },
+      { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring },
       { new: true }
     ).populate('dependencies');
 
@@ -476,6 +477,7 @@ router.post('/from-template/:templateId', authenticateToken, async (req, res) =>
       dependencies: [],
       isTemplate: false,
       templateName: null,
+      recurring: template.recurring,
       user: req.userId
     });
 
@@ -485,6 +487,71 @@ router.post('/from-template/:templateId', authenticateToken, async (req, res) =>
     res.status(201).json(newTask);
   } catch (error) {
     console.error('Create from template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Complete recurring task and create next occurrence
+router.post('/:id/complete-recurring', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (!task.recurring || !task.recurring.enabled) {
+      return res.status(400).json({ message: 'Task is not recurring' });
+    }
+
+    // Mark current task as completed
+    task.completed = true;
+    await task.save();
+
+    // Calculate next due date
+    const nextDueDate = new Date(task.dueDate || Date.now());
+    const { frequency, interval } = task.recurring;
+
+    switch (frequency) {
+      case 'daily':
+        nextDueDate.setDate(nextDueDate.getDate() + interval);
+        break;
+      case 'weekly':
+        nextDueDate.setDate(nextDueDate.getDate() + (7 * interval));
+        break;
+      case 'monthly':
+        nextDueDate.setMonth(nextDueDate.getMonth() + interval);
+        break;
+      case 'yearly':
+        nextDueDate.setFullYear(nextDueDate.getFullYear() + interval);
+        break;
+      default:
+        nextDueDate.setDate(nextDueDate.getDate() + interval);
+    }
+
+    // Create next occurrence
+    const nextTask = new Task({
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      dueDate: nextDueDate,
+      category: task.category,
+      notes: task.notes,
+      subtasks: task.subtasks.map(st => ({ ...st, completed: false })),
+      reminder: task.reminder,
+      tags: task.tags,
+      timeTracking: { enabled: false, timeSpent: 0, timerRunning: false, startTime: null },
+      dependencies: [],
+      recurring: task.recurring,
+      user: req.userId
+    });
+
+    await nextTask.save();
+    await nextTask.populate('dependencies');
+
+    res.json({ completedTask: task, nextTask });
+  } catch (error) {
+    console.error('Complete recurring task error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

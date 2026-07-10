@@ -246,6 +246,27 @@
                             <label>Template Name</label>
                             <input type="text" id="taskTemplateName" class="form-input" placeholder="Enter template name">
                         </div>
+                        <div class="form-group">
+                            <label>Recurring Task</label>
+                            <div class="reminder-toggle">
+                                <input type="checkbox" id="taskRecurringEnabled">
+                                <label for="taskRecurringEnabled">Enable Recurring</label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="recurringOptionsGroup" style="display: none;">
+                            <label>Frequency</label>
+                            <select id="taskRecurringFrequency" class="form-input">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                                <option value="custom">Custom (days)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="recurringIntervalGroup" style="display: none;">
+                            <label>Interval</label>
+                            <input type="number" id="taskRecurringInterval" class="form-input" min="1" value="1" placeholder="Repeat every X days">
+                        </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Add Task</button>
                             <button type="button" id="cancelTaskBtn" class="btn btn-outline">Cancel</button>
@@ -337,6 +358,27 @@
                             </select>
                             <small class="form-hint">Hold Ctrl/Cmd to select multiple tasks</small>
                             <div id="editTaskDependenciesList" class="dependencies-list"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Recurring Task</label>
+                            <div class="reminder-toggle">
+                                <input type="checkbox" id="editTaskRecurringEnabled">
+                                <label for="editTaskRecurringEnabled">Enable Recurring</label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="editRecurringOptionsGroup" style="display: none;">
+                            <label>Frequency</label>
+                            <select id="editTaskRecurringFrequency" class="form-input">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                                <option value="custom">Custom (days)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="editRecurringIntervalGroup" style="display: none;">
+                            <label>Interval</label>
+                            <input type="number" id="editTaskRecurringInterval" class="form-input" min="1" value="1" placeholder="Repeat every X days">
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Save Changes</button>

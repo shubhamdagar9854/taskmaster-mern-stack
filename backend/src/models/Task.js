@@ -124,6 +124,25 @@ const taskSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  recurring: {
+    enabled: {
+      type: Boolean,
+      default: false
+    },
+    frequency: {
+      type: String,
+      enum: ['daily', 'weekly', 'monthly', 'yearly', 'custom'],
+      default: 'daily'
+    },
+    interval: {
+      type: Number,
+      default: 1
+    },
+    nextDueDate: {
+      type: Date,
+      default: null
+    }
+  },
   completed: {
     type: Boolean,
     default: false

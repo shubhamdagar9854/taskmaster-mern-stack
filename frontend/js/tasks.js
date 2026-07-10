@@ -131,6 +131,21 @@ class TaskManager {
         document.getElementById('taskIsTemplate').addEventListener('change', (e) => {
             document.getElementById('templateNameGroup').style.display = e.target.checked ? 'block' : 'none';
         });
+
+        // Recurring toggle
+        document.getElementById('taskRecurringEnabled').addEventListener('change', (e) => {
+            document.getElementById('recurringOptionsGroup').style.display = e.target.checked ? 'block' : 'none';
+            document.getElementById('recurringIntervalGroup').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('taskRecurringFrequency').addEventListener('change', (e) => {
+            const intervalGroup = document.getElementById('recurringIntervalGroup');
+            if (e.target.value === 'custom') {
+                intervalGroup.style.display = 'block';
+            } else {
+                intervalGroup.style.display = 'none';
+            }
+        });
     }
 
     showAddTaskForm() {
@@ -152,6 +167,9 @@ class TaskManager {
         document.getElementById('taskAttachment').value = '';
         document.getElementById('taskIsTemplate').checked = false;
         document.getElementById('templateNameGroup').style.display = 'none';
+        document.getElementById('taskRecurringEnabled').checked = false;
+        document.getElementById('recurringOptionsGroup').style.display = 'none';
+        document.getElementById('recurringIntervalGroup').style.display = 'none';
     }
 
     async loadTasks() {
@@ -219,6 +237,12 @@ class TaskManager {
         const isTemplate = document.getElementById('taskIsTemplate').checked;
         const templateName = document.getElementById('taskTemplateName').value.trim();
 
+        // Collect recurring info
+        const recurringEnabled = document.getElementById('taskRecurringEnabled').checked;
+        const recurringFrequency = document.getElementById('taskRecurringFrequency').value;
+        const recurringInterval = parseInt(document.getElementById('taskRecurringInterval').value) || 1;
+        const recurring = recurringEnabled ? { enabled: true, frequency: recurringFrequency, interval: recurringInterval } : { enabled: false, frequency: 'daily', interval: 1 };
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
@@ -238,7 +262,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring })
             });
 
             const data = await response.json();
@@ -346,6 +370,19 @@ class TaskManager {
         this.populateDependenciesSelect('editTaskDependencies', taskId);
         this.renderDependenciesList('editTaskDependenciesList', task.dependencies, taskId);
         
+        // Load recurring
+        if (task.recurring && task.recurring.enabled) {
+            document.getElementById('editTaskRecurringEnabled').checked = true;
+            document.getElementById('editRecurringOptionsGroup').style.display = 'block';
+            document.getElementById('editRecurringIntervalGroup').style.display = 'block';
+            document.getElementById('editTaskRecurringFrequency').value = task.recurring.frequency;
+            document.getElementById('editTaskRecurringInterval').value = task.recurring.interval;
+        } else {
+            document.getElementById('editTaskRecurringEnabled').checked = false;
+            document.getElementById('editRecurringOptionsGroup').style.display = 'none';
+            document.getElementById('editRecurringIntervalGroup').style.display = 'none';
+        }
+        
         // Setup file upload handler
         const fileInput = document.getElementById('editTaskAttachment');
         fileInput.onchange = (e) => {
@@ -369,6 +406,12 @@ class TaskManager {
             });
             dependencySelect.selectedIndex = 0;
         };
+        
+        // Setup edit recurring toggle
+        document.getElementById('editTaskRecurringEnabled').addEventListener('change', (e) => {
+            document.getElementById('editRecurringOptionsGroup').style.display = e.target.checked ? 'block' : 'none';
+            document.getElementById('editRecurringIntervalGroup').style.display = e.target.checked ? 'block' : 'none';
+        });
         
         document.getElementById('editTaskForm').style.display = 'block';
         document.getElementById('addTaskForm').style.display = 'none';
@@ -423,12 +466,18 @@ class TaskManager {
         const task = this.tasks.find(t => t._id === this.currentEditTaskId);
         const dependencies = task ? task.dependencies.map(dep => dep._id) : [];
 
+        // Collect recurring info
+        const recurringEnabled = document.getElementById('editTaskRecurringEnabled').checked;
+        const recurringFrequency = document.getElementById('editTaskRecurringFrequency').value;
+        const recurringInterval = parseInt(document.getElementById('editTaskRecurringInterval').value) || 1;
+        const recurring = recurringEnabled ? { enabled: true, frequency: recurringFrequency, interval: recurringInterval } : { enabled: false, frequency: 'daily', interval: 1 };
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring });
         this.hideEditTaskForm();
     }
 
@@ -497,6 +546,7 @@ class TaskManager {
                     ${this.renderTimeTracking(task.timeTracking, task._id)}
                     ${this.renderAttachmentsDisplay(task.attachments)}
                     ${this.renderDependenciesDisplay(task.dependencies)}
+                    ${this.renderRecurringBadge(task.recurring)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
                 <div class="task-meta">
@@ -569,6 +619,37 @@ class TaskManager {
 
         this.showLoading(true);
 
+        // Check if it's a recurring task being completed
+        if (task.recurring && task.recurring.enabled && !task.completed) {
+            try {
+                const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/complete-recurring`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${window.authManager.getToken()}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Remove completed task and add new task
+                    this.tasks = this.tasks.filter(t => t._id !== taskId);
+                    this.tasks.unshift(data.nextTask);
+                    this.renderTasks();
+                    this.showMessage('Task completed! Next occurrence created.', 'success');
+                } else {
+                    const error = await response.json();
+                    this.showMessage(error.message || 'Failed to complete recurring task', 'error');
+                }
+            } catch (error) {
+                console.error('Complete recurring task error:', error);
+                this.showMessage('Failed to complete recurring task', 'error');
+            } finally {
+                this.showLoading(false);
+            }
+            return;
+        }
+
+        // Normal toggle
         try {
             const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/toggle`, {
                 method: 'PATCH',
@@ -1188,6 +1269,22 @@ class TaskManager {
         }).join('');
         
         return `<div class="task-dependencies">${dependenciesHtml}</div>`;
+    }
+
+    renderRecurringBadge(recurring) {
+        if (!recurring || !recurring.enabled) return '';
+        
+        const frequencyLabels = {
+            daily: 'Daily',
+            weekly: 'Weekly',
+            monthly: 'Monthly',
+            yearly: 'Yearly',
+            custom: `Every ${recurring.interval} days`
+        };
+        
+        const label = frequencyLabels[recurring.frequency] || 'Recurring';
+        
+        return `<span class="recurring-badge"><i class="fas fa-redo"></i> ${label}</span>`;
     }
 
     populateDependenciesSelect(selectId, currentTaskId = null) {

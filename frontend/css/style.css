@@ -1613,6 +1613,30 @@ body {
     color: #94a3b8;
 }
 
+/* Recurring Tasks Styling */
+.recurring-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.recurring-badge i {
+    font-size: 0.8rem;
+}
+
+.dark-mode .recurring-badge {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border-color: #3b82f6;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
