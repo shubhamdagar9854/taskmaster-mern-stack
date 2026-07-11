@@ -96,6 +96,9 @@
                         <button id="showTemplatesBtn" class="btn btn-outline">
                             <i class="fas fa-layer-group"></i> Templates
                         </button>
+                        <button id="bulkActionsBtn" class="btn btn-outline">
+                            <i class="fas fa-tasks"></i> Bulk Actions
+                        </button>
                         <button id="addTaskBtn" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add Task
                         </button>
@@ -118,6 +121,10 @@
                         <option value="category">Category</option>
                         <option value="title">Title (A-Z)</option>
                     </select>
+                    <div class="bulk-select-toggle">
+                        <input type="checkbox" id="bulkSelectToggle">
+                        <label for="bulkSelectToggle">Select All</label>
+                    </div>
                 </div>
 
                 <!-- Statistics Dashboard -->
@@ -424,6 +431,49 @@
                             <div id="templatesList" class="templates-list"></div>
                             <button id="createTemplateBtn" class="btn btn-primary" style="margin-top: 1rem;">
                                 <i class="fas fa-plus"></i> Create New Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions Modal -->
+                <div id="bulkActionsModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Bulk Actions</h3>
+                            <button id="closeBulkActionsModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="bulk-actions-info">
+                                <p id="selectedTasksCount">0 tasks selected</p>
+                            </div>
+                            <div class="bulk-actions-buttons">
+                                <button id="bulkCompleteBtn" class="btn btn-success" style="width: 100%; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-check"></i> Mark as Complete
+                                </button>
+                                <button id="bulkIncompleteBtn" class="btn btn-warning" style="width: 100%; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-times"></i> Mark as Incomplete
+                                </button>
+                                <button id="bulkDeleteBtn" class="btn btn-danger" style="width: 100%; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-trash"></i> Delete Selected
+                                </button>
+                                <div class="bulk-priority-change">
+                                    <label>Change Priority:</label>
+                                    <select id="bulkPrioritySelect" class="form-input">
+                                        <option value="">Select Priority</option>
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                    <button id="bulkPriorityBtn" class="btn btn-primary" style="width: 100%;">
+                                        <i class="fas fa-flag"></i> Apply Priority
+                                    </button>
+                                </div>
+                            </div>
+                            <button id="clearSelectionBtn" class="btn btn-outline" style="width: 100%; margin-top: 1rem;">
+                                <i class="fas fa-times"></i> Clear Selection
                             </button>
                         </div>
                     </div>

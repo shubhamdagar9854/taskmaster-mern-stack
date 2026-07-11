@@ -13,6 +13,7 @@ class TaskManager {
         this.timers = {}; // Store running timers
         this.currentCommentTaskId = null; // Track current task for comments
         this.templates = []; // Store templates
+        this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
         this.init();
     }
 
@@ -145,6 +146,39 @@ class TaskManager {
             } else {
                 intervalGroup.style.display = 'none';
             }
+        });
+
+        // Bulk actions
+        document.getElementById('bulkActionsBtn').addEventListener('click', () => {
+            this.showBulkActionsModal();
+        });
+
+        document.getElementById('closeBulkActionsModal').addEventListener('click', () => {
+            this.hideBulkActionsModal();
+        });
+
+        document.getElementById('bulkCompleteBtn').addEventListener('click', () => {
+            this.bulkComplete();
+        });
+
+        document.getElementById('bulkIncompleteBtn').addEventListener('click', () => {
+            this.bulkIncomplete();
+        });
+
+        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+            this.bulkDelete();
+        });
+
+        document.getElementById('bulkPriorityBtn').addEventListener('click', () => {
+            this.bulkChangePriority();
+        });
+
+        document.getElementById('clearSelectionBtn').addEventListener('click', () => {
+            this.clearSelection();
+        });
+
+        document.getElementById('bulkSelectToggle').addEventListener('change', (e) => {
+            this.toggleSelectAll(e.target.checked);
         });
     }
 
@@ -527,10 +561,11 @@ class TaskManager {
         // Add tasks
         filteredTasks.forEach(task => {
             const taskElement = document.createElement('div');
-            taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
+            taskElement.className = `task-item ${task.completed ? 'completed' : ''} ${this.selectedTasks.has(task._id) ? 'bulk-selected' : ''}`;
             taskElement.dataset.taskId = task._id;
             
             taskElement.innerHTML = `
+                <input type="checkbox" class="task-bulk-checkbox" data-bulk-select="${task._id}" ${this.selectedTasks.has(task._id) ? 'checked' : ''}>
                 <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-action="toggle">
                     ${task.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
@@ -571,7 +606,22 @@ class TaskManager {
         // Add single event listener to task list
         taskList.onclick = (e) => {
             const action = e.target.dataset.action || e.target.closest('[data-action]')?.dataset.action;
+            const bulkSelect = e.target.dataset.bulkSelect;
             const taskItem = e.target.closest('.task-item');
+            
+            // Handle bulk selection
+            if (bulkSelect) {
+                const taskId = bulkSelect;
+                if (e.target.checked) {
+                    this.selectedTasks.add(taskId);
+                    taskItem.classList.add('bulk-selected');
+                } else {
+                    this.selectedTasks.delete(taskId);
+                    taskItem.classList.remove('bulk-selected');
+                }
+                document.getElementById('bulkSelectToggle').checked = false;
+                return;
+            }
             
             if (!action) return;
             
@@ -1513,6 +1563,219 @@ class TaskManager {
         } catch (error) {
             console.error('Delete template error:', error);
             this.showMessage('Failed to delete template', 'error');
+        }
+    }
+
+    showBulkActionsModal() {
+        document.getElementById('selectedTasksCount').textContent = `${this.selectedTasks.size} tasks selected`;
+        document.getElementById('bulkActionsModal').classList.remove('hidden');
+    }
+
+    hideBulkActionsModal() {
+        document.getElementById('bulkActionsModal').classList.add('hidden');
+    }
+
+    toggleSelectAll(checked) {
+        const checkboxes = document.querySelectorAll('.task-bulk-checkbox');
+        checkboxes.forEach(checkbox => {
+            const taskId = checkbox.dataset.bulkSelect;
+            checkbox.checked = checked;
+            const taskItem = checkbox.closest('.task-item');
+            if (checked) {
+                this.selectedTasks.add(taskId);
+                taskItem.classList.add('bulk-selected');
+            } else {
+                this.selectedTasks.delete(taskId);
+                taskItem.classList.remove('bulk-selected');
+            }
+        });
+    }
+
+    clearSelection() {
+        this.selectedTasks.clear();
+        const checkboxes = document.querySelectorAll('.task-bulk-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            const taskItem = checkbox.closest('.task-item');
+            taskItem.classList.remove('bulk-selected');
+        });
+        document.getElementById('bulkSelectToggle').checked = false;
+        this.hideBulkActionsModal();
+    }
+
+    async bulkComplete() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        if (!confirm(`Mark ${this.selectedTasks.size} tasks as complete?`)) return;
+
+        this.showLoading(true);
+
+        try {
+            const promises = Array.from(this.selectedTasks).map(taskId =>
+                fetch(`http://localhost:5002/api/tasks/${taskId}/toggle`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+                })
+            );
+
+            const responses = await Promise.all(promises);
+            const allSuccessful = responses.every(r => r.ok);
+
+            if (allSuccessful) {
+                const data = await Promise.all(responses.map(r => r.json()));
+                data.forEach(updatedTask => {
+                    const index = this.tasks.findIndex(t => t._id === updatedTask._id);
+                    if (index !== -1) {
+                        this.tasks[index] = updatedTask;
+                    }
+                });
+                this.renderTasks();
+                this.clearSelection();
+                this.showMessage('Tasks marked as complete!', 'success');
+            } else {
+                this.showMessage('Failed to complete some tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk complete error:', error);
+            this.showMessage('Failed to complete tasks', 'error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    async bulkIncomplete() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        if (!confirm(`Mark ${this.selectedTasks.size} tasks as incomplete?`)) return;
+
+        this.showLoading(true);
+
+        try {
+            const promises = Array.from(this.selectedTasks).map(taskId =>
+                fetch(`http://localhost:5002/api/tasks/${taskId}/toggle`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+                })
+            );
+
+            const responses = await Promise.all(promises);
+            const allSuccessful = responses.every(r => r.ok);
+
+            if (allSuccessful) {
+                const data = await Promise.all(responses.map(r => r.json()));
+                data.forEach(updatedTask => {
+                    const index = this.tasks.findIndex(t => t._id === updatedTask._id);
+                    if (index !== -1) {
+                        this.tasks[index] = updatedTask;
+                    }
+                });
+                this.renderTasks();
+                this.clearSelection();
+                this.showMessage('Tasks marked as incomplete!', 'success');
+            } else {
+                this.showMessage('Failed to mark some tasks as incomplete', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk incomplete error:', error);
+            this.showMessage('Failed to mark tasks as incomplete', 'error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    async bulkDelete() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        if (!confirm(`Delete ${this.selectedTasks.size} tasks? This action cannot be undone.`)) return;
+
+        this.showLoading(true);
+
+        try {
+            const promises = Array.from(this.selectedTasks).map(taskId =>
+                fetch(`http://localhost:5002/api/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+                })
+            );
+
+            const responses = await Promise.all(promises);
+            const allSuccessful = responses.every(r => r.ok);
+
+            if (allSuccessful) {
+                this.tasks = this.tasks.filter(t => !this.selectedTasks.has(t._id));
+                this.renderTasks();
+                this.clearSelection();
+                this.showMessage('Tasks deleted successfully!', 'success');
+            } else {
+                this.showMessage('Failed to delete some tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk delete error:', error);
+            this.showMessage('Failed to delete tasks', 'error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    async bulkChangePriority() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        const priority = document.getElementById('bulkPrioritySelect').value;
+        if (!priority) {
+            this.showMessage('Please select a priority', 'error');
+            return;
+        }
+
+        if (!confirm(`Change priority of ${this.selectedTasks.size} tasks to ${priority}?`)) return;
+
+        this.showLoading(true);
+
+        try {
+            const promises = Array.from(this.selectedTasks).map(taskId =>
+                fetch(`http://localhost:5002/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.authManager.getToken()}`
+                    },
+                    body: JSON.stringify({ priority })
+                })
+            );
+
+            const responses = await Promise.all(promises);
+            const allSuccessful = responses.every(r => r.ok);
+
+            if (allSuccessful) {
+                const data = await Promise.all(responses.map(r => r.json()));
+                data.forEach(updatedTask => {
+                    const index = this.tasks.findIndex(t => t._id === updatedTask._id);
+                    if (index !== -1) {
+                        this.tasks[index] = updatedTask;
+                    }
+                });
+                this.renderTasks();
+                this.clearSelection();
+                this.showMessage('Priority changed successfully!', 'success');
+            } else {
+                this.showMessage('Failed to change priority of some tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk change priority error:', error);
+            this.showMessage('Failed to change priority', 'error');
+        } finally {
+            this.showLoading(false);
         }
     }
 

@@ -1637,6 +1637,107 @@ body {
     border-color: #3b82f6;
 }
 
+/* Bulk Actions Styling */
+.bulk-select-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.bulk-select-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.bulk-select-toggle label {
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.task-bulk-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-right: 0.5rem;
+}
+
+.task-item.bulk-selected {
+    background: #e0f2fe;
+    border-color: #0ea5e9;
+}
+
+.dark-mode .task-item.bulk-selected {
+    background: rgba(14, 165, 233, 0.2);
+    border-color: #0ea5e9;
+}
+
+.bulk-actions-info {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+}
+
+.dark-mode .bulk-actions-info {
+    background: rgba(51, 65, 85, 0.5);
+    color: #e2e8f0;
+}
+
+.bulk-actions-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bulk-priority-change {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.bulk-priority-change label {
+    font-weight: 600;
+    color: #333;
+}
+
+.dark-mode .bulk-priority-change {
+    background: rgba(51, 65, 85, 0.5);
+}
+
+.dark-mode .bulk-priority-change label {
+    color: #e2e8f0;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+    border: none;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
