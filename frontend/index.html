@@ -96,6 +96,9 @@
                         <button id="showTemplatesBtn" class="btn btn-outline">
                             <i class="fas fa-layer-group"></i> Templates
                         </button>
+                        <button id="showTagsBtn" class="btn btn-outline">
+                            <i class="fas fa-tags"></i> Tags
+                        </button>
                         <button id="bulkActionsBtn" class="btn btn-outline">
                             <i class="fas fa-tasks"></i> Bulk Actions
                         </button>
@@ -475,6 +478,40 @@
                             <button id="clearSelectionBtn" class="btn btn-outline" style="width: 100%; margin-top: 1rem;">
                                 <i class="fas fa-times"></i> Clear Selection
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tags Management Modal -->
+                <div id="tagsModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Tags Management</h3>
+                            <button id="closeTagsModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="tag-input-section">
+                                <div class="form-group">
+                                    <label>Create New Tag</label>
+                                    <div class="tag-input-wrapper">
+                                        <input type="text" id="newTagInput" class="form-input" placeholder="Enter tag name">
+                                        <input type="color" id="newTagColor" class="color-picker" value="#3b82f6">
+                                        <button id="addTagBtn" class="btn btn-primary">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="tagsList" class="tags-list"></div>
+                            <div class="tag-filter-section">
+                                <label>Filter by Tag:</label>
+                                <div id="tagFilters" class="tag-filters"></div>
+                                <button id="clearTagFilter" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">
+                                    <i class="fas fa-times"></i> Clear Filter
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

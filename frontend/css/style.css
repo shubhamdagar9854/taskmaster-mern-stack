@@ -1738,6 +1738,102 @@ body {
     background: #d97706;
 }
 
+/* Tags Management Styling */
+.tag-input-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.color-picker {
+    width: 50px;
+    height: 40px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.dark-mode .color-picker {
+    border-color: #475569;
+}
+
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    min-height: 60px;
+}
+
+.dark-mode .tags-list {
+    background: rgba(51, 65, 85, 0.5);
+}
+
+.managed-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .managed-tag {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.managed-tag-delete {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 0.9rem;
+    padding: 0;
+}
+
+.managed-tag-delete:hover {
+    opacity: 1;
+}
+
+.tag-filter-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dark-mode .tag-filter-section {
+    border-top-color: #475569;
+}
+
+.tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.filter-tag {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.filter-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.filter-tag.active {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    transform: scale(1.05);
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

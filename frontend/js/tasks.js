@@ -14,6 +14,8 @@ class TaskManager {
         this.currentCommentTaskId = null; // Track current task for comments
         this.templates = []; // Store templates
         this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
+        this.userTags = []; // Store user's custom tags
+        this.activeTagFilter = null; // Store active tag filter
         this.init();
     }
 
@@ -180,6 +182,29 @@ class TaskManager {
         document.getElementById('bulkSelectToggle').addEventListener('change', (e) => {
             this.toggleSelectAll(e.target.checked);
         });
+
+        // Tags management
+        document.getElementById('showTagsBtn').addEventListener('click', () => {
+            this.showTagsModal();
+        });
+
+        document.getElementById('closeTagsModal').addEventListener('click', () => {
+            this.hideTagsModal();
+        });
+
+        document.getElementById('addTagBtn').addEventListener('click', () => {
+            this.addNewTag();
+        });
+
+        document.getElementById('newTagInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.addNewTag();
+            }
+        });
+
+        document.getElementById('clearTagFilter').addEventListener('click', () => {
+            this.clearTagFilter();
+        });
     }
 
     showAddTaskForm() {
@@ -225,6 +250,7 @@ class TaskManager {
             if (response.ok) {
                 this.tasks = data;
                 this.renderTasks();
+                this.loadUserTags();
             } else {
                 this.showMessage('Failed to load tasks', 'error');
             }
@@ -531,6 +557,14 @@ class TaskManager {
             // Apply status filter
             if (this.filter === 'active' && task.completed) return false;
             if (this.filter === 'completed' && !task.completed) return false;
+
+            // Apply tag filter
+            if (this.activeTagFilter) {
+                const hasTag = task.tags && task.tags.some(tag => 
+                    tag.toLowerCase() === this.activeTagFilter.toLowerCase()
+                );
+                if (!hasTag) return false;
+            }
 
             return true;
         });
@@ -900,8 +934,14 @@ class TaskManager {
         display.innerHTML = '';
         
         tagsArray.forEach(tag => {
+            const userTag = this.userTags.find(ut => ut.name.toLowerCase() === tag.toLowerCase());
+            const color = userTag ? userTag.color : '#6b7280';
+            
             const tagElement = document.createElement('span');
             tagElement.className = 'tag';
+            tagElement.style.backgroundColor = color + '20';
+            tagElement.style.color = color;
+            tagElement.style.borderColor = color;
             tagElement.innerHTML = `
                 ${this.escapeHtml(tag)}
                 <span class="tag-remove" data-tag="${this.escapeHtml(tag)}">&times;</span>
@@ -918,9 +958,11 @@ class TaskManager {
     renderTagsDisplay(tags) {
         if (!tags || tags.length === 0) return '';
         
-        const tagsHtml = tags.map(tag => `
-            <span class="tag">${this.escapeHtml(tag)}</span>
-        `).join('');
+        const tagsHtml = tags.map(tag => {
+            const userTag = this.userTags.find(ut => ut.name.toLowerCase() === tag.toLowerCase());
+            const color = userTag ? userTag.color : '#6b7280';
+            return `<span class="task-tag" style="background-color: ${color}20; color: ${color}; border-color: ${color};">${this.escapeHtml(tag)}</span>`;
+        }).join('');
         
         return `<div class="task-tags" style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">${tagsHtml}</div>`;
     }
@@ -1797,6 +1839,135 @@ class TaskManager {
         document.getElementById('completedTasks').textContent = completed;
         document.getElementById('pendingTasks').textContent = pending;
         document.getElementById('overdueTasks').textContent = overdue;
+    }
+
+    // Tags Management Methods
+    loadUserTags() {
+        // Load tags from localStorage
+        const storedTags = localStorage.getItem('userTags');
+        if (storedTags) {
+            this.userTags = JSON.parse(storedTags);
+        } else {
+            // Initialize with default tags
+            this.userTags = [
+                { name: 'urgent', color: '#ef4444' },
+                { name: 'important', color: '#f59e0b' },
+                { name: 'work', color: '#3b82f6' },
+                { name: 'personal', color: '#10b981' }
+            ];
+            this.saveUserTags();
+        }
+    }
+
+    saveUserTags() {
+        localStorage.setItem('userTags', JSON.stringify(this.userTags));
+    }
+
+    showTagsModal() {
+        this.renderTagsList();
+        this.renderTagFilters();
+        document.getElementById('tagsModal').classList.remove('hidden');
+    }
+
+    hideTagsModal() {
+        document.getElementById('tagsModal').classList.add('hidden');
+    }
+
+    renderTagsList() {
+        const container = document.getElementById('tagsList');
+        container.innerHTML = '';
+
+        this.userTags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'managed-tag';
+            tagElement.style.backgroundColor = tag.color + '20';
+            tagElement.style.color = tag.color;
+            tagElement.style.borderColor = tag.color;
+            tagElement.innerHTML = `
+                ${this.escapeHtml(tag.name)}
+                <button class="managed-tag-delete" data-tag-name="${tag.name}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            tagElement.querySelector('.managed-tag-delete').addEventListener('click', () => {
+                this.deleteTag(tag.name);
+            });
+            container.appendChild(tagElement);
+        });
+    }
+
+    renderTagFilters() {
+        const container = document.getElementById('tagFilters');
+        container.innerHTML = '';
+
+        this.userTags.forEach(tag => {
+            const filterElement = document.createElement('span');
+            filterElement.className = `managed-tag filter-tag ${this.activeTagFilter === tag.name ? 'active' : ''}`;
+            filterElement.style.backgroundColor = tag.color + '20';
+            filterElement.style.color = tag.color;
+            filterElement.style.borderColor = tag.color;
+            filterElement.textContent = tag.name;
+            filterElement.addEventListener('click', () => {
+                this.filterByTag(tag.name);
+            });
+            container.appendChild(filterElement);
+        });
+    }
+
+    addNewTag() {
+        const input = document.getElementById('newTagInput');
+        const colorInput = document.getElementById('newTagColor');
+        const tagName = input.value.trim();
+        const tagColor = colorInput.value;
+
+        if (!tagName) {
+            this.showMessage('Please enter a tag name', 'error');
+            return;
+        }
+
+        if (this.userTags.some(tag => tag.name.toLowerCase() === tagName.toLowerCase())) {
+            this.showMessage('Tag already exists', 'error');
+            return;
+        }
+
+        this.userTags.push({ name: tagName, color: tagColor });
+        this.saveUserTags();
+        this.renderTagsList();
+        this.renderTagFilters();
+        input.value = '';
+        this.showMessage('Tag added successfully!', 'success');
+    }
+
+    deleteTag(tagName) {
+        if (!confirm(`Delete tag "${tagName}"?`)) return;
+
+        this.userTags = this.userTags.filter(tag => tag.name !== tagName);
+        this.saveUserTags();
+        this.renderTagsList();
+        this.renderTagFilters();
+
+        // Clear filter if deleted tag was active
+        if (this.activeTagFilter === tagName) {
+            this.clearTagFilter();
+        }
+
+        this.showMessage('Tag deleted successfully!', 'success');
+    }
+
+    filterByTag(tagName) {
+        if (this.activeTagFilter === tagName) {
+            this.clearTagFilter();
+        } else {
+            this.activeTagFilter = tagName;
+            this.renderTagFilters();
+            this.renderTasks();
+        }
+    }
+
+    clearTagFilter() {
+        this.activeTagFilter = null;
+        this.renderTagFilters();
+        this.renderTasks();
     }
 
     sortTasks(tasks) {
