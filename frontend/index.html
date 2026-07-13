@@ -99,6 +99,9 @@
                         <button id="showTagsBtn" class="btn btn-outline">
                             <i class="fas fa-tags"></i> Tags
                         </button>
+                        <button id="showStatsBtn" class="btn btn-outline">
+                            <i class="fas fa-chart-bar"></i> Statistics
+                        </button>
                         <button id="bulkActionsBtn" class="btn btn-outline">
                             <i class="fas fa-tasks"></i> Bulk Actions
                         </button>
@@ -511,6 +514,96 @@
                                 <button id="clearTagFilter" class="btn btn-outline btn-sm" style="margin-top: 0.5rem;">
                                     <i class="fas fa-times"></i> Clear Filter
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Modal -->
+                <div id="statsModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>Task Statistics & Analytics</h3>
+                            <button id="closeStatsModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="stats-overview">
+                                <div class="stat-card stat-large">
+                                    <div class="stat-icon total-large">📊</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value-large" id="statTotalTasks">0</div>
+                                        <div class="stat-label">Total Tasks</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card stat-large">
+                                    <div class="stat-icon completed-large">✅</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value-large" id="statCompletedTasks">0</div>
+                                        <div class="stat-label">Completed</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card stat-large">
+                                    <div class="stat-icon pending-large">⏳</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value-large" id="statPendingTasks">0</div>
+                                        <div class="stat-label">Pending</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card stat-large">
+                                    <div class="stat-icon overdue-large">⚠️</div>
+                                    <div class="stat-info">
+                                        <div class="stat-value-large" id="statOverdueTasks">0</div>
+                                        <div class="stat-label">Overdue</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="stats-charts">
+                                <div class="chart-section">
+                                    <h4>Completion Rate</h4>
+                                    <div class="progress-bar-large">
+                                        <div class="progress-fill-large" id="completionRateBar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="progress-text" id="completionRateText">0%</div>
+                                </div>
+                                
+                                <div class="chart-section">
+                                    <h4>Priority Distribution</h4>
+                                    <div class="priority-chart">
+                                        <div class="priority-bar">
+                                            <span class="priority-label">High</span>
+                                            <div class="priority-fill high" id="highPriorityBar" style="width: 0%"></div>
+                                            <span class="priority-count" id="highPriorityCount">0</span>
+                                        </div>
+                                        <div class="priority-bar">
+                                            <span class="priority-label">Medium</span>
+                                            <div class="priority-fill medium" id="mediumPriorityBar" style="width: 0%"></div>
+                                            <span class="priority-count" id="mediumPriorityCount">0</span>
+                                        </div>
+                                        <div class="priority-bar">
+                                            <span class="priority-label">Low</span>
+                                            <div class="priority-fill low" id="lowPriorityBar" style="width: 0%"></div>
+                                            <span class="priority-count" id="lowPriorityCount">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="chart-section">
+                                    <h4>Category Distribution</h4>
+                                    <div class="category-chart" id="categoryChart"></div>
+                                </div>
+                                
+                                <div class="chart-section">
+                                    <h4>Recent Activity (Last 7 Days)</h4>
+                                    <div class="activity-chart" id="activityChart"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="stats-insights">
+                                <h4>Productivity Insights</h4>
+                                <div class="insights-list" id="insightsList"></div>
                             </div>
                         </div>
                     </div>

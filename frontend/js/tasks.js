@@ -205,6 +205,15 @@ class TaskManager {
         document.getElementById('clearTagFilter').addEventListener('click', () => {
             this.clearTagFilter();
         });
+
+        // Statistics management
+        document.getElementById('showStatsBtn').addEventListener('click', () => {
+            this.showStatsModal();
+        });
+
+        document.getElementById('closeStatsModal').addEventListener('click', () => {
+            this.hideStatsModal();
+        });
     }
 
     showAddTaskForm() {
@@ -965,6 +974,214 @@ class TaskManager {
         }).join('');
         
         return `<div class="task-tags" style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem;">${tagsHtml}</div>`;
+    }
+
+    // Statistics Methods
+    showStatsModal() {
+        this.calculateStatistics();
+        document.getElementById('statsModal').classList.remove('hidden');
+    }
+
+    hideStatsModal() {
+        document.getElementById('statsModal').classList.add('hidden');
+    }
+
+    calculateStatistics() {
+        const total = this.tasks.length;
+        const completed = this.tasks.filter(t => t.completed).length;
+        const pending = total - completed;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const overdue = this.tasks.filter(t => {
+            if (!t.dueDate || t.completed) return false;
+            const due = new Date(t.dueDate);
+            due.setHours(0, 0, 0, 0);
+            return due < today;
+        }).length;
+
+        // Update overview stats
+        document.getElementById('statTotalTasks').textContent = total;
+        document.getElementById('statCompletedTasks').textContent = completed;
+        document.getElementById('statPendingTasks').textContent = pending;
+        document.getElementById('statOverdueTasks').textContent = overdue;
+
+        // Calculate completion rate
+        const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+        document.getElementById('completionRateBar').style.width = `${completionRate}%`;
+        document.getElementById('completionRateText').textContent = `${completionRate}%`;
+
+        // Calculate priority distribution
+        const highPriority = this.tasks.filter(t => t.priority === 'high').length;
+        const mediumPriority = this.tasks.filter(t => t.priority === 'medium').length;
+        const lowPriority = this.tasks.filter(t => t.priority === 'low').length;
+        
+        const maxPriority = Math.max(highPriority, mediumPriority, lowPriority, 1);
+        
+        document.getElementById('highPriorityBar').style.width = `${(highPriority / maxPriority) * 100}%`;
+        document.getElementById('highPriorityCount').textContent = highPriority;
+        document.getElementById('mediumPriorityBar').style.width = `${(mediumPriority / maxPriority) * 100}%`;
+        document.getElementById('mediumPriorityCount').textContent = mediumPriority;
+        document.getElementById('lowPriorityBar').style.width = `${(lowPriority / maxPriority) * 100}%`;
+        document.getElementById('lowPriorityCount').textContent = lowPriority;
+
+        // Calculate category distribution
+        this.renderCategoryChart();
+
+        // Calculate activity (last 7 days)
+        this.renderActivityChart();
+
+        // Generate insights
+        this.generateInsights(total, completed, pending, overdue, completionRate);
+    }
+
+    renderCategoryChart() {
+        const categories = ['work', 'personal', 'shopping', 'health', 'finance', 'other'];
+        const categoryCounts = {};
+        
+        categories.forEach(cat => {
+            categoryCounts[cat] = this.tasks.filter(t => t.category === cat).length;
+        });
+
+        const maxCount = Math.max(...Object.values(categoryCounts), 1);
+        const categoryChart = document.getElementById('categoryChart');
+        categoryChart.innerHTML = '';
+
+        categories.forEach(cat => {
+            const count = categoryCounts[cat];
+            const percentage = (count / maxCount) * 100;
+            
+            const bar = document.createElement('div');
+            bar.className = 'category-bar';
+            bar.innerHTML = `
+                <span class="category-bar-label">${this.getCategoryIcon(cat)} ${cat}</span>
+                <div class="category-bar-fill" style="width: ${percentage}%"></div>
+                <span class="category-bar-count">${count}</span>
+            `;
+            categoryChart.appendChild(bar);
+        });
+    }
+
+    renderActivityChart() {
+        const activityChart = document.getElementById('activityChart');
+        activityChart.innerHTML = '';
+
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+            days.push({
+                date: date,
+                label: date.toLocaleDateString('en-US', { weekday: 'short' })
+            });
+        }
+
+        const activityCounts = days.map(day => {
+            const nextDay = new Date(day.date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            
+            const count = this.tasks.filter(t => {
+                const taskDate = new Date(t.createdAt);
+                return taskDate >= day.date && taskDate < nextDay;
+            }).length;
+
+            return { ...day, count };
+        });
+
+        const maxCount = Math.max(...activityCounts.map(d => d.count), 1);
+
+        activityCounts.forEach(day => {
+            const percentage = (day.count / maxCount) * 100;
+            
+            const bar = document.createElement('div');
+            bar.className = 'activity-bar';
+            bar.innerHTML = `
+                <span class="activity-bar-label">${day.label}</span>
+                <div class="activity-bar-fill" style="width: ${percentage}%"></div>
+                <span class="activity-bar-count">${day.count}</span>
+            `;
+            activityChart.appendChild(bar);
+        });
+    }
+
+    generateInsights(total, completed, pending, overdue, completionRate) {
+        const insightsList = document.getElementById('insightsList');
+        insightsList.innerHTML = '';
+
+        const insights = [];
+
+        // Completion rate insight
+        if (completionRate >= 80) {
+            insights.push({
+                icon: '🎯',
+                text: `Excellent! You've completed ${completionRate}% of your tasks. Keep up the great work!`
+            });
+        } else if (completionRate >= 50) {
+            insights.push({
+                icon: '👍',
+                text: `Good progress! ${completionRate}% completion rate. Focus on pending tasks to improve.`
+            });
+        } else if (completionRate > 0) {
+            insights.push({
+                icon: '💪',
+                text: `You're making progress! ${completionRate}% completed. Try to complete more tasks.`
+            });
+        }
+
+        // Overdue insight
+        if (overdue > 0) {
+            insights.push({
+                icon: '⚠️',
+                text: `You have ${overdue} overdue task${overdue > 1 ? 's' : ''}. Consider prioritizing them.`
+            });
+        }
+
+        // Pending tasks insight
+        if (pending > 10) {
+            insights.push({
+                icon: '📋',
+                text: `You have ${pending} pending tasks. Consider breaking them into smaller subtasks.`
+            });
+        }
+
+        // Recent activity insight
+        const recentTasks = this.tasks.filter(t => {
+            const taskDate = new Date(t.createdAt);
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return taskDate >= weekAgo;
+        }).length;
+
+        if (recentTasks > 5) {
+            insights.push({
+                icon: '🚀',
+                text: `Very active! You created ${recentTasks} tasks this week.`
+            });
+        } else if (recentTasks === 0) {
+            insights.push({
+                icon: '💡',
+                text: `No new tasks this week. Consider adding some tasks to stay productive.`
+            });
+        }
+
+        // Default insight if none generated
+        if (insights.length === 0) {
+            insights.push({
+                icon: '✨',
+                text: `Start adding tasks to see personalized productivity insights!`
+            });
+        }
+
+        insights.forEach(insight => {
+            const item = document.createElement('div');
+            item.className = 'insight-item';
+            item.innerHTML = `
+                <span class="insight-icon">${insight.icon}</span>
+                <span class="insight-text">${insight.text}</span>
+            `;
+            insightsList.appendChild(item);
+        });
     }
 
     renderTimeTracking(timeTracking, taskId) {
