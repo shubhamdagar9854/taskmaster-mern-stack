@@ -16,6 +16,18 @@ class TaskManager {
         this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
+        this.advancedFilters = {
+            priority: '',
+            category: '',
+            status: '',
+            dueDateFrom: '',
+            dueDateTo: '',
+            tags: '',
+            subtasks: '',
+            attachments: '',
+            dependencies: '',
+            recurring: ''
+        };
         this.init();
     }
 
@@ -213,6 +225,23 @@ class TaskManager {
 
         document.getElementById('closeStatsModal').addEventListener('click', () => {
             this.hideStatsModal();
+        });
+
+        // Advanced search
+        document.getElementById('advancedSearchBtn').addEventListener('click', () => {
+            this.showAdvancedSearchModal();
+        });
+
+        document.getElementById('closeAdvancedSearchModal').addEventListener('click', () => {
+            this.hideAdvancedSearchModal();
+        });
+
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+            this.applyAdvancedFilters();
+        });
+
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            this.clearAdvancedFilters();
         });
     }
 
@@ -574,6 +603,29 @@ class TaskManager {
                 );
                 if (!hasTag) return false;
             }
+
+            // Apply advanced filters
+            if (this.advancedFilters.priority && task.priority !== this.advancedFilters.priority) return false;
+            if (this.advancedFilters.category && task.category !== this.advancedFilters.category) return false;
+            if (this.advancedFilters.status === 'active' && task.completed) return false;
+            if (this.advancedFilters.status === 'completed' && !task.completed) return false;
+            if (this.advancedFilters.dueDateFrom) {
+                const fromDate = new Date(this.advancedFilters.dueDateFrom);
+                if (!task.dueDate || new Date(task.dueDate) < fromDate) return false;
+            }
+            if (this.advancedFilters.dueDateTo) {
+                const toDate = new Date(this.advancedFilters.dueDateTo);
+                if (!task.dueDate || new Date(task.dueDate) > toDate) return false;
+            }
+            if (this.advancedFilters.tags && (!task.tags || !task.tags.includes(this.advancedFilters.tags))) return false;
+            if (this.advancedFilters.subtasks === 'yes' && (!task.subtasks || task.subtasks.length === 0)) return false;
+            if (this.advancedFilters.subtasks === 'no' && task.subtasks && task.subtasks.length > 0) return false;
+            if (this.advancedFilters.attachments === 'yes' && (!task.attachments || task.attachments.length === 0)) return false;
+            if (this.advancedFilters.attachments === 'no' && task.attachments && task.attachments.length > 0) return false;
+            if (this.advancedFilters.dependencies === 'yes' && (!task.dependencies || task.dependencies.length === 0)) return false;
+            if (this.advancedFilters.dependencies === 'no' && task.dependencies && task.dependencies.length > 0) return false;
+            if (this.advancedFilters.recurring === 'yes' && (!task.recurring || !task.recurring.enabled)) return false;
+            if (this.advancedFilters.recurring === 'no' && task.recurring && task.recurring.enabled) return false;
 
             return true;
         });
@@ -1182,6 +1234,96 @@ class TaskManager {
             `;
             insightsList.appendChild(item);
         });
+    }
+
+    // Advanced Search Methods
+    showAdvancedSearchModal() {
+        this.populateFilterTags();
+        document.getElementById('advancedSearchModal').classList.remove('hidden');
+    }
+
+    hideAdvancedSearchModal() {
+        document.getElementById('advancedSearchModal').classList.add('hidden');
+    }
+
+    populateFilterTags() {
+        const filterTags = document.getElementById('filterTags');
+        filterTags.innerHTML = '<option value="">All Tags</option>';
+        
+        // Get all unique tags from tasks
+        const allTags = new Set();
+        this.tasks.forEach(task => {
+            if (task.tags) {
+                task.tags.forEach(tag => allTags.add(tag));
+            }
+        });
+        
+        // Add user tags
+        this.userTags.forEach(userTag => {
+            allTags.add(userTag.name);
+        });
+        
+        Array.from(allTags).sort().forEach(tag => {
+            const option = document.createElement('option');
+            option.value = tag;
+            option.textContent = tag;
+            filterTags.appendChild(option);
+        });
+    }
+
+    applyAdvancedFilters() {
+        this.advancedFilters = {
+            priority: document.getElementById('filterPriority').value,
+            category: document.getElementById('filterCategory').value,
+            status: document.getElementById('filterStatus').value,
+            dueDateFrom: document.getElementById('filterDueDateFrom').value,
+            dueDateTo: document.getElementById('filterDueDateTo').value,
+            tags: document.getElementById('filterTags').value,
+            subtasks: document.getElementById('filterSubtasks').value,
+            attachments: document.getElementById('filterAttachments').value,
+            dependencies: document.getElementById('filterDependencies').value,
+            recurring: document.getElementById('filterRecurring').value
+        };
+        
+        this.renderTasks();
+        this.hideAdvancedSearchModal();
+        
+        // Show active filters count
+        const activeCount = Object.values(this.advancedFilters).filter(v => v !== '').length;
+        if (activeCount > 0) {
+            this.showMessage(`${activeCount} filter${activeCount > 1 ? 's' : ''} applied`, 'info');
+        }
+    }
+
+    clearAdvancedFilters() {
+        this.advancedFilters = {
+            priority: '',
+            category: '',
+            status: '',
+            dueDateFrom: '',
+            dueDateTo: '',
+            tags: '',
+            subtasks: '',
+            attachments: '',
+            dependencies: '',
+            recurring: ''
+        };
+        
+        // Reset form inputs
+        document.getElementById('filterPriority').value = '';
+        document.getElementById('filterCategory').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterDueDateFrom').value = '';
+        document.getElementById('filterDueDateTo').value = '';
+        document.getElementById('filterTags').value = '';
+        document.getElementById('filterSubtasks').value = '';
+        document.getElementById('filterAttachments').value = '';
+        document.getElementById('filterDependencies').value = '';
+        document.getElementById('filterRecurring').value = '';
+        
+        this.renderTasks();
+        this.hideAdvancedSearchModal();
+        this.showMessage('All filters cleared', 'info');
     }
 
     renderTimeTracking(timeTracking, taskId) {

@@ -2137,6 +2137,26 @@ body {
     color: #e2e8f0;
 }
 
+/* Advanced Search Styling */
+.date-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-range-inputs span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.dark-mode .date-range-inputs span {
+    color: #94a3b8;
+}
+
+.date-range-inputs .form-input {
+    flex: 1;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
