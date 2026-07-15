@@ -28,6 +28,7 @@ class TaskManager {
             dependencies: '',
             recurring: ''
         };
+        this.currentCalendarDate = new Date();
         this.init();
     }
 
@@ -242,6 +243,23 @@ class TaskManager {
 
         document.getElementById('clearFiltersBtn').addEventListener('click', () => {
             this.clearAdvancedFilters();
+        });
+
+        // Calendar management
+        document.getElementById('showCalendarBtn').addEventListener('click', () => {
+            this.showCalendarModal();
+        });
+
+        document.getElementById('closeCalendarModal').addEventListener('click', () => {
+            this.hideCalendarModal();
+        });
+
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            this.changeMonth(-1);
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            this.changeMonth(1);
         });
     }
 
@@ -1324,6 +1342,121 @@ class TaskManager {
         this.renderTasks();
         this.hideAdvancedSearchModal();
         this.showMessage('All filters cleared', 'info');
+    }
+
+    // Calendar Methods
+    showCalendarModal() {
+        this.renderCalendar();
+        document.getElementById('calendarModal').classList.remove('hidden');
+    }
+
+    hideCalendarModal() {
+        document.getElementById('calendarModal').classList.add('hidden');
+    }
+
+    changeMonth(delta) {
+        this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + delta);
+        this.renderCalendar();
+    }
+
+    renderCalendar() {
+        const year = this.currentCalendarDate.getFullYear();
+        const month = this.currentCalendarDate.getMonth();
+        
+        // Update month display
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+        
+        // Get first day of month and total days
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startingDay = firstDay.getDay();
+        const totalDays = lastDay.getDate();
+        
+        // Get previous month's last days for padding
+        const prevMonthLastDay = new Date(year, month, 0).getDate();
+        
+        // Get tasks grouped by date
+        const tasksByDate = {};
+        this.tasks.forEach(task => {
+            if (task.dueDate) {
+                const taskDate = new Date(task.dueDate);
+                const dateKey = `${taskDate.getFullYear()}-${taskDate.getMonth()}-${taskDate.getDate()}`;
+                if (!tasksByDate[dateKey]) {
+                    tasksByDate[dateKey] = [];
+                }
+                tasksByDate[dateKey].push(task);
+            }
+        });
+        
+        // Render calendar days
+        const calendarDays = document.getElementById('calendarDays');
+        calendarDays.innerHTML = '';
+        
+        // Previous month days
+        for (let i = startingDay - 1; i >= 0; i--) {
+            const day = prevMonthLastDay - i;
+            const dayElement = this.createCalendarDay(day, true, null, year, month);
+            calendarDays.appendChild(dayElement);
+        }
+        
+        // Current month days
+        const today = new Date();
+        for (let day = 1; day <= totalDays; day++) {
+            const isToday = today.getDate() === day && 
+                           today.getMonth() === month && 
+                           today.getFullYear() === year;
+            const dateKey = `${year}-${month}-${day}`;
+            const dayTasks = tasksByDate[dateKey] || [];
+            const dayElement = this.createCalendarDay(day, false, dayTasks, year, month, isToday);
+            calendarDays.appendChild(dayElement);
+        }
+        
+        // Next month days
+        const totalCells = startingDay + totalDays;
+        const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+        for (let day = 1; day <= remainingCells; day++) {
+            const dayElement = this.createCalendarDay(day, true, null, year, month);
+            calendarDays.appendChild(dayElement);
+        }
+    }
+
+    createCalendarDay(day, isOtherMonth, tasks, year, month, isToday = false) {
+        const dayElement = document.createElement('div');
+        dayElement.className = `calendar-day ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
+        
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'calendar-day-number';
+        dayNumber.textContent = day;
+        dayElement.appendChild(dayNumber);
+        
+        if (tasks && tasks.length > 0) {
+            const tasksContainer = document.createElement('div');
+            tasksContainer.className = 'calendar-day-tasks';
+            
+            // Show up to 3 tasks
+            tasks.slice(0, 3).forEach(task => {
+                const taskDot = document.createElement('div');
+                taskDot.className = `calendar-task-dot ${task.priority} ${task.completed ? 'completed' : ''}`;
+                taskDot.textContent = task.title;
+                taskDot.title = task.title;
+                tasksContainer.appendChild(taskDot);
+            });
+            
+            // Show count if more than 3 tasks
+            if (tasks.length > 3) {
+                const moreDot = document.createElement('div');
+                moreDot.className = 'calendar-task-dot';
+                moreDot.textContent = `+${tasks.length - 3} more`;
+                moreDot.style.background = '#6b7280';
+                tasksContainer.appendChild(moreDot);
+            }
+            
+            dayElement.appendChild(tasksContainer);
+        }
+        
+        return dayElement;
     }
 
     renderTimeTracking(timeTracking, taskId) {
