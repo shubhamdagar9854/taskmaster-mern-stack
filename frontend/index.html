@@ -105,6 +105,9 @@
                         <button id="showCalendarBtn" class="btn btn-outline">
                             <i class="fas fa-calendar-alt"></i> Calendar
                         </button>
+                        <button id="showExportImportBtn" class="btn btn-outline">
+                            <i class="fas fa-file-export"></i> Export/Import
+                        </button>
                         <button id="bulkActionsBtn" class="btn btn-outline">
                             <i class="fas fa-tasks"></i> Bulk Actions
                         </button>
@@ -759,6 +762,49 @@
                                 <div class="legend-item">
                                     <span class="legend-color completed"></span>
                                     <span>Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export/Import Modal -->
+                <div id="exportImportModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Export/Import Tasks</h3>
+                            <button id="closeExportImportModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="export-section">
+                                <h4>Export Tasks</h4>
+                                <p class="section-description">Export your tasks to JSON or CSV format for backup or sharing.</p>
+                                <div class="export-options">
+                                    <button id="exportJsonBtn" class="btn btn-primary">
+                                        <i class="fas fa-file-code"></i> Export as JSON
+                                    </button>
+                                    <button id="exportCsvBtn" class="btn btn-primary">
+                                        <i class="fas fa-file-csv"></i> Export as CSV
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="import-section">
+                                <h4>Import Tasks</h4>
+                                <p class="section-description">Import tasks from a JSON or CSV file.</p>
+                                <div class="import-options">
+                                    <div class="file-upload">
+                                        <input type="file" id="importFileInput" accept=".json,.csv" class="file-input">
+                                        <label for="importFileInput" class="file-label">
+                                            <i class="fas fa-upload"></i>
+                                            Choose file
+                                        </label>
+                                        <span id="selectedFileName" class="selected-file-name">No file selected</span>
+                                    </div>
+                                    <button id="importBtn" class="btn btn-primary" disabled>
+                                        <i class="fas fa-file-import"></i> Import Tasks
+                                    </button>
                                 </div>
                             </div>
                         </div>

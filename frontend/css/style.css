@@ -2334,6 +2334,105 @@ body {
     background: #6b7280;
 }
 
+/* Export/Import Modal Styling */
+.export-section,
+.import-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.dark-mode .export-section,
+.dark-mode .import-section {
+    border-bottom-color: #475569;
+}
+
+.import-section {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.export-section h4,
+.import-section h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.dark-mode .export-section h4,
+.dark-mode .import-section h4 {
+    color: #e2e8f0;
+}
+
+.section-description {
+    margin: 0 0 1rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.dark-mode .section-description {
+    color: #94a3b8;
+}
+
+.export-options,
+.import-options {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.file-upload {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #333;
+    transition: all 0.2s;
+}
+
+.dark-mode .file-label {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e2e8f0;
+}
+
+.file-label:hover {
+    background: #e5e7eb;
+}
+
+.dark-mode .file-label:hover {
+    background: #4b5563;
+}
+
+.selected-file-name {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
+.dark-mode .selected-file-name {
+    color: #94a3b8;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

@@ -261,6 +261,31 @@ class TaskManager {
         document.getElementById('nextMonth').addEventListener('click', () => {
             this.changeMonth(1);
         });
+
+        // Export/Import management
+        document.getElementById('showExportImportBtn').addEventListener('click', () => {
+            this.showExportImportModal();
+        });
+
+        document.getElementById('closeExportImportModal').addEventListener('click', () => {
+            this.hideExportImportModal();
+        });
+
+        document.getElementById('exportJsonBtn').addEventListener('click', () => {
+            this.exportTasksAsJson();
+        });
+
+        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+            this.exportTasksAsCsv();
+        });
+
+        document.getElementById('importFileInput').addEventListener('change', (e) => {
+            this.handleFileSelect(e);
+        });
+
+        document.getElementById('importBtn').addEventListener('click', () => {
+            this.importTasks();
+        });
     }
 
     showAddTaskForm() {
@@ -1457,6 +1482,222 @@ class TaskManager {
         }
         
         return dayElement;
+    }
+
+    // Export/Import Methods
+    showExportImportModal() {
+        document.getElementById('exportImportModal').classList.remove('hidden');
+    }
+
+    hideExportImportModal() {
+        document.getElementById('exportImportModal').classList.add('hidden');
+        // Reset file input
+        document.getElementById('importFileInput').value = '';
+        document.getElementById('selectedFileName').textContent = 'No file selected';
+        document.getElementById('importBtn').disabled = true;
+    }
+
+    exportTasksAsJson() {
+        const exportData = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            tasks: this.tasks,
+            userTags: this.userTags
+        };
+
+        const jsonString = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tasks_export_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        this.showMessage('Tasks exported as JSON successfully!', 'success');
+    }
+
+    exportTasksAsCsv() {
+        const headers = ['Title', 'Description', 'Priority', 'Due Date', 'Category', 'Status', 'Tags'];
+        const rows = this.tasks.map(task => [
+            `"${task.title.replace(/"/g, '""')}"`,
+            `"${(task.description || '').replace(/"/g, '""')}"`,
+            task.priority,
+            task.dueDate || '',
+            task.category || '',
+            task.completed ? 'Completed' : 'Active',
+            `"${(task.tags || []).join(', ')}"`
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tasks_export_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        this.showMessage('Tasks exported as CSV successfully!', 'success');
+    }
+
+    handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            document.getElementById('selectedFileName').textContent = file.name;
+            document.getElementById('importBtn').disabled = false;
+        } else {
+            document.getElementById('selectedFileName').textContent = 'No file selected';
+            document.getElementById('importBtn').disabled = true;
+        }
+    }
+
+    async importTasks() {
+        const fileInput = document.getElementById('importFileInput');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            this.showMessage('Please select a file to import', 'error');
+            return;
+        }
+
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+
+        try {
+            const content = await file.text();
+
+            if (fileExtension === 'json') {
+                await this.importFromJson(content);
+            } else if (fileExtension === 'csv') {
+                await this.importFromCsv(content);
+            } else {
+                this.showMessage('Unsupported file format. Please use JSON or CSV.', 'error');
+                return;
+            }
+
+            this.hideExportImportModal();
+            this.showMessage('Tasks imported successfully!', 'success');
+        } catch (error) {
+            console.error('Import error:', error);
+            this.showMessage('Failed to import tasks. Please check the file format.', 'error');
+        }
+    }
+
+    async importFromJson(content) {
+        try {
+            const data = JSON.parse(content);
+            
+            if (!data.tasks || !Array.isArray(data.tasks)) {
+                throw new Error('Invalid JSON format');
+            }
+
+            // Import user tags if available
+            if (data.userTags && Array.isArray(data.userTags)) {
+                data.userTags.forEach(importedTag => {
+                    if (!this.userTags.some(existingTag => 
+                        existingTag.name.toLowerCase() === importedTag.name.toLowerCase()
+                    )) {
+                        this.userTags.push(importedTag);
+                    }
+                });
+                this.saveUserTags();
+            }
+
+            // Import tasks
+            for (const task of data.tasks) {
+                try {
+                    const response = await fetch('http://localhost:5002/api/tasks', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${window.authManager.getToken()}`
+                        },
+                        body: JSON.stringify(task)
+                    });
+
+                    if (response.ok) {
+                        const newTask = await response.json();
+                        this.tasks.unshift(newTask);
+                    }
+                } catch (error) {
+                    console.error('Failed to import task:', task.title, error);
+                }
+            }
+
+            this.renderTasks();
+        } catch (error) {
+            throw new Error('Invalid JSON file');
+        }
+    }
+
+    async importFromCsv(content) {
+        const lines = content.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+
+            const values = this.parseCsvLine(lines[i]);
+            const task = {
+                title: values[0] || '',
+                description: values[1] || '',
+                priority: values[2] || 'medium',
+                dueDate: values[3] || null,
+                category: values[4] || 'other',
+                completed: values[5] === 'Completed',
+                tags: values[6] ? values[6].split(',').map(t => t.trim()) : []
+            };
+
+            try {
+                const response = await fetch('http://localhost:5002/api/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.authManager.getToken()}`
+                    },
+                    body: JSON.stringify(task)
+                });
+
+                if (response.ok) {
+                    const newTask = await response.json();
+                    this.tasks.unshift(newTask);
+                }
+            } catch (error) {
+                console.error('Failed to import task:', task.title, error);
+            }
+        }
+
+        this.renderTasks();
+    }
+
+    parseCsvLine(line) {
+        const values = [];
+        let currentValue = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    currentValue += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+
+        values.push(currentValue.trim());
+        return values;
     }
 
     renderTimeTracking(timeTracking, taskId) {
