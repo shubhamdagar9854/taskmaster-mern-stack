@@ -142,6 +142,16 @@
                     </div>
                 </div>
 
+                <!-- View Options -->
+                <div class="view-container">
+                    <button id="listViewBtn" class="view-btn active" title="List View">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <button id="kanbanViewBtn" class="view-btn" title="Kanban View">
+                        <i class="fas fa-columns"></i>
+                    </button>
+                </div>
+
                 <!-- Statistics Dashboard -->
                 <div id="statsDashboard" class="stats-dashboard">
                     <div class="stat-card">
@@ -412,6 +422,31 @@
                 <!-- Task List -->
                 <div id="taskList" class="task-list">
                     <!-- Tasks will be dynamically added here -->
+                </div>
+
+                <!-- Kanban Board -->
+                <div id="kanbanBoard" class="kanban-board hidden">
+                    <div class="kanban-column" data-status="todo">
+                        <div class="kanban-column-header todo">
+                            <h3>To Do</h3>
+                            <span class="kanban-count" id="todoCount">0</span>
+                        </div>
+                        <div class="kanban-tasks" id="todoTasks"></div>
+                    </div>
+                    <div class="kanban-column" data-status="inprogress">
+                        <div class="kanban-column-header inprogress">
+                            <h3>In Progress</h3>
+                            <span class="kanban-count" id="inprogressCount">0</span>
+                        </div>
+                        <div class="kanban-tasks" id="inprogressTasks"></div>
+                    </div>
+                    <div class="kanban-column" data-status="done">
+                        <div class="kanban-column-header done">
+                            <h3>Done</h3>
+                            <span class="kanban-count" id="doneCount">0</span>
+                        </div>
+                        <div class="kanban-tasks" id="doneTasks"></div>
+                    </div>
                 </div>
 
                 <!-- Task Comments Modal -->

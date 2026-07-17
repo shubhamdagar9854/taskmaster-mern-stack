@@ -29,6 +29,7 @@ class TaskManager {
             recurring: ''
         };
         this.currentCalendarDate = new Date();
+        this.currentView = 'list'; // 'list' or 'kanban'
         this.init();
     }
 
@@ -285,6 +286,15 @@ class TaskManager {
 
         document.getElementById('importBtn').addEventListener('click', () => {
             this.importTasks();
+        });
+
+        // View toggle
+        document.getElementById('listViewBtn').addEventListener('click', () => {
+            this.switchView('list');
+        });
+
+        document.getElementById('kanbanViewBtn').addEventListener('click', () => {
+            this.switchView('kanban');
         });
     }
 
@@ -799,6 +809,11 @@ class TaskManager {
                     break;
             }
         };
+
+        // Update kanban if in kanban view
+        if (this.currentView === 'kanban') {
+            this.renderKanban();
+        }
     }
 
     async toggleTask(taskId) {
@@ -1698,6 +1713,83 @@ class TaskManager {
 
         values.push(currentValue.trim());
         return values;
+    }
+
+    // View Methods
+    switchView(view) {
+        this.currentView = view;
+        
+        const listViewBtn = document.getElementById('listViewBtn');
+        const kanbanViewBtn = document.getElementById('kanbanViewBtn');
+        const taskList = document.getElementById('taskList');
+        const kanbanBoard = document.getElementById('kanbanBoard');
+        
+        if (view === 'list') {
+            listViewBtn.classList.add('active');
+            kanbanViewBtn.classList.remove('active');
+            taskList.classList.remove('hidden');
+            kanbanBoard.classList.add('hidden');
+        } else {
+            listViewBtn.classList.remove('active');
+            kanbanViewBtn.classList.add('active');
+            taskList.classList.add('hidden');
+            kanbanBoard.classList.remove('hidden');
+            this.renderKanban();
+        }
+    }
+
+    renderKanban() {
+        const todoTasks = [];
+        const inProgressTasks = [];
+        const doneTasks = [];
+        
+        // Group tasks by status
+        this.tasks.forEach(task => {
+            if (task.completed) {
+                doneTasks.push(task);
+            } else if (task.priority === 'high') {
+                inProgressTasks.push(task);
+            } else {
+                todoTasks.push(task);
+            }
+        });
+        
+        // Update counts
+        document.getElementById('todoCount').textContent = todoTasks.length;
+        document.getElementById('inprogressCount').textContent = inProgressTasks.length;
+        document.getElementById('doneCount').textContent = doneTasks.length;
+        
+        // Render columns
+        this.renderKanbanColumn('todoTasks', todoTasks);
+        this.renderKanbanColumn('inprogressTasks', inProgressTasks);
+        this.renderKanbanColumn('doneTasks', doneTasks);
+    }
+
+    renderKanbanColumn(columnId, tasks) {
+        const column = document.getElementById(columnId);
+        column.innerHTML = '';
+        
+        tasks.forEach(task => {
+            const taskElement = document.createElement('div');
+            taskElement.className = 'kanban-task';
+            taskElement.dataset.taskId = task._id;
+            
+            const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '';
+            
+            taskElement.innerHTML = `
+                <div class="kanban-task-title">${this.escapeHtml(task.title)}</div>
+                <div class="kanban-task-meta">
+                    <span class="kanban-task-priority ${task.priority}">${task.priority}</span>
+                    ${dueDate ? `<span class="kanban-task-due">📅 ${dueDate}</span>` : ''}
+                </div>
+            `;
+            
+            taskElement.addEventListener('click', () => {
+                this.editTask(task._id);
+            });
+            
+            column.appendChild(taskElement);
+        });
     }
 
     renderTimeTracking(timeTracking, taskId) {
