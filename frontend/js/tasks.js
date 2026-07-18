@@ -648,6 +648,7 @@ class TaskManager {
             // Apply status filter
             if (this.filter === 'active' && task.completed) return false;
             if (this.filter === 'completed' && !task.completed) return false;
+            if (this.filter === 'favorites' && !task.isFavorite) return false;
 
             // Apply tag filter
             if (this.activeTagFilter) {
@@ -735,6 +736,9 @@ class TaskManager {
                 <div class="task-meta">
                     <div class="task-date">Created: ${new Date(task.createdAt).toLocaleDateString()}</div>
                     <div class="task-actions">
+                        <button class="btn btn-outline btn-sm" data-action="favorite">
+                            <i class="fas fa-star ${task.isFavorite ? 'favorite-active' : ''}"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="edit">
                             <i class="fas fa-edit"></i> Edit
                         </button>
@@ -806,6 +810,9 @@ class TaskManager {
                     break;
                 case 'delete':
                     this.deleteTask(taskId);
+                    break;
+                case 'favorite':
+                    this.toggleFavorite(taskId);
                     break;
             }
         };
@@ -909,6 +916,36 @@ class TaskManager {
             this.showMessage('Network error. Please try again.', 'error');
         } finally {
             this.showLoading(false);
+        }
+    }
+
+    async toggleFavorite(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/favorite`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const index = this.tasks.findIndex(t => t._id === taskId);
+                if (index !== -1) {
+                    this.tasks[index] = data;
+                    this.renderTasks();
+                    this.showMessage(data.isFavorite ? 'Task added to favorites!' : 'Task removed from favorites!', 'success');
+                }
+            } else {
+                this.showMessage(data.message || 'Failed to toggle favorite', 'error');
+            }
+        } catch (error) {
+            console.error('Toggle favorite error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
         }
     }
 

@@ -412,6 +412,18 @@ body {
     min-width: 150px;
 }
 
+.filter-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.dark-mode .filter-label {
+    color: #e2e8f0;
+}
+
 .filter-select {
     width: 100%;
     padding: 1rem 1.5rem;
@@ -2600,6 +2612,23 @@ body {
 
 .dark-mode .kanban-task-due {
     color: #94a3b8;
+}
+
+/* Favorite Button Styling */
+.favorite-active {
+    color: #fbbf24 !important;
+}
+
+.task-actions .btn-outline[data-action="favorite"] {
+    color: #9ca3af;
+}
+
+.task-actions .btn-outline[data-action="favorite"]:hover {
+    color: #fbbf24;
+}
+
+.task-actions .btn-outline[data-action="favorite"] .favorite-active {
+    color: #fbbf24;
 }
 
 .task-meta {

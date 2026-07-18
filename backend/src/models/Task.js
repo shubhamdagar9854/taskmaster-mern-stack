@@ -143,6 +143,10 @@ const taskSchema = new mongoose.Schema({
       default: null
     }
   },
+  isFavorite: {
+    type: Boolean,
+    default: false
+  },
   completed: {
     type: Boolean,
     default: false
