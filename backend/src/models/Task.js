@@ -147,6 +147,10 @@ const taskSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isArchived: {
+    type: Boolean,
+    default: false
+  },
   completed: {
     type: Boolean,
     default: false

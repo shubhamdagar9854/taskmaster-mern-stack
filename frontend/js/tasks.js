@@ -649,6 +649,7 @@ class TaskManager {
             if (this.filter === 'active' && task.completed) return false;
             if (this.filter === 'completed' && !task.completed) return false;
             if (this.filter === 'favorites' && !task.isFavorite) return false;
+            if (this.filter === 'archived' && !task.isArchived) return false;
 
             // Apply tag filter
             if (this.activeTagFilter) {
@@ -739,6 +740,9 @@ class TaskManager {
                         <button class="btn btn-outline btn-sm" data-action="favorite">
                             <i class="fas fa-star ${task.isFavorite ? 'favorite-active' : ''}"></i>
                         </button>
+                        <button class="btn btn-outline btn-sm" data-action="archive">
+                            <i class="fas fa-archive ${task.isArchived ? 'archive-active' : ''}"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="edit">
                             <i class="fas fa-edit"></i> Edit
                         </button>
@@ -813,6 +817,9 @@ class TaskManager {
                     break;
                 case 'favorite':
                     this.toggleFavorite(taskId);
+                    break;
+                case 'archive':
+                    this.toggleArchive(taskId);
                     break;
             }
         };
@@ -945,6 +952,36 @@ class TaskManager {
             }
         } catch (error) {
             console.error('Toggle favorite error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async toggleArchive(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/archive`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const index = this.tasks.findIndex(t => t._id === taskId);
+                if (index !== -1) {
+                    this.tasks[index] = data;
+                    this.renderTasks();
+                    this.showMessage(data.isArchived ? 'Task archived!' : 'Task unarchived!', 'success');
+                }
+            } else {
+                this.showMessage(data.message || 'Failed to toggle archive', 'error');
+            }
+        } catch (error) {
+            console.error('Toggle archive error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
     }

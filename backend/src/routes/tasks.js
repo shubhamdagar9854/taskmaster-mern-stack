@@ -202,6 +202,25 @@ router.patch('/:id/favorite', authenticateToken, async (req, res) => {
   }
 });
 
+// Toggle task archive
+router.patch('/:id/archive', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    task.isArchived = !task.isArchived;
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Toggle archive error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Start timer
 router.post('/:id/timer/start', authenticateToken, async (req, res) => {
   try {

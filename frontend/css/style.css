@@ -2631,6 +2631,23 @@ body {
     color: #fbbf24;
 }
 
+/* Archive Button Styling */
+.archive-active {
+    color: #6b7280 !important;
+}
+
+.task-actions .btn-outline[data-action="archive"] {
+    color: #9ca3af;
+}
+
+.task-actions .btn-outline[data-action="archive"]:hover {
+    color: #6b7280;
+}
+
+.task-actions .btn-outline[data-action="archive"] .archive-active {
+    color: #6b7280;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;
