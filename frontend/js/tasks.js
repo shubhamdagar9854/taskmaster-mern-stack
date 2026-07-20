@@ -296,6 +296,11 @@ class TaskManager {
         document.getElementById('kanbanViewBtn').addEventListener('click', () => {
             this.switchView('kanban');
         });
+
+        // Activity log
+        document.getElementById('closeActivityModal').addEventListener('click', () => {
+            this.hideActivityModal();
+        });
     }
 
     showAddTaskForm() {
@@ -743,6 +748,9 @@ class TaskManager {
                         <button class="btn btn-outline btn-sm" data-action="archive">
                             <i class="fas fa-archive ${task.isArchived ? 'archive-active' : ''}"></i>
                         </button>
+                        <button class="btn btn-outline btn-sm" data-action="activity">
+                            <i class="fas fa-history"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="edit">
                             <i class="fas fa-edit"></i> Edit
                         </button>
@@ -820,6 +828,9 @@ class TaskManager {
                     break;
                 case 'archive':
                     this.toggleArchive(taskId);
+                    break;
+                case 'activity':
+                    this.showActivityModal(taskId);
                     break;
             }
         };
@@ -984,6 +995,59 @@ class TaskManager {
             console.error('Toggle archive error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    showActivityModal(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        const activityLogList = document.getElementById('activityLogList');
+        activityLogList.innerHTML = '';
+
+        if (!task.activityLog || task.activityLog.length === 0) {
+            activityLogList.innerHTML = '<div class="empty-state"><p>No activity recorded yet.</p></div>';
+        } else {
+            // Sort by timestamp descending (newest first)
+            const sortedLog = [...task.activityLog].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            sortedLog.forEach(activity => {
+                const icon = this.getActivityIcon(activity.action);
+                const time = new Date(activity.timestamp).toLocaleString();
+                
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.innerHTML = `
+                    <div class="activity-icon ${activity.action}">${icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-action">${this.capitalizeFirst(activity.action)}</div>
+                        <div class="activity-description">${activity.description}</div>
+                        <div class="activity-time">${time}</div>
+                    </div>
+                `;
+                activityLogList.appendChild(activityItem);
+            });
+        }
+
+        document.getElementById('activityModal').classList.remove('hidden');
+    }
+
+    hideActivityModal() {
+        document.getElementById('activityModal').classList.add('hidden');
+    }
+
+    getActivityIcon(action) {
+        const icons = {
+            created: '✨',
+            updated: '✏️',
+            toggled: '✅',
+            favorited: '⭐',
+            archived: '📦'
+        };
+        return icons[action] || '📝';
+    }
+
+    capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     escapeHtml(text) {

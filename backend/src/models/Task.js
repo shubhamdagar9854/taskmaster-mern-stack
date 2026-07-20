@@ -151,6 +151,20 @@ const taskSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  activityLog: [{
+    action: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   completed: {
     type: Boolean,
     default: false

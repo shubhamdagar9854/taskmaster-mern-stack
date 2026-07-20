@@ -6,6 +6,19 @@ const fs = require('fs');
 const Task = require('../models/Task');
 const router = express.Router();
 
+// Helper function to log activity
+const logActivity = (task, action, description) => {
+  task.activityLog.push({
+    action,
+    description,
+    timestamp: new Date()
+  });
+  // Keep only last 50 activities
+  if (task.activityLog.length > 50) {
+    task.activityLog = task.activityLog.slice(-50);
+  }
+};
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -114,6 +127,7 @@ router.post('/', authenticateToken, async (req, res) => {
       user: req.userId
     });
 
+    logActivity(task, 'created', 'Task created');
     await task.save();
     await task.populate('dependencies');
     res.status(201).json(task);
@@ -128,16 +142,32 @@ router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring } = req.body;
 
-    const task = await Task.findOneAndUpdate(
-      { _id: req.params.id, user: req.userId },
-      { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring },
-      { new: true }
-    ).populate('dependencies');
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    // Log changes
+    const changes = [];
+    if (title && title !== task.title) changes.push(`title changed to "${title}"`);
+    if (description !== undefined && description !== task.description) changes.push('description updated');
+    if (priority && priority !== task.priority) changes.push(`priority changed to ${priority}`);
+    if (dueDate !== undefined && dueDate !== task.dueDate) changes.push('due date updated');
+    if (category && category !== task.category) changes.push(`category changed to ${category}`);
+    if (notes !== undefined && notes !== task.notes) changes.push('notes updated');
+    if (subtasks) changes.push('subtasks updated');
+    if (tags) changes.push('tags updated');
+    if (dependencies) changes.push('dependencies updated');
+    if (recurring) changes.push('recurring settings updated');
+
+    if (changes.length > 0) {
+      logActivity(task, 'updated', changes.join(', '));
+    }
+
+    Object.assign(task, { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring });
+    await task.save();
+    await task.populate('dependencies');
     res.json(task);
   } catch (error) {
     console.error('Update task error:', error);
@@ -174,6 +204,7 @@ router.patch('/:id/toggle', authenticateToken, async (req, res) => {
     }
 
     task.completed = !task.completed;
+    logActivity(task, 'toggled', task.completed ? 'Task marked as completed' : 'Task marked as incomplete');
     await task.save();
 
     res.json(task);
@@ -193,6 +224,7 @@ router.patch('/:id/favorite', authenticateToken, async (req, res) => {
     }
 
     task.isFavorite = !task.isFavorite;
+    logActivity(task, 'favorited', task.isFavorite ? 'Task added to favorites' : 'Task removed from favorites');
     await task.save();
 
     res.json(task);
@@ -212,6 +244,7 @@ router.patch('/:id/archive', authenticateToken, async (req, res) => {
     }
 
     task.isArchived = !task.isArchived;
+    logActivity(task, 'archived', task.isArchived ? 'Task archived' : 'Task unarchived');
     await task.save();
 
     res.json(task);
