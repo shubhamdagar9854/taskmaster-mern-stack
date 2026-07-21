@@ -254,6 +254,46 @@ router.patch('/:id/archive', authenticateToken, async (req, res) => {
   }
 });
 
+// Get due reminders
+router.get('/reminders/due', authenticateToken, async (req, res) => {
+  try {
+    const now = new Date();
+    const tasks = await Task.find({
+      user: req.userId,
+      'reminder.enabled': true,
+      'reminder.time': { $lte: now },
+      'reminder.sent': false,
+      completed: false
+    });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Get reminders error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Mark reminder as sent
+router.patch('/:id/reminder/sent', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (task.reminder) {
+      task.reminder.sent = true;
+      await task.save();
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('Mark reminder sent error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Start timer
 router.post('/:id/timer/start', authenticateToken, async (req, res) => {
   try {

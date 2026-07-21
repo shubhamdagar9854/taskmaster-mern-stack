@@ -30,6 +30,7 @@ class TaskManager {
         };
         this.currentCalendarDate = new Date();
         this.currentView = 'list'; // 'list' or 'kanban'
+        this.notificationsShown = false;
         this.init();
     }
 
@@ -301,6 +302,19 @@ class TaskManager {
         document.getElementById('closeActivityModal').addEventListener('click', () => {
             this.hideActivityModal();
         });
+
+        // Notifications
+        document.getElementById('notificationsBtn').addEventListener('click', () => {
+            this.showNotificationsModal();
+        });
+
+        document.getElementById('closeNotificationsModal').addEventListener('click', () => {
+            this.hideNotificationsModal();
+        });
+
+        // Check for reminders every minute
+        setInterval(() => this.checkReminders(), 60000);
+        this.checkReminders(); // Initial check
     }
 
     showAddTaskForm() {
@@ -1048,6 +1062,123 @@ class TaskManager {
 
     capitalizeFirst(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    async checkReminders() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/reminders/due', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const reminders = await response.json();
+                this.updateNotificationBadge(reminders.length);
+                
+                if (reminders.length > 0 && !this.notificationsShown) {
+                    this.notificationsShown = true;
+                    reminders.forEach(reminder => {
+                        this.showMessage(`Reminder: ${reminder.title} is due!`, 'warning');
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Check reminders error:', error);
+        }
+    }
+
+    updateNotificationBadge(count) {
+        const badge = document.getElementById('notificationBadge');
+        if (count > 0) {
+            badge.textContent = count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    async showNotificationsModal() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/reminders/due', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const reminders = await response.json();
+                this.renderNotifications(reminders);
+                document.getElementById('notificationsModal').classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Show notifications error:', error);
+        }
+    }
+
+    hideNotificationsModal() {
+        document.getElementById('notificationsModal').classList.add('hidden');
+    }
+
+    renderNotifications(reminders) {
+        const notificationsList = document.getElementById('notificationsList');
+        notificationsList.innerHTML = '';
+
+        if (!reminders || reminders.length === 0) {
+            notificationsList.innerHTML = '<div class="empty-state"><p>No pending reminders.</p></div>';
+            return;
+        }
+
+        reminders.forEach(reminder => {
+            const reminderTime = new Date(reminder.reminder.time).toLocaleString();
+            const dueDate = reminder.dueDate ? new Date(reminder.dueDate).toLocaleDateString() : 'No due date';
+            
+            const notificationItem = document.createElement('div');
+            notificationItem.className = 'notification-item';
+            notificationItem.innerHTML = `
+                <div class="notification-icon">🔔</div>
+                <div class="notification-content">
+                    <div class="notification-title">${this.escapeHtml(reminder.title)}</div>
+                    <div class="notification-message">Reminder was set for: ${reminderTime}</div>
+                    <div class="notification-time">Due: ${dueDate}</div>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary" data-dismiss-reminder="${reminder._id}">
+                            Dismiss
+                        </button>
+                        <button class="btn btn-sm btn-outline" data-view-task="${reminder._id}">
+                            View Task
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            notificationItem.querySelector('[data-dismiss-reminder]').addEventListener('click', () => {
+                this.markReminderAsSent(reminder._id);
+            });
+            
+            notificationItem.querySelector('[data-view-task]').addEventListener('click', () => {
+                this.hideNotificationsModal();
+                this.editTask(reminder._id);
+            });
+            
+            notificationsList.appendChild(notificationItem);
+        });
+    }
+
+    async markReminderAsSent(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/reminder/sent`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const index = this.tasks.findIndex(t => t._id === taskId);
+                if (index !== -1) {
+                    this.tasks[index] = await response.json();
+                }
+                this.showNotificationsModal(); // Refresh notifications
+                this.showMessage('Reminder dismissed!', 'success');
+            }
+        } catch (error) {
+            console.error('Mark reminder sent error:', error);
+        }
     }
 
     escapeHtml(text) {

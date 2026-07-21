@@ -48,6 +48,15 @@ const taskSchema = new mongoose.Schema({
     time: {
       type: Date,
       default: null
+    },
+    type: {
+      type: String,
+      enum: ['email', 'in-app', 'both'],
+      default: 'in-app'
+    },
+    sent: {
+      type: Boolean,
+      default: false
     }
   },
   tags: [{
