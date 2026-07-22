@@ -315,6 +315,25 @@ class TaskManager {
         // Check for reminders every minute
         setInterval(() => this.checkReminders(), 60000);
         this.checkReminders(); // Initial check
+
+        // Share modal
+        document.getElementById('closeShareModal').addEventListener('click', () => {
+            this.hideShareModal();
+        });
+
+        document.getElementById('shareTaskBtn').addEventListener('click', () => {
+            this.shareTask();
+        });
+
+        // Load shared tasks when filter changes
+        document.getElementById('taskFilter').addEventListener('change', (e) => {
+            this.filter = e.target.value;
+            if (this.filter === 'shared') {
+                this.loadSharedTasks();
+            } else {
+                this.renderTasks();
+            }
+        });
     }
 
     showAddTaskForm() {
@@ -669,6 +688,10 @@ class TaskManager {
             if (this.filter === 'completed' && !task.completed) return false;
             if (this.filter === 'favorites' && !task.isFavorite) return false;
             if (this.filter === 'archived' && !task.isArchived) return false;
+            if (this.filter === 'shared') {
+                // Load shared tasks separately
+                return false;
+            }
 
             // Apply tag filter
             if (this.activeTagFilter) {
@@ -762,6 +785,9 @@ class TaskManager {
                         <button class="btn btn-outline btn-sm" data-action="archive">
                             <i class="fas fa-archive ${task.isArchived ? 'archive-active' : ''}"></i>
                         </button>
+                        <button class="btn btn-outline btn-sm" data-action="share">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="activity">
                             <i class="fas fa-history"></i>
                         </button>
@@ -842,6 +868,9 @@ class TaskManager {
                     break;
                 case 'archive':
                     this.toggleArchive(taskId);
+                    break;
+                case 'share':
+                    this.showShareModal(taskId);
                     break;
                 case 'activity':
                     this.showActivityModal(taskId);
@@ -1178,6 +1207,135 @@ class TaskManager {
             }
         } catch (error) {
             console.error('Mark reminder sent error:', error);
+        }
+    }
+
+    showShareModal(taskId) {
+        this.currentShareTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        document.getElementById('shareEmail').value = '';
+        this.renderSharedUsers(task);
+        document.getElementById('shareModal').classList.remove('hidden');
+    }
+
+    hideShareModal() {
+        document.getElementById('shareModal').classList.add('hidden');
+        this.currentShareTaskId = null;
+    }
+
+    async shareTask() {
+        const email = document.getElementById('shareEmail').value.trim();
+        if (!email) {
+            this.showMessage('Please enter an email address', 'error');
+            return;
+        }
+
+        if (!this.currentShareTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentShareTaskId}/share`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const index = this.tasks.findIndex(t => t._id === this.currentShareTaskId);
+                if (index !== -1) {
+                    this.tasks[index] = data;
+                }
+                document.getElementById('shareEmail').value = '';
+                this.renderSharedUsers(data);
+                this.showMessage('Task shared successfully!', 'success');
+            } else {
+                this.showMessage(data.message || 'Failed to share task', 'error');
+            }
+        } catch (error) {
+            console.error('Share task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    renderSharedUsers(task) {
+        const sharedUsersList = document.getElementById('sharedUsersList');
+        sharedUsersList.innerHTML = '';
+
+        if (!task.sharedWith || task.sharedWith.length === 0) {
+            sharedUsersList.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Task not shared with anyone yet.</p>';
+            return;
+        }
+
+        task.sharedWith.forEach(user => {
+            const userName = user.username || 'Unknown User';
+            const userEmail = user.email || 'No email';
+            const initial = userName.charAt(0).toUpperCase();
+
+            const userItem = document.createElement('div');
+            userItem.className = 'shared-user-item';
+            userItem.innerHTML = `
+                <div class="shared-user-info">
+                    <div class="shared-user-avatar">${initial}</div>
+                    <div>
+                        <div class="shared-user-name">${this.escapeHtml(userName)}</div>
+                        <div class="shared-user-email">${this.escapeHtml(userEmail)}</div>
+                    </div>
+                </div>
+                <button class="remove-share-btn" data-remove-share="${user._id}">Remove</button>
+            `;
+
+            userItem.querySelector('[data-remove-share]').addEventListener('click', () => {
+                this.removeShare(task._id, user._id);
+            });
+
+            sharedUsersList.appendChild(userItem);
+        });
+    }
+
+    async removeShare(taskId, userId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/share/${userId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const index = this.tasks.findIndex(t => t._id === taskId);
+                if (index !== -1) {
+                    this.tasks[index] = data;
+                }
+                this.renderSharedUsers(data);
+                this.showMessage('Sharing removed successfully!', 'success');
+            } else {
+                this.showMessage(data.message || 'Failed to remove sharing', 'error');
+            }
+        } catch (error) {
+            console.error('Remove share error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async loadSharedTasks() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/shared', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.tasks = await response.json();
+                this.renderTasks();
+            }
+        } catch (error) {
+            console.error('Load shared tasks error:', error);
+            this.showMessage('Failed to load shared tasks', 'error');
         }
     }
 

@@ -160,6 +160,15 @@ const taskSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  sharedWith: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  sharedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   activityLog: [{
     action: {
       type: String,

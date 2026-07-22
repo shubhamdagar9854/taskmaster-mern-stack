@@ -138,6 +138,7 @@
                         <option value="completed">Completed</option>
                         <option value="favorites">Favorites</option>
                         <option value="archived">Archived</option>
+                        <option value="shared">Shared with Me</option>
                     </select>
                 </div>
 
@@ -892,6 +893,30 @@
                             <div id="notificationsList" class="notifications-list">
                                 <!-- Notifications will be dynamically added here -->
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share Task Modal -->
+                <div id="shareModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Share Task</h3>
+                            <button id="closeShareModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="shareEmail">Share with (email):</label>
+                                <input type="email" id="shareEmail" class="form-input" placeholder="Enter user email">
+                            </div>
+                            <div class="shared-users-list" id="sharedUsersList">
+                                <!-- Shared users will be dynamically added here -->
+                            </div>
+                            <button id="shareTaskBtn" class="btn btn-primary">
+                                <i class="fas fa-share-alt"></i> Share Task
+                            </button>
                         </div>
                     </div>
                 </div>

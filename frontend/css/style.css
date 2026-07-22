@@ -2836,6 +2836,78 @@ body {
     position: relative;
 }
 
+/* Share Modal Styling */
+.shared-users-list {
+    margin-top: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.shared-user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.dark-mode .shared-user-item {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.shared-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shared-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.shared-user-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.dark-mode .shared-user-name {
+    color: #e2e8f0;
+}
+
+.shared-user-email {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.dark-mode .shared-user-email {
+    color: #94a3b8;
+}
+
+.remove-share-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.remove-share-btn:hover {
+    background: #dc2626;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

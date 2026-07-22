@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Task = require('../models/Task');
+const User = require('../models/User');
 const router = express.Router();
 
 // Helper function to log activity
@@ -290,6 +291,82 @@ router.patch('/:id/reminder/sent', authenticateToken, async (req, res) => {
     res.json(task);
   } catch (error) {
     console.error('Mark reminder sent error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Share task with another user
+router.post('/:id/share', authenticateToken, async (req, res) => {
+  try {
+    const { email } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Find the user to share with
+    const userToShare = await User.findOne({ email });
+    if (!userToShare) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (userToShare._id.toString() === req.userId) {
+      return res.status(400).json({ message: 'Cannot share task with yourself' });
+    }
+
+    // Check if already shared
+    if (task.sharedWith && task.sharedWith.includes(userToShare._id)) {
+      return res.status(400).json({ message: 'Task already shared with this user' });
+    }
+
+    // Add to sharedWith array
+    if (!task.sharedWith) {
+      task.sharedWith = [];
+    }
+    task.sharedWith.push(userToShare._id);
+    
+    logActivity(task, 'shared', `Task shared with ${userToShare.username}`);
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Share task error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove sharing
+router.delete('/:id/share/:userId', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    task.sharedWith = task.sharedWith.filter(id => id.toString() !== req.params.userId);
+    logActivity(task, 'unshared', 'Task sharing removed');
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Remove sharing error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get shared tasks (tasks shared with current user)
+router.get('/shared', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ sharedWith: req.userId })
+      .populate('user', 'username email')
+      .populate('sharedWith', 'username email')
+      .sort({ createdAt: -1 });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Get shared tasks error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
