@@ -2908,6 +2908,88 @@ body {
     background: #dc2626;
 }
 
+/* Time Report Modal Styling */
+.time-report-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.report-card {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.dark-mode .report-card {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.report-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.dark-mode .report-label {
+    color: #94a3b8;
+}
+
+.report-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+.dark-mode .report-value {
+    color: #60a5fa;
+}
+
+.time-report-tasks {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.time-report-task-item {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.dark-mode .time-report-task-item {
+    border-bottom-color: #475569;
+}
+
+.time-report-task-item:last-child {
+    border-bottom: none;
+}
+
+.time-report-task-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.dark-mode .time-report-task-title {
+    color: #e2e8f0;
+}
+
+.time-report-task-time {
+    color: #3b82f6;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.time-report-task-entries {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.dark-mode .time-report-task-entries {
+    color: #94a3b8;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

@@ -371,6 +371,76 @@ router.get('/shared', authenticateToken, async (req, res) => {
   }
 });
 
+// Add manual time entry
+router.post('/:id/time/manual', authenticateToken, async (req, res) => {
+  try {
+    const { duration, note } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (!task.timeTracking) {
+      task.timeTracking = { enabled: true, timeSpent: 0, timerRunning: false, startTime: null, manualEntries: [] };
+    }
+
+    if (!task.timeTracking.manualEntries) {
+      task.timeTracking.manualEntries = [];
+    }
+
+    task.timeTracking.manualEntries.push({
+      duration: Number(duration),
+      date: new Date(),
+      note: note || ''
+    });
+
+    task.timeTracking.timeSpent += Number(duration);
+    task.timeTracking.enabled = true;
+    
+    logActivity(task, 'time_logged', `Manual time entry: ${duration} minutes added`);
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Add manual time entry error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get time tracking report
+router.get('/time/report', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId, 'timeTracking.enabled': true });
+    
+    const report = {
+      totalTasks: tasks.length,
+      totalMinutes: 0,
+      tasks: []
+    };
+
+    tasks.forEach(task => {
+      const taskTime = task.timeTracking.timeSpent || 0;
+      report.totalMinutes += taskTime;
+      
+      report.tasks.push({
+        id: task._id,
+        title: task.title,
+        timeSpent: taskTime,
+        manualEntries: task.timeTracking.manualEntries || [],
+        completed: task.completed
+      });
+    });
+
+    report.totalHours = (report.totalMinutes / 60).toFixed(2);
+
+    res.json(report);
+  } catch (error) {
+    console.error('Get time report error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Start timer
 router.post('/:id/timer/start', authenticateToken, async (req, res) => {
   try {

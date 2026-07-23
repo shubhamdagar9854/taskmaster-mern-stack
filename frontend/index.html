@@ -97,6 +97,9 @@
                             <i class="fas fa-bell"></i>
                             <span id="notificationBadge" class="notification-badge hidden">0</span>
                         </button>
+                        <button id="showTimeReportBtn" class="btn btn-outline">
+                            <i class="fas fa-clock"></i> Time Report
+                        </button>
                         <button id="showTemplatesBtn" class="btn btn-outline">
                             <i class="fas fa-layer-group"></i> Templates
                         </button>
@@ -916,6 +919,58 @@
                             </div>
                             <button id="shareTaskBtn" class="btn btn-primary">
                                 <i class="fas fa-share-alt"></i> Share Task
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Report Modal -->
+                <div id="timeReportModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Time Tracking Report</h3>
+                            <button id="closeTimeReportModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="time-report-summary">
+                                <div class="report-card">
+                                    <div class="report-label">Total Tasks Tracked</div>
+                                    <div class="report-value" id="totalTasksTracked">0</div>
+                                </div>
+                                <div class="report-card">
+                                    <div class="report-label">Total Time</div>
+                                    <div class="report-value" id="totalTimeReport">0h 0m</div>
+                                </div>
+                            </div>
+                            <div class="time-report-tasks" id="timeReportTasks">
+                                <!-- Time report tasks will be dynamically added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Time Entry Modal -->
+                <div id="manualTimeModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Add Manual Time Entry</h3>
+                            <button id="closeManualTimeModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="manualTimeDuration">Duration (minutes):</label>
+                                <input type="number" id="manualTimeDuration" class="form-input" placeholder="Enter duration in minutes" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="manualTimeNote">Note (optional):</label>
+                                <textarea id="manualTimeNote" class="form-input" placeholder="Add a note about this time entry" rows="3"></textarea>
+                            </div>
+                            <button id="addManualTimeBtn" class="btn btn-primary">
+                                <i class="fas fa-clock"></i> Add Time Entry
                             </button>
                         </div>
                     </div>

@@ -79,7 +79,21 @@ const taskSchema = new mongoose.Schema({
     startTime: {
       type: Date,
       default: null
-    }
+    },
+    manualEntries: [{
+      duration: {
+        type: Number,
+        required: true
+      },
+      date: {
+        type: Date,
+        default: Date.now
+      },
+      note: {
+        type: String,
+        default: ''
+      }
+    }]
   },
   attachments: [{
     filename: {

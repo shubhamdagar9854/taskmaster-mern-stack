@@ -334,6 +334,24 @@ class TaskManager {
                 this.renderTasks();
             }
         });
+
+        // Time report
+        document.getElementById('showTimeReportBtn').addEventListener('click', () => {
+            this.showTimeReportModal();
+        });
+
+        document.getElementById('closeTimeReportModal').addEventListener('click', () => {
+            this.hideTimeReportModal();
+        });
+
+        // Manual time entry
+        document.getElementById('closeManualTimeModal').addEventListener('click', () => {
+            this.hideManualTimeModal();
+        });
+
+        document.getElementById('addManualTimeBtn').addEventListener('click', () => {
+            this.addManualTimeEntry();
+        });
     }
 
     showAddTaskForm() {
@@ -788,6 +806,9 @@ class TaskManager {
                         <button class="btn btn-outline btn-sm" data-action="share">
                             <i class="fas fa-share-alt"></i>
                         </button>
+                        <button class="btn btn-outline btn-sm" data-action="manual-time">
+                            <i class="fas fa-clock"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="activity">
                             <i class="fas fa-history"></i>
                         </button>
@@ -871,6 +892,9 @@ class TaskManager {
                     break;
                 case 'share':
                     this.showShareModal(taskId);
+                    break;
+                case 'manual-time':
+                    this.showManualTimeModal(taskId);
                     break;
                 case 'activity':
                     this.showActivityModal(taskId);
@@ -1336,6 +1360,114 @@ class TaskManager {
         } catch (error) {
             console.error('Load shared tasks error:', error);
             this.showMessage('Failed to load shared tasks', 'error');
+        }
+    }
+
+    showTimeReportModal() {
+        this.loadTimeReport();
+        document.getElementById('timeReportModal').classList.remove('hidden');
+    }
+
+    hideTimeReportModal() {
+        document.getElementById('timeReportModal').classList.add('hidden');
+    }
+
+    async loadTimeReport() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/time/report', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const report = await response.json();
+                this.renderTimeReport(report);
+            }
+        } catch (error) {
+            console.error('Load time report error:', error);
+            this.showMessage('Failed to load time report', 'error');
+        }
+    }
+
+    renderTimeReport(report) {
+        document.getElementById('totalTasksTracked').textContent = report.totalTasks;
+        
+        const hours = Math.floor(report.totalMinutes / 60);
+        const minutes = report.totalMinutes % 60;
+        document.getElementById('totalTimeReport').textContent = `${hours}h ${minutes}m`;
+
+        const timeReportTasks = document.getElementById('timeReportTasks');
+        timeReportTasks.innerHTML = '';
+
+        if (report.tasks.length === 0) {
+            timeReportTasks.innerHTML = '<div class="empty-state"><p>No time tracking data available.</p></div>';
+            return;
+        }
+
+        report.tasks.forEach(task => {
+            const taskHours = Math.floor(task.timeSpent / 60);
+            const taskMinutes = task.timeSpent % 60;
+            const entriesCount = task.manualEntries ? task.manualEntries.length : 0;
+
+            const taskItem = document.createElement('div');
+            taskItem.className = 'time-report-task-item';
+            taskItem.innerHTML = `
+                <div class="time-report-task-title">${this.escapeHtml(task.title)}</div>
+                <div class="time-report-task-time">${taskHours}h ${taskMinutes}m</div>
+                <div class="time-report-task-entries">${entriesCount} manual entries</div>
+            `;
+            timeReportTasks.appendChild(taskItem);
+        });
+    }
+
+    showManualTimeModal(taskId) {
+        this.currentManualTimeTaskId = taskId;
+        document.getElementById('manualTimeDuration').value = '';
+        document.getElementById('manualTimeNote').value = '';
+        document.getElementById('manualTimeModal').classList.remove('hidden');
+    }
+
+    hideManualTimeModal() {
+        document.getElementById('manualTimeModal').classList.add('hidden');
+        this.currentManualTimeTaskId = null;
+    }
+
+    async addManualTimeEntry() {
+        const duration = document.getElementById('manualTimeDuration').value;
+        const note = document.getElementById('manualTimeNote').value;
+
+        if (!duration || duration <= 0) {
+            this.showMessage('Please enter a valid duration', 'error');
+            return;
+        }
+
+        if (!this.currentManualTimeTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentManualTimeTaskId}/time/manual`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ duration, note })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const index = this.tasks.findIndex(t => t._id === this.currentManualTimeTaskId);
+                if (index !== -1) {
+                    this.tasks[index] = data;
+                }
+                this.hideManualTimeModal();
+                this.renderTasks();
+                this.showMessage('Time entry added successfully!', 'success');
+            } else {
+                this.showMessage(data.message || 'Failed to add time entry', 'error');
+            }
+        } catch (error) {
+            console.error('Add manual time entry error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
         }
     }
 
