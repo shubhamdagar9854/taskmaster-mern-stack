@@ -441,6 +441,82 @@ router.get('/time/report', authenticateToken, async (req, res) => {
   }
 });
 
+// Add reaction to comment
+router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
+  try {
+    const { emoji } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = task.comments.id(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    // Check if user already reacted with this emoji
+    const existingReaction = comment.reactions.find(
+      r => r.user === req.userId && r.emoji === emoji
+    );
+
+    if (existingReaction) {
+      // Remove reaction
+      comment.reactions = comment.reactions.filter(r => 
+        !(r.user === req.userId && r.emoji === emoji)
+      );
+    } else {
+      // Add reaction
+      comment.reactions.push({
+        user: req.userId,
+        emoji,
+        createdAt: new Date()
+      });
+    }
+
+    await task.save();
+    res.json(task);
+  } catch (error) {
+    console.error('Add reaction error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add reply to comment
+router.post('/:id/comments/:commentId/replies', authenticateToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = task.comments.id(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    if (!comment.replies) {
+      comment.replies = [];
+    }
+
+    comment.replies.push({
+      text,
+      author: req.userId,
+      createdAt: new Date()
+    });
+
+    logActivity(task, 'comment_replied', 'A reply was added to a comment');
+    await task.save();
+    res.json(task);
+  } catch (error) {
+    console.error('Add reply error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Start timer
 router.post('/:id/timer/start', authenticateToken, async (req, res) => {
   try {

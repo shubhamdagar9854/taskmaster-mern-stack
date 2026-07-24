@@ -224,6 +224,10 @@ class AuthManager {
         return this.user ? this.user.username : null;
     }
 
+    getUserId() {
+        return this.user ? this.user._id : null;
+    }
+
     isAuthenticated() {
         return !!this.token;
     }

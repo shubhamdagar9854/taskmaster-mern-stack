@@ -133,7 +133,33 @@ const taskSchema = new mongoose.Schema({
     createdAt: {
       type: Date,
       default: Date.now
-    }
+    },
+    reactions: [{
+      user: {
+        type: String
+      },
+      emoji: {
+        type: String
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    replies: [{
+      text: {
+        type: String,
+        required: true
+      },
+      author: {
+        type: String,
+        required: true
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   }],
   dependencies: [{
     type: mongoose.Schema.Types.ObjectId,

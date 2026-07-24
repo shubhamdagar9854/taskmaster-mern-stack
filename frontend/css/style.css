@@ -2990,6 +2990,144 @@ body {
     color: #94a3b8;
 }
 
+/* Comment Reactions and Replies Styling */
+.comment-reactions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.reaction-btn {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s;
+}
+
+.dark-mode .reaction-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #475569;
+}
+
+.reaction-btn:hover {
+    background: #e5e7eb;
+}
+
+.dark-mode .reaction-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.reaction-btn.active {
+    background: #dbeafe;
+    border-color: #3b82f6;
+}
+
+.dark-mode .reaction-btn.active {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.reaction-count {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.dark-mode .reaction-count {
+    color: #94a3b8;
+}
+
+.comment-replies {
+    margin-top: 1rem;
+    padding-left: 1rem;
+    border-left: 2px solid #e5e7eb;
+}
+
+.dark-mode .comment-replies {
+    border-left-color: #475569;
+}
+
+.reply-item {
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.dark-mode .reply-item {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.reply-author {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.dark-mode .reply-author {
+    color: #e2e8f0;
+}
+
+.reply-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.dark-mode .reply-text {
+    color: #94a3b8;
+}
+
+.reply-date {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.dark-mode .reply-date {
+    color: #6b7280;
+}
+
+.reply-form {
+    margin-top: 0.75rem;
+}
+
+.reply-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.dark-mode .reply-input {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+.reply-submit-btn {
+    margin-top: 0.5rem;
+    padding: 0.4rem 1rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.reply-submit-btn:hover {
+    background: #2563eb;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

@@ -2643,6 +2643,49 @@ class TaskManager {
         comments.forEach(comment => {
             const item = document.createElement('div');
             item.className = 'comment-item';
+            
+            // Get reactions grouped by emoji
+            const reactions = comment.reactions || [];
+            const reactionGroups = {};
+            reactions.forEach(r => {
+                if (!reactionGroups[r.emoji]) {
+                    reactionGroups[r.emoji] = [];
+                }
+                reactionGroups[r.emoji].push(r);
+            });
+
+            // Build reaction buttons HTML
+            const availableEmojis = ['👍', '❤️', '😂', '🎉'];
+            let reactionsHtml = '<div class="comment-reactions">';
+            availableEmojis.forEach(emoji => {
+                const count = reactionGroups[emoji] ? reactionGroups[emoji].length : 0;
+                const hasReacted = reactionGroups[emoji] && reactionGroups[emoji].some(r => r.user === window.authManager.getUserId());
+                reactionsHtml += `
+                    <button class="reaction-btn ${hasReacted ? 'active' : ''}" data-emoji="${emoji}" data-comment-id="${comment._id}">
+                        <span>${emoji}</span>
+                        ${count > 0 ? `<span class="reaction-count">${count}</span>` : ''}
+                    </button>
+                `;
+            });
+            reactionsHtml += '</div>';
+
+            // Build replies HTML
+            const replies = comment.replies || [];
+            let repliesHtml = '';
+            if (replies.length > 0) {
+                repliesHtml = '<div class="comment-replies">';
+                replies.forEach(reply => {
+                    repliesHtml += `
+                        <div class="reply-item">
+                            <div class="reply-author">${this.escapeHtml(reply.author)}</div>
+                            <div class="reply-text">${this.escapeHtml(reply.text)}</div>
+                            <div class="reply-date">${new Date(reply.createdAt).toLocaleString()}</div>
+                        </div>
+                    `;
+                });
+                repliesHtml += '</div>';
+            }
+
             item.innerHTML = `
                 <div class="comment-header">
                     <span class="comment-author">${this.escapeHtml(comment.author)}</span>
@@ -2654,10 +2697,33 @@ class TaskManager {
                     </div>
                 </div>
                 <div class="comment-text">${this.escapeHtml(comment.text)}</div>
+                ${reactionsHtml}
+                ${repliesHtml}
+                <div class="reply-form">
+                    <textarea class="reply-input" placeholder="Write a reply..." data-reply-to="${comment._id}"></textarea>
+                    <button class="reply-submit-btn" data-reply-to="${comment._id}">Reply</button>
+                </div>
             `;
 
+            // Delete button handler
             item.querySelector('.comment-delete').addEventListener('click', () => {
                 this.deleteComment(this.currentCommentTaskId, comment._id);
+            });
+
+            // Reaction button handlers
+            item.querySelectorAll('.reaction-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.toggleReaction(this.currentCommentTaskId, comment._id, btn.dataset.emoji);
+                });
+            });
+
+            // Reply button handler
+            item.querySelector('.reply-submit-btn').addEventListener('click', () => {
+                const replyInput = item.querySelector('.reply-input');
+                const replyText = replyInput.value.trim();
+                if (replyText) {
+                    this.addReply(this.currentCommentTaskId, comment._id, replyText);
+                }
             });
 
             container.appendChild(item);
@@ -2726,6 +2792,59 @@ class TaskManager {
         } catch (error) {
             console.error('Delete comment error:', error);
             this.showMessage('Failed to delete comment', 'error');
+        }
+    }
+
+    async toggleReaction(taskId, commentId, emoji) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/comments/${commentId}/reactions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ emoji })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderCommentsList(data.comments);
+                }
+            }
+        } catch (error) {
+            console.error('Toggle reaction error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async addReply(taskId, commentId, text) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/comments/${commentId}/replies`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ text })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = data;
+                    this.renderCommentsList(data.comments);
+                    this.showMessage('Reply added successfully!', 'success');
+                }
+            } else {
+                this.showMessage('Failed to add reply', 'error');
+            }
+        } catch (error) {
+            console.error('Add reply error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
         }
     }
 
