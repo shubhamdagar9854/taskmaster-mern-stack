@@ -352,6 +352,15 @@ class TaskManager {
         document.getElementById('addManualTimeBtn').addEventListener('click', () => {
             this.addManualTimeEntry();
         });
+
+        // Priority stats
+        document.getElementById('showPriorityStatsBtn').addEventListener('click', () => {
+            this.showPriorityStatsModal();
+        });
+
+        document.getElementById('closePriorityStatsModal').addEventListener('click', () => {
+            this.hidePriorityStatsModal();
+        });
     }
 
     showAddTaskForm() {
@@ -780,7 +789,7 @@ class TaskManager {
                     ${task.completed ? '<i class="fas fa-check"></i>' : ''}
                 </div>
                 <div class="task-content">
-                    <span class="priority-badge ${task.priority || 'medium'}">${task.priority || 'medium'}</span>
+                    ${this.getPriorityBadge(task.priority)}
                     <span class="category-badge ${task.category || 'other'}">${this.getCategoryIcon(task.category)} ${task.category || 'other'}</span>
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
@@ -1469,6 +1478,72 @@ class TaskManager {
             console.error('Add manual time entry error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    showPriorityStatsModal() {
+        this.loadPriorityStats();
+        document.getElementById('priorityStatsModal').classList.remove('hidden');
+    }
+
+    hidePriorityStatsModal() {
+        document.getElementById('priorityStatsModal').classList.add('hidden');
+    }
+
+    async loadPriorityStats() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/priority/stats', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const stats = await response.json();
+                this.renderPriorityStats(stats);
+            }
+        } catch (error) {
+            console.error('Load priority stats error:', error);
+            this.showMessage('Failed to load priority stats', 'error');
+        }
+    }
+
+    renderPriorityStats(stats) {
+        const grid = document.getElementById('priorityStatsGrid');
+        grid.innerHTML = '';
+
+        const priorityConfig = [
+            { key: 'urgent', label: 'Urgent', icon: '🔴', class: 'urgent' },
+            { key: 'high', label: 'High', icon: '🟠', class: 'high' },
+            { key: 'medium', label: 'Medium', icon: '🟡', class: 'medium' },
+            { key: 'low', label: 'Low', icon: '🟢', class: 'low' },
+            { key: 'none', label: 'None', icon: '⚪', class: 'none' }
+        ];
+
+        priorityConfig.forEach(config => {
+            const count = stats[config.key] || 0;
+            const card = document.createElement('div');
+            card.className = `priority-stat-card ${config.class}`;
+            card.innerHTML = `
+                <div class="priority-stat-icon">${config.icon}</div>
+                <div class="priority-stat-value">${count}</div>
+                <div class="priority-stat-label">${config.label}</div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    getPriorityBadge(priority) {
+        const priorityConfig = {
+            urgent: { label: 'Urgent', icon: '🔴', class: 'urgent' },
+            high: { label: 'High', icon: '🟠', class: 'high' },
+            medium: { label: 'Medium', icon: '🟡', class: 'medium' },
+            low: { label: 'Low', icon: '🟢', class: 'low' }
+        };
+
+        if (!priority || !priorityConfig[priority]) {
+            return '<span class="priority-badge none">⚪ None</span>';
+        }
+
+        const config = priorityConfig[priority];
+        return `<span class="priority-badge ${config.class}">${config.icon} ${config.label}</span>`;
     }
 
     escapeHtml(text) {
@@ -2338,7 +2413,7 @@ class TaskManager {
             taskElement.innerHTML = `
                 <div class="kanban-task-title">${this.escapeHtml(task.title)}</div>
                 <div class="kanban-task-meta">
-                    <span class="kanban-task-priority ${task.priority}">${task.priority}</span>
+                    ${this.getPriorityBadge(task.priority)}
                     ${dueDate ? `<span class="kanban-task-due">📅 ${dueDate}</span>` : ''}
                 </div>
             `;

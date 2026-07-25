@@ -3128,6 +3128,117 @@ body {
     background: #2563eb;
 }
 
+/* Priority Stats Modal Styling */
+.priority-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.priority-stat-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+}
+
+.priority-stat-card.urgent {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.priority-stat-card.high {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.priority-stat-card.medium {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+
+.priority-stat-card.low {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.priority-stat-card.none {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.priority-stat-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.priority-stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.priority-stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Enhanced Priority Badges */
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-badge.urgent {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.dark-mode .priority-badge.urgent {
+    background: rgba(220, 38, 38, 0.2);
+    color: #fca5a5;
+    border-color: rgba(220, 38, 38, 0.3);
+}
+
+.priority-badge.high {
+    background: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #fed7aa;
+}
+
+.dark-mode .priority-badge.high {
+    background: rgba(234, 88, 12, 0.2);
+    color: #fdba74;
+    border-color: rgba(234, 88, 12, 0.3);
+}
+
+.priority-badge.medium {
+    background: #fefce8;
+    color: #ca8a04;
+    border: 1px solid #fef08a;
+}
+
+.dark-mode .priority-badge.medium {
+    background: rgba(202, 138, 4, 0.2);
+    color: #fde047;
+    border-color: rgba(202, 138, 4, 0.3);
+}
+
+.priority-badge.low {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.dark-mode .priority-badge.low {
+    background: rgba(22, 163, 74, 0.2);
+    color: #86efac;
+    border-color: rgba(22, 163, 74, 0.3);
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

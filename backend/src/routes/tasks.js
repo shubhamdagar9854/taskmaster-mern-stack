@@ -441,6 +441,34 @@ router.get('/time/report', authenticateToken, async (req, res) => {
   }
 });
 
+// Get priority statistics
+router.get('/priority/stats', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId });
+    
+    const stats = {
+      low: 0,
+      medium: 0,
+      high: 0,
+      urgent: 0,
+      none: 0
+    };
+
+    tasks.forEach(task => {
+      if (!task.priority) {
+        stats.none++;
+      } else {
+        stats[task.priority]++;
+      }
+    });
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Get priority stats error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {

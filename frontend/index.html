@@ -100,6 +100,9 @@
                         <button id="showTimeReportBtn" class="btn btn-outline">
                             <i class="fas fa-clock"></i> Time Report
                         </button>
+                        <button id="showPriorityStatsBtn" class="btn btn-outline">
+                            <i class="fas fa-flag"></i> Priority Stats
+                        </button>
                         <button id="showTemplatesBtn" class="btn btn-outline">
                             <i class="fas fa-layer-group"></i> Templates
                         </button>
@@ -972,6 +975,23 @@
                             <button id="addManualTimeBtn" class="btn btn-primary">
                                 <i class="fas fa-clock"></i> Add Time Entry
                             </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority Stats Modal -->
+                <div id="priorityStatsModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Priority Statistics</h3>
+                            <button id="closePriorityStatsModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="priority-stats-grid" id="priorityStatsGrid">
+                                <!-- Priority stats will be dynamically added here -->
+                            </div>
                         </div>
                     </div>
                 </div>
