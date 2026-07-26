@@ -361,6 +361,15 @@ class TaskManager {
         document.getElementById('closePriorityStatsModal').addEventListener('click', () => {
             this.hidePriorityStatsModal();
         });
+
+        // Dependency graph
+        document.getElementById('showDependencyGraphBtn').addEventListener('click', () => {
+            this.showDependencyGraphModal();
+        });
+
+        document.getElementById('closeDependencyGraphModal').addEventListener('click', () => {
+            this.hideDependencyGraphModal();
+        });
     }
 
     showAddTaskForm() {
@@ -1544,6 +1553,87 @@ class TaskManager {
 
         const config = priorityConfig[priority];
         return `<span class="priority-badge ${config.class}">${config.icon} ${config.label}</span>`;
+    }
+
+    showDependencyGraphModal() {
+        this.loadDependencyGraph();
+        document.getElementById('dependencyGraphModal').classList.remove('hidden');
+    }
+
+    hideDependencyGraphModal() {
+        document.getElementById('dependencyGraphModal').classList.add('hidden');
+    }
+
+    async loadDependencyGraph() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/dependencies/graph', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const graph = await response.json();
+                this.renderDependencyGraph(graph);
+            }
+        } catch (error) {
+            console.error('Load dependency graph error:', error);
+            this.showMessage('Failed to load dependency graph', 'error');
+        }
+    }
+
+    renderDependencyGraph(graph) {
+        const container = document.getElementById('dependencyGraphContainer');
+        container.innerHTML = '';
+
+        if (!graph.edges || graph.edges.length === 0) {
+            container.innerHTML = '<div class="no-dependencies"><p>No task dependencies found.</p></div>';
+            return;
+        }
+
+        const dependencyList = document.createElement('div');
+        dependencyList.className = 'dependency-list';
+
+        // Group dependencies by task
+        const taskDependencies = {};
+        graph.edges.forEach(edge => {
+            if (!taskDependencies[edge.to]) {
+                taskDependencies[edge.to] = [];
+            }
+            taskDependencies[edge.to].push(edge.from);
+        });
+
+        // Render each task with its dependencies
+        Object.keys(taskDependencies).forEach(taskId => {
+            const task = graph.nodes.find(n => n.id === taskId);
+            if (!task) return;
+
+            const blockingTaskIds = taskDependencies[taskId];
+            const blockingTasks = blockingTaskIds.map(id => graph.nodes.find(n => n.id === id)).filter(Boolean);
+
+            const dependencyItem = document.createElement('div');
+            dependencyItem.className = 'dependency-item blocking';
+            
+            const blockingTasksHtml = blockingTasks.map(t => {
+                const statusClass = t.completed ? 'completed' : '';
+                const statusText = t.completed ? 'Completed' : 'In Progress';
+                return `
+                    <div class="dependency-header">
+                        <span class="dependency-title">${this.escapeHtml(t.title)}</span>
+                        <span class="dependency-status ${statusClass}">${statusText}</span>
+                    </div>
+                `;
+            }).join('');
+
+            dependencyItem.innerHTML = `
+                <div class="dependency-relation">
+                    <strong>${this.escapeHtml(task.title)}</strong> is blocked by:
+                </div>
+                ${blockingTasksHtml}
+            `;
+
+            dependencyList.appendChild(dependencyItem);
+        });
+
+        container.appendChild(dependencyList);
     }
 
     escapeHtml(text) {
