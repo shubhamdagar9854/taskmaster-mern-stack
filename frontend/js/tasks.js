@@ -14,6 +14,7 @@ class TaskManager {
         this.currentCommentTaskId = null; // Track current task for comments
         this.templates = []; // Store templates
         this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
+        this.bulkMode = false; // Track bulk selection mode
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -369,6 +370,27 @@ class TaskManager {
 
         document.getElementById('closeDependencyGraphModal').addEventListener('click', () => {
             this.hideDependencyGraphModal();
+        });
+
+        // Bulk actions
+        document.getElementById('bulkActionsBtn').addEventListener('click', () => {
+            this.toggleBulkMode();
+        });
+
+        document.getElementById('bulkCancelBtn').addEventListener('click', () => {
+            this.toggleBulkMode();
+        });
+
+        document.getElementById('bulkCompleteBtn').addEventListener('click', () => {
+            this.bulkComplete();
+        });
+
+        document.getElementById('bulkArchiveBtn').addEventListener('click', () => {
+            this.bulkArchive();
+        });
+
+        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+            this.bulkDelete();
         });
     }
 
@@ -855,14 +877,7 @@ class TaskManager {
             // Handle bulk selection
             if (bulkSelect) {
                 const taskId = bulkSelect;
-                if (e.target.checked) {
-                    this.selectedTasks.add(taskId);
-                    taskItem.classList.add('bulk-selected');
-                } else {
-                    this.selectedTasks.delete(taskId);
-                    taskItem.classList.remove('bulk-selected');
-                }
-                document.getElementById('bulkSelectToggle').checked = false;
+                this.toggleTaskSelection(taskId);
                 return;
             }
             
@@ -1634,6 +1649,151 @@ class TaskManager {
         });
 
         container.appendChild(dependencyList);
+    }
+
+    toggleBulkMode() {
+        this.bulkMode = !this.bulkMode;
+        const tasksContainer = document.getElementById('tasksContainer');
+        const bulkActionsPanel = document.getElementById('bulkActionsPanel');
+        
+        if (this.bulkMode) {
+            tasksContainer.classList.add('bulk-mode');
+            bulkActionsPanel.classList.remove('hidden');
+            this.selectedTasks.clear();
+        } else {
+            tasksContainer.classList.remove('bulk-mode');
+            bulkActionsPanel.classList.add('hidden');
+            this.selectedTasks.clear();
+        }
+        
+        this.renderTasks();
+    }
+
+    toggleTaskSelection(taskId) {
+        if (this.selectedTasks.has(taskId)) {
+            this.selectedTasks.delete(taskId);
+        } else {
+            this.selectedTasks.add(taskId);
+        }
+        // Re-render to update UI
+        this.renderTasks();
+    }
+
+    async bulkComplete() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('Please select tasks to complete', 'error');
+            return;
+        }
+
+        if (!confirm(`Complete ${this.selectedTasks.size} tasks?`)) return;
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/bulk', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({
+                    taskIds: Array.from(this.selectedTasks),
+                    updates: { completed: true }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                data.forEach(updatedTask => {
+                    const index = this.tasks.findIndex(t => t._id === updatedTask._id);
+                    if (index !== -1) {
+                        this.tasks[index] = updatedTask;
+                    }
+                });
+                this.toggleBulkMode();
+                this.renderTasks();
+                this.showMessage(`Completed ${data.length} tasks!`, 'success');
+            } else {
+                this.showMessage('Failed to complete tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk complete error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async bulkArchive() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('Please select tasks to archive', 'error');
+            return;
+        }
+
+        if (!confirm(`Archive ${this.selectedTasks.size} tasks?`)) return;
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/bulk', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({
+                    taskIds: Array.from(this.selectedTasks),
+                    updates: { isArchived: true }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                data.forEach(updatedTask => {
+                    const index = this.tasks.findIndex(t => t._id === updatedTask._id);
+                    if (index !== -1) {
+                        this.tasks[index] = updatedTask;
+                    }
+                });
+                this.toggleBulkMode();
+                this.renderTasks();
+                this.showMessage(`Archived ${data.length} tasks!`, 'success');
+            } else {
+                this.showMessage('Failed to archive tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk archive error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async bulkDelete() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('Please select tasks to delete', 'error');
+            return;
+        }
+
+        if (!confirm(`Delete ${this.selectedTasks.size} tasks? This action cannot be undone.`)) return;
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/bulk', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({
+                    taskIds: Array.from(this.selectedTasks)
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.tasks = this.tasks.filter(t => !this.selectedTasks.has(t._id));
+                this.toggleBulkMode();
+                this.renderTasks();
+                this.showMessage(`Deleted ${data.deletedCount} tasks!`, 'success');
+            } else {
+                this.showMessage('Failed to delete tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Bulk delete error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     escapeHtml(text) {

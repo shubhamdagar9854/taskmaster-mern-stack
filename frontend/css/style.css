@@ -3334,6 +3334,79 @@ body {
     color: #6b7280;
 }
 
+/* Bulk Actions Panel Styling */
+.bulk-actions-panel {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f3f4f6;
+    border-radius: 8px;
+}
+
+.dark-mode .bulk-actions-panel {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+    border: none;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+}
+
+.task-bulk-checkbox {
+    margin-right: 0.75rem;
+    display: none;
+}
+
+.bulk-mode .task-bulk-checkbox {
+    display: block;
+}
+
+.bulk-selected {
+    background: #dbeafe !important;
+    border: 2px solid #3b82f6 !important;
+}
+
+.dark-mode .bulk-selected {
+    background: rgba(59, 130, 246, 0.2) !important;
+    border-color: #3b82f6 !important;
+}
+
 .task-meta {
     display: flex;
     flex-direction: column;

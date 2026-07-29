@@ -553,6 +553,72 @@ router.get('/:id/blocked', authenticateToken, async (req, res) => {
   }
 });
 
+// Bulk update tasks
+router.put('/bulk', authenticateToken, async (req, res) => {
+  try {
+    const { taskIds, updates } = req.body;
+
+    if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({ message: 'Task IDs are required' });
+    }
+
+    if (!updates || typeof updates !== 'object') {
+      return res.status(400).json({ message: 'Updates are required' });
+    }
+
+    const tasks = await Task.find({ _id: { $in: taskIds }, user: req.userId });
+
+    if (tasks.length === 0) {
+      return res.status(404).json({ message: 'No tasks found' });
+    }
+
+    const updatedTasks = [];
+    tasks.forEach(task => {
+      Object.keys(updates).forEach(key => {
+        if (key !== 'user' && key !== '_id') {
+          task[key] = updates[key];
+        }
+      });
+      task.updatedAt = Date.now();
+      updatedTasks.push(task);
+    });
+
+    await Task.bulkSave(updatedTasks);
+
+    // Log activity for each task
+    updatedTasks.forEach(task => {
+      logActivity(task._id, req.userId, 'bulk_update', `Bulk updated: ${Object.keys(updates).join(', ')}`);
+    });
+
+    res.json(updatedTasks);
+  } catch (error) {
+    console.error('Bulk update error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Bulk delete tasks
+router.delete('/bulk', authenticateToken, async (req, res) => {
+  try {
+    const { taskIds } = req.body;
+
+    if (!taskIds || !Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({ message: 'Task IDs are required' });
+    }
+
+    const result = await Task.deleteMany({ _id: { $in: taskIds }, user: req.userId });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'No tasks found' });
+    }
+
+    res.json({ message: `Deleted ${result.deletedCount} tasks`, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {
