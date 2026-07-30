@@ -619,6 +619,67 @@ router.delete('/bulk', authenticateToken, async (req, res) => {
   }
 });
 
+// Advanced search tasks
+router.post('/search', authenticateToken, async (req, res) => {
+  try {
+    const { query, priority, category, status, dueDateFrom, dueDateTo, tags } = req.body;
+
+    const searchFilter = { user: req.userId };
+
+    // Text search in title and description
+    if (query && query.trim()) {
+      searchFilter.$or = [
+        { title: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
+        { notes: { $regex: query, $options: 'i' } }
+      ];
+    }
+
+    // Priority filter
+    if (priority) {
+      searchFilter.priority = priority;
+    }
+
+    // Category filter
+    if (category) {
+      searchFilter.category = category;
+    }
+
+    // Status filter
+    if (status === 'active') {
+      searchFilter.completed = false;
+    } else if (status === 'completed') {
+      searchFilter.completed = true;
+    }
+
+    // Due date range filter
+    if (dueDateFrom || dueDateTo) {
+      searchFilter.dueDate = {};
+      if (dueDateFrom) {
+        searchFilter.dueDate.$gte = new Date(dueDateFrom);
+      }
+      if (dueDateTo) {
+        searchFilter.dueDate.$lte = new Date(dueDateTo);
+      }
+    }
+
+    // Tags filter
+    if (tags && tags.trim()) {
+      const tagArray = tags.split(',').map(t => t.trim()).filter(t => t);
+      if (tagArray.length > 0) {
+        searchFilter.tags = { $in: tagArray };
+      }
+    }
+
+    const tasks = await Task.find(searchFilter).sort({ createdAt: -1 });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Advanced search error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {

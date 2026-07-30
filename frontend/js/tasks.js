@@ -15,6 +15,7 @@ class TaskManager {
         this.templates = []; // Store templates
         this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
         this.bulkMode = false; // Track bulk selection mode
+        this.advancedSearchActive = false; // Track if advanced search is active
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -69,8 +70,12 @@ class TaskManager {
 
         // Search tasks
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            this.searchQuery = e.target.value.trim().toLowerCase();
-            this.renderTasks();
+            this.searchQuery = e.target.value.trim();
+            if (this.searchQuery.length > 0) {
+                this.advancedSearch();
+            } else {
+                this.loadTasks();
+            }
         });
 
         // Filter tasks
@@ -734,10 +739,10 @@ class TaskManager {
         const taskCounter = document.getElementById('taskCounter');
 
         let filteredTasks = this.tasks.filter(task => {
-            // Apply search filter
-            if (this.searchQuery) {
-                const titleMatch = task.title.toLowerCase().includes(this.searchQuery);
-                const descriptionMatch = (task.description || '').toLowerCase().includes(this.searchQuery);
+            // Apply search filter (only if not using advanced search)
+            if (this.searchQuery && !this.advancedSearchActive) {
+                const titleMatch = task.title.toLowerCase().includes(this.searchQuery.toLowerCase());
+                const descriptionMatch = (task.description || '').toLowerCase().includes(this.searchQuery.toLowerCase());
                 if (!titleMatch && !descriptionMatch) return false;
             }
 
@@ -759,28 +764,30 @@ class TaskManager {
                 if (!hasTag) return false;
             }
 
-            // Apply advanced filters
-            if (this.advancedFilters.priority && task.priority !== this.advancedFilters.priority) return false;
-            if (this.advancedFilters.category && task.category !== this.advancedFilters.category) return false;
-            if (this.advancedFilters.status === 'active' && task.completed) return false;
-            if (this.advancedFilters.status === 'completed' && !task.completed) return false;
-            if (this.advancedFilters.dueDateFrom) {
-                const fromDate = new Date(this.advancedFilters.dueDateFrom);
-                if (!task.dueDate || new Date(task.dueDate) < fromDate) return false;
+            // Apply advanced filters (only if not using advanced search)
+            if (!this.advancedSearchActive) {
+                if (this.advancedFilters.priority && task.priority !== this.advancedFilters.priority) return false;
+                if (this.advancedFilters.category && task.category !== this.advancedFilters.category) return false;
+                if (this.advancedFilters.status === 'active' && task.completed) return false;
+                if (this.advancedFilters.status === 'completed' && !task.completed) return false;
+                if (this.advancedFilters.dueDateFrom) {
+                    const fromDate = new Date(this.advancedFilters.dueDateFrom);
+                    if (!task.dueDate || new Date(task.dueDate) < fromDate) return false;
+                }
+                if (this.advancedFilters.dueDateTo) {
+                    const toDate = new Date(this.advancedFilters.dueDateTo);
+                    if (!task.dueDate || new Date(task.dueDate) > toDate) return false;
+                }
+                if (this.advancedFilters.tags && (!task.tags || !task.tags.includes(this.advancedFilters.tags))) return false;
+                if (this.advancedFilters.subtasks === 'yes' && (!task.subtasks || task.subtasks.length === 0)) return false;
+                if (this.advancedFilters.subtasks === 'no' && task.subtasks && task.subtasks.length > 0) return false;
+                if (this.advancedFilters.attachments === 'yes' && (!task.attachments || task.attachments.length === 0)) return false;
+                if (this.advancedFilters.attachments === 'no' && task.attachments && task.attachments.length > 0) return false;
+                if (this.advancedFilters.dependencies === 'yes' && (!task.dependencies || task.dependencies.length === 0)) return false;
+                if (this.advancedFilters.dependencies === 'no' && task.dependencies && task.dependencies.length > 0) return false;
+                if (this.advancedFilters.recurring === 'yes' && (!task.recurring || !task.recurring.enabled)) return false;
+                if (this.advancedFilters.recurring === 'no' && task.recurring && task.recurring.enabled) return false;
             }
-            if (this.advancedFilters.dueDateTo) {
-                const toDate = new Date(this.advancedFilters.dueDateTo);
-                if (!task.dueDate || new Date(task.dueDate) > toDate) return false;
-            }
-            if (this.advancedFilters.tags && (!task.tags || !task.tags.includes(this.advancedFilters.tags))) return false;
-            if (this.advancedFilters.subtasks === 'yes' && (!task.subtasks || task.subtasks.length === 0)) return false;
-            if (this.advancedFilters.subtasks === 'no' && task.subtasks && task.subtasks.length > 0) return false;
-            if (this.advancedFilters.attachments === 'yes' && (!task.attachments || task.attachments.length === 0)) return false;
-            if (this.advancedFilters.attachments === 'no' && task.attachments && task.attachments.length > 0) return false;
-            if (this.advancedFilters.dependencies === 'yes' && (!task.dependencies || task.dependencies.length === 0)) return false;
-            if (this.advancedFilters.dependencies === 'no' && task.dependencies && task.dependencies.length > 0) return false;
-            if (this.advancedFilters.recurring === 'yes' && (!task.recurring || !task.recurring.enabled)) return false;
-            if (this.advancedFilters.recurring === 'no' && task.recurring && task.recurring.enabled) return false;
 
             return true;
         });
@@ -1380,19 +1387,56 @@ class TaskManager {
         }
     }
 
-    async loadSharedTasks() {
+    async loadTasks() {
+        this.advancedSearchActive = false;
         try {
-            const response = await fetch('http://localhost:5002/api/tasks/shared', {
+            const response = await fetch('http://localhost:5002/api/tasks', {
                 headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
             });
 
             if (response.ok) {
                 this.tasks = await response.json();
                 this.renderTasks();
+            } else {
+                this.showMessage('Failed to load tasks', 'error');
             }
         } catch (error) {
-            console.error('Load shared tasks error:', error);
-            this.showMessage('Failed to load shared tasks', 'error');
+            console.error('Load tasks error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async advancedSearch() {
+        this.advancedSearchActive = true;
+        const searchFilters = {
+            query: this.searchQuery,
+            priority: this.advancedFilters.priority,
+            category: this.advancedFilters.category,
+            status: this.advancedFilters.status,
+            dueDateFrom: this.advancedFilters.dueDateFrom,
+            dueDateTo: this.advancedFilters.dueDateTo,
+            tags: this.advancedFilters.tags
+        };
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify(searchFilters)
+            });
+
+            if (response.ok) {
+                this.tasks = await response.json();
+                this.renderTasks();
+            } else {
+                this.showMessage('Search failed', 'error');
+            }
+        } catch (error) {
+            console.error('Advanced search error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
         }
     }
 
