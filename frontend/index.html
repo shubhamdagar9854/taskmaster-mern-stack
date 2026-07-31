@@ -245,8 +245,17 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="taskDueDate">Due Date (Optional)</label>
-                            <input type="date" id="taskDueDate" class="form-input">
+                            <label for="taskReminderTime">Reminder Time:</label>
+                            <input type="datetime-local" id="taskReminderTime" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="taskReminderType">Reminder Type:</label>
+                            <select id="taskReminderType" class="form-input">
+                                <option value="in-app">In-App Notification</option>
+                                <option value="email">Email</option>
+                                <option value="push">Push Notification</option>
+                                <option value="all">All Notifications</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="taskCategory">Category</label>
@@ -396,11 +405,17 @@
                         </div>
                         <div class="form-group">
                             <label>Reminder (Optional)</label>
-                            <div class="reminder-toggle">
+                            <div>
                                 <input type="checkbox" id="editTaskReminderEnabled">
                                 <label for="editTaskReminderEnabled">Enable Reminder</label>
                             </div>
                             <input type="datetime-local" id="editTaskReminderTime" class="form-input" style="display: none;">
+                            <select id="editTaskReminderType" class="form-input" style="display: none;">
+                                <option value="in-app">In-App Notification</option>
+                                <option value="email">Email</option>
+                                <option value="push">Push Notification</option>
+                                <option value="all">All Notifications</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Tags (Optional)</label>

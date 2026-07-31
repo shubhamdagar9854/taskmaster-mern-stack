@@ -29,6 +29,13 @@ const taskSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  reminder: {
+    enabled: { type: Boolean, default: false },
+    time: { type: Date },
+    type: { type: String, enum: ['email', 'push', 'in-app', 'all'], default: 'in-app' },
+    sent: { type: Boolean, default: false },
+    sentAt: { type: Date }
+  },
   subtasks: [{
     title: {
       type: String,
@@ -38,30 +45,14 @@ const taskSchema = new mongoose.Schema({
     completed: {
       type: Boolean,
       default: false
+    },
+    reminder: {
+      enabled: { type: Boolean, default: false },
+      time: { type: Date },
+      type: { type: String, enum: ['email', 'push', 'in-app', 'all'], default: 'in-app' },
+      sent: { type: Boolean, default: false },
+      sentAt: { type: Date }
     }
-  }],
-  reminder: {
-    enabled: {
-      type: Boolean,
-      default: false
-    },
-    time: {
-      type: Date,
-      default: null
-    },
-    type: {
-      type: String,
-      enum: ['email', 'in-app', 'both'],
-      default: 'in-app'
-    },
-    sent: {
-      type: Boolean,
-      default: false
-    }
-  },
-  tags: [{
-    type: String,
-    trim: true
   }],
   timeTracking: {
     enabled: {

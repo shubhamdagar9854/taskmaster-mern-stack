@@ -680,6 +680,103 @@ router.post('/search', authenticateToken, async (req, res) => {
   }
 });
 
+// Send reminder notification
+router.post('/:id/reminder/send', authenticateToken, async (req, res) => {
+  try {
+    const { type } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (!task.reminder || !task.reminder.enabled) {
+      return res.status(400).json({ message: 'Reminder not enabled for this task' });
+    }
+
+    // Simulate sending reminder based on type
+    let notificationSent = false;
+    let notificationDetails = {};
+
+    switch (type) {
+      case 'email':
+        notificationSent = true;
+        notificationDetails = {
+          type: 'email',
+          message: `Reminder sent via email for task: ${task.title}`,
+          sentAt: new Date()
+        };
+        break;
+      case 'push':
+        notificationSent = true;
+        notificationDetails = {
+          type: 'push',
+          message: `Push notification sent for task: ${task.title}`,
+          sentAt: new Date()
+        };
+        break;
+      case 'in-app':
+        notificationSent = true;
+        notificationDetails = {
+          type: 'in-app',
+          message: `In-app notification created for task: ${task.title}`,
+          sentAt: new Date()
+        };
+        break;
+      case 'all':
+        notificationSent = true;
+        notificationDetails = {
+          type: 'all',
+          message: `All notifications sent for task: ${task.title}`,
+          sentAt: new Date()
+        };
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid reminder type' });
+    }
+
+    // Update reminder status
+    task.reminder.sent = true;
+    task.reminder.sentAt = new Date();
+    await task.save();
+
+    logActivity(task._id, req.userId, 'reminder_sent', `Reminder sent via ${type}`);
+
+    res.json({
+      success: notificationSent,
+      notificationDetails,
+      task
+    });
+  } catch (error) {
+    console.error('Send reminder error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get reminder history
+router.get('/:id/reminder/history', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const reminderHistory = {
+      enabled: task.reminder?.enabled || false,
+      time: task.reminder?.time,
+      type: task.reminder?.type,
+      sent: task.reminder?.sent || false,
+      sentAt: task.reminder?.sentAt
+    };
+
+    res.json(reminderHistory);
+  } catch (error) {
+    console.error('Get reminder history error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {

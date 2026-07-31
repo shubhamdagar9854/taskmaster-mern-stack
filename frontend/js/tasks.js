@@ -102,10 +102,12 @@ class TaskManager {
         // Reminder toggle listeners
         document.getElementById('taskReminderEnabled').addEventListener('change', (e) => {
             document.getElementById('taskReminderTime').style.display = e.target.checked ? 'block' : 'none';
+            document.getElementById('taskReminderType').style.display = e.target.checked ? 'block' : 'none';
         });
 
         document.getElementById('editTaskReminderEnabled').addEventListener('change', (e) => {
             document.getElementById('editTaskReminderTime').style.display = e.target.checked ? 'block' : 'none';
+            document.getElementById('editTaskReminderType').style.display = e.target.checked ? 'block' : 'none';
         });
 
         // Tag input listeners
@@ -412,6 +414,7 @@ class TaskManager {
         this.currentSubtasks = [];
         document.getElementById('taskReminderEnabled').checked = false;
         document.getElementById('taskReminderTime').style.display = 'none';
+        document.getElementById('taskReminderType').style.display = 'none';
         this.currentTags = [];
         document.getElementById('taskTags').innerHTML = '';
         document.getElementById('taskTimeTrackingEnabled').checked = false;
@@ -472,7 +475,8 @@ class TaskManager {
         // Collect reminder
         const reminderEnabled = document.getElementById('taskReminderEnabled').checked;
         const reminderTime = document.getElementById('taskReminderTime').value;
-        const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null } : { enabled: false, time: null };
+        const reminderType = document.getElementById('taskReminderType').value;
+        const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null, type: reminderType } : { enabled: false, time: null, type: 'in-app' };
 
         // Collect tags
         const tags = [...this.currentTags];
@@ -598,10 +602,13 @@ class TaskManager {
         if (task.reminder && task.reminder.enabled) {
             document.getElementById('editTaskReminderEnabled').checked = true;
             document.getElementById('editTaskReminderTime').style.display = 'block';
+            document.getElementById('editTaskReminderType').style.display = 'block';
             document.getElementById('editTaskReminderTime').value = task.reminder.time ? task.reminder.time.slice(0, 16) : '';
+            document.getElementById('editTaskReminderType').value = task.reminder.type || 'in-app';
         } else {
             document.getElementById('editTaskReminderEnabled').checked = false;
             document.getElementById('editTaskReminderTime').style.display = 'none';
+            document.getElementById('editTaskReminderType').style.display = 'none';
         }
         
         // Load tags
@@ -677,6 +684,7 @@ class TaskManager {
         this.currentEditSubtasks = [];
         document.getElementById('editTaskReminderEnabled').checked = false;
         document.getElementById('editTaskReminderTime').style.display = 'none';
+        document.getElementById('editTaskReminderType').style.display = 'none';
         this.currentEditTags = [];
         document.getElementById('editTaskTags').innerHTML = '';
         document.getElementById('editTaskTimeTrackingEnabled').checked = false;
@@ -705,7 +713,8 @@ class TaskManager {
         // Collect reminder
         const reminderEnabled = document.getElementById('editTaskReminderEnabled').checked;
         const reminderTime = document.getElementById('editTaskReminderTime').value;
-        const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null } : { enabled: false, time: null };
+        const reminderType = document.getElementById('editTaskReminderType').value;
+        const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null, type: reminderType } : { enabled: false, time: null, type: 'in-app' };
 
         // Collect tags
         const tags = [...this.currentEditTags];
@@ -1838,6 +1847,50 @@ class TaskManager {
             console.error('Bulk delete error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    async sendReminder(taskId, type = 'in-app') {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/reminder/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ type })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const index = this.tasks.findIndex(t => t._id === taskId);
+                if (index !== -1) {
+                    this.tasks[index] = data.task;
+                }
+                this.renderTasks();
+                this.showMessage(data.notificationDetails.message, 'success');
+            } else {
+                this.showMessage('Failed to send reminder', 'error');
+            }
+        } catch (error) {
+            console.error('Send reminder error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async getReminderHistory(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/reminder/history`, {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const history = await response.json();
+                return history;
+            }
+        } catch (error) {
+            console.error('Get reminder history error:', error);
+        }
+        return null;
     }
 
     escapeHtml(text) {
