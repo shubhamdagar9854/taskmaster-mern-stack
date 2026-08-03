@@ -2649,6 +2649,99 @@ body {
 }
 
 /* Activity Log Modal Styling */
+.activity-feed-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-feed-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.activity-feed-item:last-child {
+    border-bottom: none;
+}
+
+.activity-feed-item.activity {
+    border-left: 3px solid var(--primary-color);
+}
+
+.activity-feed-item.comment {
+    border-left: 3px solid var(--success-color);
+}
+
+.activity-feed-item.reply {
+    border-left: 3px solid var(--info-color);
+}
+
+.activity-feed-item.reaction {
+    border-left: 3px solid var(--warning-color);
+}
+
+.activity-feed-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.activity-feed-item.activity .activity-feed-icon {
+    background: var(--primary-color-light);
+    color: var(--primary-color);
+}
+
+.activity-feed-item.comment .activity-feed-icon {
+    background: var(--success-color-light);
+    color: var(--success-color);
+}
+
+.activity-feed-item.reply .activity-feed-icon {
+    background: var(--info-color-light);
+    color: var(--info-color);
+}
+
+.activity-feed-item.reaction .activity-feed-icon {
+    background: var(--warning-color-light);
+    color: var(--warning-color);
+}
+
+.activity-feed-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-feed-description {
+    color: var(--text-color);
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.activity-feed-time {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.activity-feed-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.activity-feed-empty i {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
 .activity-log-list {
     max-height: 400px;
     overflow-y: auto;

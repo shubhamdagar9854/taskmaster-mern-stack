@@ -1113,38 +1113,81 @@ class TaskManager {
         }
     }
 
-    showActivityModal(taskId) {
+    async showActivityModal(taskId) {
         const task = this.tasks.find(t => t._id === taskId);
         if (!task) return;
 
-        const activityLogList = document.getElementById('activityLogList');
-        activityLogList.innerHTML = '';
+        const activityFeedList = document.getElementById('activityFeedList');
+        activityFeedList.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading activity...</div>';
 
-        if (!task.activityLog || task.activityLog.length === 0) {
-            activityLogList.innerHTML = '<div class="empty-state"><p>No activity recorded yet.</p></div>';
-        } else {
-            // Sort by timestamp descending (newest first)
-            const sortedLog = [...task.activityLog].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            sortedLog.forEach(activity => {
-                const icon = this.getActivityIcon(activity.action);
-                const time = new Date(activity.timestamp).toLocaleString();
-                
-                const activityItem = document.createElement('div');
-                activityItem.className = 'activity-item';
-                activityItem.innerHTML = `
-                    <div class="activity-icon ${activity.action}">${icon}</div>
-                    <div class="activity-content">
-                        <div class="activity-action">${this.capitalizeFirst(activity.action)}</div>
-                        <div class="activity-description">${activity.description}</div>
-                        <div class="activity-time">${time}</div>
-                    </div>
-                `;
-                activityLogList.appendChild(activityItem);
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/activity`, {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
             });
+
+            if (response.ok) {
+                const activityFeed = await response.json();
+                this.renderActivityFeed(activityFeed);
+            } else {
+                activityFeedList.innerHTML = '<div class="activity-feed-empty"><i class="fas fa-exclamation-circle"></i><p>Failed to load activity</p></div>';
+            }
+        } catch (error) {
+            console.error('Load activity feed error:', error);
+            activityFeedList.innerHTML = '<div class="activity-feed-empty"><i class="fas fa-exclamation-circle"></i><p>Network error</p></div>';
         }
 
         document.getElementById('activityModal').classList.remove('hidden');
+    }
+
+    renderActivityFeed(activityFeed) {
+        const activityFeedList = document.getElementById('activityFeedList');
+        activityFeedList.innerHTML = '';
+
+        if (!activityFeed || activityFeed.length === 0) {
+            activityFeedList.innerHTML = '<div class="activity-feed-empty"><i class="fas fa-clock"></i><p>No activity recorded yet</p></div>';
+            return;
+        }
+
+        activityFeed.forEach(activity => {
+            const icon = this.getActivityFeedIcon(activity.type);
+            const time = this.formatTimeAgo(activity.timestamp);
+
+            const feedItem = document.createElement('div');
+            feedItem.className = `activity-feed-item ${activity.type}`;
+            feedItem.innerHTML = `
+                <div class="activity-feed-icon">${icon}</div>
+                <div class="activity-feed-content">
+                    <div class="activity-feed-description">${activity.description}</div>
+                    <div class="activity-feed-time">${time}</div>
+                </div>
+            `;
+            activityFeedList.appendChild(feedItem);
+        });
+    }
+
+    getActivityFeedIcon(type) {
+        const icons = {
+            activity: '<i class="fas fa-history"></i>',
+            comment: '<i class="fas fa-comment"></i>',
+            reply: '<i class="fas fa-reply"></i>',
+            reaction: '<i class="fas fa-heart"></i>'
+        };
+        return icons[type] || '<i class="fas fa-circle"></i>';
+    }
+
+    formatTimeAgo(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffMs = now - time;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return time.toLocaleDateString();
     }
 
     hideActivityModal() {

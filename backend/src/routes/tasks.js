@@ -777,6 +777,86 @@ router.get('/:id/reminder/history', authenticateToken, async (req, res) => {
   }
 });
 
+// Get task activity feed
+router.get('/:id/activity', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Combine activity log with comments for comprehensive feed
+    const activityFeed = [];
+
+    // Add activity log entries
+    if (task.activityLog && task.activityLog.length > 0) {
+      task.activityLog.forEach(log => {
+        activityFeed.push({
+          type: 'activity',
+          action: log.action,
+          description: log.description,
+          timestamp: log.timestamp
+        });
+      });
+    }
+
+    // Add comment entries
+    if (task.comments && task.comments.length > 0) {
+      task.comments.forEach(comment => {
+        activityFeed.push({
+          type: 'comment',
+          action: 'comment_added',
+          description: `${comment.author} commented: "${comment.text.substring(0, 50)}${comment.text.length > 50 ? '...' : ''}"`,
+          timestamp: comment.createdAt,
+          author: comment.author,
+          commentId: comment._id
+        });
+
+        // Add reply entries
+        if (comment.replies && comment.replies.length > 0) {
+          comment.replies.forEach(reply => {
+            activityFeed.push({
+              type: 'reply',
+              action: 'reply_added',
+              description: `${reply.author} replied: "${reply.text.substring(0, 50)}${reply.text.length > 50 ? '...' : ''}"`,
+              timestamp: reply.createdAt,
+              author: reply.author,
+              commentId: comment._id
+            });
+          });
+        }
+      });
+    }
+
+    // Add reaction entries
+    if (task.comments && task.comments.length > 0) {
+      task.comments.forEach(comment => {
+        if (comment.reactions && comment.reactions.length > 0) {
+          comment.reactions.forEach(reaction => {
+            activityFeed.push({
+              type: 'reaction',
+              action: 'reaction_added',
+              description: `${reaction.user} reacted with ${reaction.emoji}`,
+              timestamp: reaction.createdAt,
+              author: reaction.user,
+              commentId: comment._id
+            });
+          });
+        }
+      });
+    }
+
+    // Sort by timestamp (newest first)
+    activityFeed.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    res.json(activityFeed);
+  } catch (error) {
+    console.error('Get activity feed error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {
