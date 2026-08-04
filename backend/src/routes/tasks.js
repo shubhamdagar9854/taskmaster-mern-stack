@@ -857,6 +857,85 @@ router.get('/:id/activity', authenticateToken, async (req, res) => {
   }
 });
 
+// Get comprehensive task statistics
+router.get('/stats/comprehensive', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId });
+
+    const stats = {
+      total: tasks.length,
+      completed: tasks.filter(t => t.completed).length,
+      active: tasks.filter(t => !t.completed).length,
+      favorites: tasks.filter(t => t.isFavorite).length,
+      archived: tasks.filter(t => t.isArchived).length,
+      withSubtasks: tasks.filter(t => t.subtasks && t.subtasks.length > 0).length,
+      withAttachments: tasks.filter(t => t.attachments && t.attachments.length > 0).length,
+      withComments: tasks.filter(t => t.comments && t.comments.length > 0).length,
+      withDependencies: tasks.filter(t => t.dependencies && t.dependencies.length > 0).length,
+      withReminders: tasks.filter(t => t.reminder && t.reminder.enabled).length,
+      recurring: tasks.filter(t => t.recurring && t.recurring.enabled).length,
+      shared: tasks.filter(t => t.sharedWith && t.sharedWith.length > 0).length,
+      templates: tasks.filter(t => t.isTemplate).length,
+      byPriority: {
+        low: tasks.filter(t => t.priority === 'low').length,
+        medium: tasks.filter(t => t.priority === 'medium').length,
+        high: tasks.filter(t => t.priority === 'high').length
+      },
+      byCategory: {
+        work: tasks.filter(t => t.category === 'work').length,
+        personal: tasks.filter(t => t.category === 'personal').length,
+        shopping: tasks.filter(t => t.category === 'shopping').length,
+        health: tasks.filter(t => t.category === 'health').length,
+        finance: tasks.filter(t => t.category === 'finance').length,
+        other: tasks.filter(t => t.category === 'other').length
+      },
+      byDueDate: {
+        overdue: tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && !t.completed).length,
+        dueToday: tasks.filter(t => {
+          if (!t.dueDate) return false;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const dueDate = new Date(t.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === today.getTime() && !t.completed;
+        }).length,
+        dueThisWeek: tasks.filter(t => {
+          if (!t.dueDate) return false;
+          const today = new Date();
+          const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+          return new Date(t.dueDate) >= today && new Date(t.dueDate) <= weekFromNow && !t.completed;
+        }).length,
+        noDueDate: tasks.filter(t => !t.dueDate).length
+      },
+      timeTracking: {
+        withTimeTracking: tasks.filter(t => t.timeTracking && t.timeTracking.enabled).length,
+        totalTimeSpent: tasks.reduce((sum, t) => sum + (t.timeTracking?.timeSpent || 0), 0),
+        averageTimeSpent: tasks.length > 0 ? Math.round(tasks.reduce((sum, t) => sum + (t.timeTracking?.timeSpent || 0), 0) / tasks.length) : 0
+      },
+      subtasks: {
+        totalSubtasks: tasks.reduce((sum, t) => sum + (t.subtasks?.length || 0), 0),
+        completedSubtasks: tasks.reduce((sum, t) => sum + (t.subtasks?.filter(s => s.completed).length || 0), 0)
+      },
+      comments: {
+        totalComments: tasks.reduce((sum, t) => sum + (t.comments?.length || 0), 0),
+        totalReplies: tasks.reduce((sum, t) => {
+          if (!t.comments) return sum;
+          return sum + t.comments.reduce((replySum, c) => replySum + (c.replies?.length || 0), 0);
+        }, 0)
+      },
+      attachments: {
+        totalAttachments: tasks.reduce((sum, t) => sum + (t.attachments?.length || 0), 0)
+      },
+      completionRate: tasks.length > 0 ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Get comprehensive stats error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {

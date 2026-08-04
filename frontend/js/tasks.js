@@ -2111,9 +2111,257 @@ class TaskManager {
     }
 
     // Statistics Methods
-    showStatsModal() {
-        this.calculateStatistics();
+    async showStatsModal() {
+        const statsContent = document.getElementById('comprehensiveStatsContent');
+        statsContent.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading statistics...</div>';
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/stats/comprehensive', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const stats = await response.json();
+                this.renderComprehensiveStats(stats);
+            } else {
+                statsContent.innerHTML = '<div class="comprehensive-stats-empty"><i class="fas fa-exclamation-circle"></i><p>Failed to load statistics</p></div>';
+            }
+        } catch (error) {
+            console.error('Load comprehensive stats error:', error);
+            statsContent.innerHTML = '<div class="comprehensive-stats-empty"><i class="fas fa-exclamation-circle"></i><p>Network error</p></div>';
+        }
+
         document.getElementById('statsModal').classList.remove('hidden');
+    }
+
+    renderComprehensiveStats(stats) {
+        const statsContent = document.getElementById('comprehensiveStatsContent');
+        statsContent.innerHTML = '';
+
+        if (!stats) {
+            statsContent.innerHTML = '<div class="comprehensive-stats-empty"><i class="fas fa-chart-bar"></i><p>No statistics available</p></div>';
+            return;
+        }
+
+        // Overview Section
+        let html = `
+            <div class="stats-section">
+                <h4 class="stats-section-title">📊 Overview</h4>
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-card-value">${stats.total}</div>
+                        <div class="stat-card-label">Total Tasks</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-card-value">${stats.completed}</div>
+                        <div class="stat-card-label">Completed</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-card-value">${stats.active}</div>
+                        <div class="stat-card-label">Active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.completionRate}%</div>
+                        <div class="stat-card-label">Completion Rate</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Task Features Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">🎯 Task Features</h4>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.favorites}</div>
+                        <div class="stat-card-label">Favorites</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.archived}</div>
+                        <div class="stat-card-label">Archived</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.withSubtasks}</div>
+                        <div class="stat-card-label">With Subtasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.withAttachments}</div>
+                        <div class="stat-card-label">With Attachments</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.withComments}</div>
+                        <div class="stat-card-label">With Comments</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.withDependencies}</div>
+                        <div class="stat-card-label">With Dependencies</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.withReminders}</div>
+                        <div class="stat-card-label">With Reminders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.recurring}</div>
+                        <div class="stat-card-label">Recurring</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.shared}</div>
+                        <div class="stat-card-label">Shared</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.templates}</div>
+                        <div class="stat-card-label">Templates</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Priority Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">🎨 By Priority</h4>
+                <div class="stats-row">
+                    <span class="stats-row-label">Low Priority</span>
+                    <span class="stats-row-value">${stats.byPriority.low}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">Medium Priority</span>
+                    <span class="stats-row-value">${stats.byPriority.medium}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">High Priority</span>
+                    <span class="stats-row-value">${stats.byPriority.high}</span>
+                </div>
+            </div>
+        `;
+
+        // Category Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">📂 By Category</h4>
+                <div class="stats-row">
+                    <span class="stats-row-label">💼 Work</span>
+                    <span class="stats-row-value">${stats.byCategory.work}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">👤 Personal</span>
+                    <span class="stats-row-value">${stats.byCategory.personal}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">🛒 Shopping</span>
+                    <span class="stats-row-value">${stats.byCategory.shopping}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">🏥 Health</span>
+                    <span class="stats-row-value">${stats.byCategory.health}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">💰 Finance</span>
+                    <span class="stats-row-value">${stats.byCategory.finance}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">📌 Other</span>
+                    <span class="stats-row-value">${stats.byCategory.other}</span>
+                </div>
+            </div>
+        `;
+
+        // Due Date Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">📅 By Due Date</h4>
+                <div class="stats-row">
+                    <span class="stats-row-label">⚠️ Overdue</span>
+                    <span class="stats-row-value danger">${stats.byDueDate.overdue}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">📆 Due Today</span>
+                    <span class="stats-row-value warning">${stats.byDueDate.dueToday}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">📋 Due This Week</span>
+                    <span class="stats-row-value">${stats.byDueDate.dueThisWeek}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">📅 No Due Date</span>
+                    <span class="stats-row-value">${stats.byDueDate.noDueDate}</span>
+                </div>
+            </div>
+        `;
+
+        // Time Tracking Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">⏱️ Time Tracking</h4>
+                <div class="stats-row">
+                    <span class="stats-row-label">With Time Tracking</span>
+                    <span class="stats-row-value">${stats.timeTracking.withTimeTracking}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">Total Time Spent</span>
+                    <span class="stats-row-value">${this.formatTime(stats.timeTracking.totalTimeSpent)}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">Average Time Spent</span>
+                    <span class="stats-row-value">${this.formatTime(stats.timeTracking.averageTimeSpent)}</span>
+                </div>
+            </div>
+        `;
+
+        // Subtasks Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">✅ Subtasks</h4>
+                <div class="stats-row">
+                    <span class="stats-row-label">Total Subtasks</span>
+                    <span class="stats-row-value">${stats.subtasks.totalSubtasks}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">Completed Subtasks</span>
+                    <span class="stats-row-value success">${stats.subtasks.completedSubtasks}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">Subtask Completion Rate</span>
+                    <span class="stats-row-value">${stats.subtasks.totalSubtasks > 0 ? Math.round((stats.subtasks.completedSubtasks / stats.subtasks.totalSubtasks) * 100) : 0}%</span>
+                </div>
+            </div>
+        `;
+
+        // Comments Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">💬 Comments</h4>
+                <div class="stats-row">
+                    <span class="stats-row-label">Total Comments</span>
+                    <span class="stats-row-value">${stats.comments.totalComments}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stats-row-label">Total Replies</span>
+                    <span class="stats-row-value">${stats.comments.totalReplies}</span>
+                </div>
+            </div>
+        `;
+
+        // Attachments Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">📎 Attachments</h4>
+                <div class="stats-row">
+                    <span class="stats-row-label">Total Attachments</span>
+                    <span class="stats-row-value">${stats.attachments.totalAttachments}</span>
+                </div>
+            </div>
+        `;
+
+        statsContent.innerHTML = html;
+    }
+
+    formatTime(seconds) {
+        if (seconds < 60) return `${seconds}s`;
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+        return `${Math.floor(seconds / 86400)}d`;
     }
 
     hideStatsModal() {
