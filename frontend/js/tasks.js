@@ -16,6 +16,7 @@ class TaskManager {
         this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
         this.bulkMode = false; // Track bulk selection mode
         this.advancedSearchActive = false; // Track if advanced search is active
+        this.currentMoveCategoryTaskId = null; // Track task for category move
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -868,6 +869,12 @@ class TaskManager {
                         <button class="btn btn-outline btn-sm" data-action="activity">
                             <i class="fas fa-history"></i>
                         </button>
+                        <button class="btn btn-outline btn-sm" data-action="duplicate">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm" data-action="move-category">
+                            <i class="fas fa-folder"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="edit">
                             <i class="fas fa-edit"></i> Edit
                         </button>
@@ -947,6 +954,12 @@ class TaskManager {
                     break;
                 case 'activity':
                     this.showActivityModal(taskId);
+                    break;
+                case 'duplicate':
+                    this.duplicateTask(taskId);
+                    break;
+                case 'move-category':
+                    this.showMoveCategoryModal(taskId);
                     break;
             }
         };
@@ -1934,6 +1947,66 @@ class TaskManager {
             console.error('Get reminder history error:', error);
         }
         return null;
+    }
+
+    async duplicateTask(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/duplicate`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const duplicatedTask = await response.json();
+                this.tasks.unshift(duplicatedTask);
+                this.renderTasks();
+                this.showMessage('Task duplicated successfully!', 'success');
+            } else {
+                this.showMessage('Failed to duplicate task', 'error');
+            }
+        } catch (error) {
+            console.error('Duplicate task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    showMoveCategoryModal(taskId) {
+        this.currentMoveCategoryTaskId = taskId;
+        const category = prompt('Enter new category (work, personal, shopping, health, finance, other):');
+        
+        if (category && ['work', 'personal', 'shopping', 'health', 'finance', 'other'].includes(category.toLowerCase())) {
+            this.moveTaskCategory(taskId, category.toLowerCase());
+        } else if (category) {
+            this.showMessage('Invalid category. Please use: work, personal, shopping, health, finance, or other', 'error');
+        }
+    }
+
+    async moveTaskCategory(taskId, category) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/move-category`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ category })
+            });
+
+            if (response.ok) {
+                const updatedTask = await response.json();
+                const index = this.tasks.findIndex(t => t._id === taskId);
+                if (index !== -1) {
+                    this.tasks[index] = updatedTask;
+                }
+                this.renderTasks();
+                this.showMessage('Task moved successfully!', 'success');
+            } else {
+                this.showMessage('Failed to move task', 'error');
+            }
+        } catch (error) {
+            console.error('Move category error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     escapeHtml(text) {

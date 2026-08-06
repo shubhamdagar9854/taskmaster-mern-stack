@@ -936,6 +936,65 @@ router.get('/stats/comprehensive', authenticateToken, async (req, res) => {
   }
 });
 
+// Duplicate task
+router.post('/:id/duplicate', authenticateToken, async (req, res) => {
+  try {
+    const originalTask = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!originalTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Create a duplicate task
+    const duplicateTask = new Task({
+      title: `${originalTask.title} (Copy)`,
+      description: originalTask.description,
+      priority: originalTask.priority,
+      dueDate: originalTask.dueDate,
+      category: originalTask.category,
+      notes: originalTask.notes,
+      subtasks: originalTask.subtasks,
+      tags: originalTask.tags,
+      user: req.userId,
+      completed: false,
+      isFavorite: false,
+      isArchived: false
+    });
+
+    const savedTask = await duplicateTask.save();
+
+    logActivity(savedTask._id, req.userId, 'task_duplicated', `Task duplicated from ${originalTask.title}`);
+
+    res.json(savedTask);
+  } catch (error) {
+    console.error('Duplicate task error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Move task to category
+router.patch('/:id/move-category', authenticateToken, async (req, res) => {
+  try {
+    const { category } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const oldCategory = task.category;
+    task.category = category;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'category_changed', `Task moved from ${oldCategory} to ${category}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Move category error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {
