@@ -995,6 +995,105 @@ router.patch('/:id/move-category', authenticateToken, async (req, res) => {
   }
 });
 
+// Create template from task
+router.post('/:id/create-template', authenticateToken, async (req, res) => {
+  try {
+    const originalTask = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!originalTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Create a template task
+    const templateTask = new Task({
+      title: `${originalTask.title} (Template)`,
+      description: originalTask.description,
+      priority: originalTask.priority,
+      category: originalTask.category,
+      notes: originalTask.notes,
+      subtasks: originalTask.subtasks,
+      tags: originalTask.tags,
+      user: req.userId,
+      completed: false,
+      isFavorite: false,
+      isArchived: false,
+      isTemplate: true
+    });
+
+    const savedTemplate = await templateTask.save();
+
+    logActivity(savedTemplate._id, req.userId, 'template_created', `Template created from ${originalTask.title}`);
+
+    res.json(savedTemplate);
+  } catch (error) {
+    console.error('Create template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all templates
+router.get('/templates', authenticateToken, async (req, res) => {
+  try {
+    const templates = await Task.find({ user: req.userId, isTemplate: true });
+    res.json(templates);
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create task from template
+router.post('/templates/:id/create-task', authenticateToken, async (req, res) => {
+  try {
+    const template = await Task.findOne({ _id: req.params.id, user: req.userId, isTemplate: true });
+
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    // Create a new task from template
+    const newTask = new Task({
+      title: template.title.replace(' (Template)', ''),
+      description: template.description,
+      priority: template.priority,
+      category: template.category,
+      notes: template.notes,
+      subtasks: template.subtasks,
+      tags: template.tags,
+      user: req.userId,
+      completed: false,
+      isFavorite: false,
+      isArchived: false,
+      isTemplate: false
+    });
+
+    const savedTask = await newTask.save();
+
+    logActivity(savedTask._id, req.userId, 'task_from_template', `Task created from template ${template.title}`);
+
+    res.json(savedTask);
+  } catch (error) {
+    console.error('Create task from template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete template
+router.delete('/templates/:id', authenticateToken, async (req, res) => {
+  try {
+    const template = await Task.findOneAndDelete({ _id: req.params.id, user: req.userId, isTemplate: true });
+
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    res.json({ message: 'Template deleted successfully' });
+  } catch (error) {
+    console.error('Delete template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {

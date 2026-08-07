@@ -875,6 +875,9 @@ class TaskManager {
                         <button class="btn btn-outline btn-sm" data-action="move-category">
                             <i class="fas fa-folder"></i>
                         </button>
+                        <button class="btn btn-outline btn-sm" data-action="create-template">
+                            <i class="fas fa-layer-group"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="edit">
                             <i class="fas fa-edit"></i> Edit
                         </button>
@@ -960,6 +963,9 @@ class TaskManager {
                     break;
                 case 'move-category':
                     this.showMoveCategoryModal(taskId);
+                    break;
+                case 'create-template':
+                    this.createTemplateFromTask(taskId);
                     break;
             }
         };
@@ -2005,6 +2011,144 @@ class TaskManager {
             }
         } catch (error) {
             console.error('Move category error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async createTemplateFromTask(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/create-template`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const template = await response.json();
+                this.showMessage('Template created successfully!', 'success');
+                this.loadTemplates();
+            } else {
+                this.showMessage('Failed to create template', 'error');
+            }
+        } catch (error) {
+            console.error('Create template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async loadTemplates() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/templates', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.templates = await response.json();
+            }
+        } catch (error) {
+            console.error('Load templates error:', error);
+        }
+    }
+
+    showTemplatesModal() {
+        this.loadTemplates();
+        this.renderTemplates();
+        document.getElementById('templatesModal').classList.remove('hidden');
+    }
+
+    hideTemplatesModal() {
+        document.getElementById('templatesModal').classList.add('hidden');
+    }
+
+    renderTemplates() {
+        const templatesList = document.getElementById('templatesList');
+        templatesList.innerHTML = '';
+
+        if (this.templates.length === 0) {
+            templatesList.innerHTML = '<div class="empty-state"><i class="fas fa-layer-group"></i><p>No templates yet. Create a template from any task!</p></div>';
+            return;
+        }
+
+        this.templates.forEach(template => {
+            const templateElement = document.createElement('div');
+            templateElement.className = 'template-item';
+            templateElement.innerHTML = `
+                <div class="template-info">
+                    <h4>${this.escapeHtml(template.title)}</h4>
+                    <p class="template-meta">
+                        <span class="priority-badge priority-${template.priority}">${template.priority}</span>
+                        <span class="category-badge">${template.category}</span>
+                        ${template.subtasks && template.subtasks.length > 0 ? `<span class="subtasks-count"><i class="fas fa-check-square"></i> ${template.subtasks.length} subtasks</span>` : ''}
+                    </p>
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-primary btn-sm" data-template-action="use" data-template-id="${template._id}">
+                        <i class="fas fa-plus"></i> Use
+                    </button>
+                    <button class="btn btn-danger btn-sm" data-template-action="delete" data-template-id="${template._id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            templatesList.appendChild(templateElement);
+        });
+
+        // Add event listeners for template actions
+        templatesList.onclick = (e) => {
+            const action = e.target.dataset.templateAction || e.target.closest('[data-template-action]')?.dataset.templateAction;
+            const templateId = e.target.dataset.templateId || e.target.closest('[data-template-id]')?.dataset.templateId;
+
+            if (action && templateId) {
+                if (action === 'use') {
+                    this.createTaskFromTemplate(templateId);
+                } else if (action === 'delete') {
+                    this.deleteTemplate(templateId);
+                }
+            }
+        };
+    }
+
+    async createTaskFromTemplate(templateId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/templates/${templateId}/create-task`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const newTask = await response.json();
+                this.tasks.unshift(newTask);
+                this.renderTasks();
+                this.showMessage('Task created from template!', 'success');
+                this.hideTemplatesModal();
+            } else {
+                this.showMessage('Failed to create task from template', 'error');
+            }
+        } catch (error) {
+            console.error('Create task from template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async deleteTemplate(templateId) {
+        if (!confirm('Are you sure you want to delete this template?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/templates/${templateId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.templates = this.templates.filter(t => t._id !== templateId);
+                this.renderTemplates();
+                this.showMessage('Template deleted successfully!', 'success');
+            } else {
+                this.showMessage('Failed to delete template', 'error');
+            }
+        } catch (error) {
+            console.error('Delete template error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
     }
