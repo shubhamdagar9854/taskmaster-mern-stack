@@ -523,6 +523,70 @@
                     </div>
                 </div>
 
+                <!-- Notes Modal -->
+                <div id="notesModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>Task Notes</h3>
+                            <button id="closeNotesModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="notes-toolbar">
+                                <button class="btn btn-outline btn-sm" data-format="bold" title="Bold">
+                                    <i class="fas fa-bold"></i>
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-format="italic" title="Italic">
+                                    <i class="fas fa-italic"></i>
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-format="underline" title="Underline">
+                                    <i class="fas fa-underline"></i>
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-format="strikethrough" title="Strikethrough">
+                                    <i class="fas fa-strikethrough"></i>
+                                </button>
+                                <div class="toolbar-divider"></div>
+                                <button class="btn btn-outline btn-sm" data-format="insertUnorderedList" title="Bullet List">
+                                    <i class="fas fa-list-ul"></i>
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-format="insertOrderedList" title="Numbered List">
+                                    <i class="fas fa-list-ol"></i>
+                                </button>
+                                <div class="toolbar-divider"></div>
+                                <button class="btn btn-outline btn-sm" data-format="formatBlock-h1" title="Heading 1">
+                                    <i class="fas fa-heading"></i> H1
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-format="formatBlock-h2" title="Heading 2">
+                                    <i class="fas fa-heading"></i> H2
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-format="formatBlock-h3" title="Heading 3">
+                                    <i class="fas fa-heading"></i> H3
+                                </button>
+                                <div class="toolbar-divider"></div>
+                                <button class="btn btn-outline btn-sm" id="showNotesHistoryBtn" title="Notes History">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                            </div>
+                            <div id="notesEditor" contenteditable="true" class="notes-editor"></div>
+                            <div id="notesHistoryPanel" class="notes-history-panel hidden">
+                                <div class="notes-history-header">
+                                    <h4>Notes History</h4>
+                                    <button id="hideNotesHistoryBtn" class="btn btn-sm btn-outline">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div id="notesHistoryList" class="notes-history-list"></div>
+                            </div>
+                            <div class="notes-actions">
+                                <button id="saveNotesBtn" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Notes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Templates Modal -->
                 <div id="templatesModal" class="modal hidden">
                     <div class="modal-content">

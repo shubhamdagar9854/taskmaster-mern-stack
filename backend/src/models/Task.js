@@ -29,6 +29,25 @@ const taskSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  formattedNotes: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  notesHistory: [{
+    notes: {
+      type: String,
+      trim: true
+    },
+    formattedNotes: {
+      type: String,
+      trim: true
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   reminder: {
     enabled: { type: Boolean, default: false },
     time: { type: Date },

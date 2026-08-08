@@ -1094,6 +1094,90 @@ router.delete('/templates/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Update task notes with history
+router.patch('/:id/notes', authenticateToken, async (req, res) => {
+  try {
+    const { notes, formattedNotes } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Save current notes to history before updating
+    if (task.notes && task.notes.trim() !== '') {
+      if (!task.notesHistory) {
+        task.notesHistory = [];
+      }
+      task.notesHistory.push({
+        notes: task.notes,
+        formattedNotes: task.formattedNotes || task.notes,
+        updatedAt: new Date()
+      });
+
+      // Keep only last 10 versions
+      if (task.notesHistory.length > 10) {
+        task.notesHistory = task.notesHistory.slice(-10);
+      }
+    }
+
+    task.notes = notes;
+    task.formattedNotes = formattedNotes || notes;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'notes_updated', 'Task notes updated');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Update notes error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get notes history
+router.get('/:id/notes-history', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.json(task.notesHistory || []);
+  } catch (error) {
+    console.error('Get notes history error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Restore notes from history
+router.patch('/:id/notes/restore/:historyIndex', authenticateToken, async (req, res) => {
+  try {
+    const { historyIndex } = req.params;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (!task.notesHistory || !task.notesHistory[historyIndex]) {
+      return res.status(404).json({ message: 'History version not found' });
+    }
+
+    const historyItem = task.notesHistory[historyIndex];
+    task.notes = historyItem.notes;
+    task.formattedNotes = historyItem.formattedNotes;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'notes_restored', `Notes restored from version ${parseInt(historyIndex) + 1}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Restore notes error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {

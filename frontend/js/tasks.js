@@ -17,6 +17,7 @@ class TaskManager {
         this.bulkMode = false; // Track bulk selection mode
         this.advancedSearchActive = false; // Track if advanced search is active
         this.currentMoveCategoryTaskId = null; // Track task for category move
+        this.currentNotesTaskId = null; // Track current task for notes editing
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -147,6 +148,32 @@ class TaskManager {
 
         document.getElementById('closeTemplatesModal').addEventListener('click', () => {
             this.hideTemplatesModal();
+        });
+
+        // Notes modal
+        document.getElementById('closeNotesModal').addEventListener('click', () => {
+            this.hideNotesModal();
+        });
+
+        document.getElementById('saveNotesBtn').addEventListener('click', () => {
+            this.saveNotes();
+        });
+
+        document.getElementById('showNotesHistoryBtn').addEventListener('click', () => {
+            this.showNotesHistory();
+        });
+
+        document.getElementById('hideNotesHistoryBtn').addEventListener('click', () => {
+            this.hideNotesHistory();
+        });
+
+        // Notes toolbar formatting
+        document.querySelectorAll('.notes-toolbar [data-format]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const format = e.currentTarget.dataset.format;
+                this.applyFormat(format);
+            });
         });
 
         document.getElementById('createTemplateBtn').addEventListener('click', () => {
@@ -841,7 +868,7 @@ class TaskManager {
                     <span class="category-badge ${task.category || 'other'}">${this.getCategoryIcon(task.category)} ${task.category || 'other'}</span>
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
-                    ${task.notes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${this.escapeHtml(task.notes)}</div>` : ''}
+                    ${task.formattedNotes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${task.formattedNotes}</div>` : ''}
                     ${this.renderSubtasksDisplay(task.subtasks)}
                     ${this.renderReminderBadge(task.reminder)}
                     ${this.renderTagsDisplay(task.tags)}
@@ -868,6 +895,9 @@ class TaskManager {
                         </button>
                         <button class="btn btn-outline btn-sm" data-action="activity">
                             <i class="fas fa-history"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm" data-action="notes">
+                            <i class="fas fa-sticky-note"></i>
                         </button>
                         <button class="btn btn-outline btn-sm" data-action="duplicate">
                             <i class="fas fa-copy"></i>
@@ -957,6 +987,9 @@ class TaskManager {
                     break;
                 case 'activity':
                     this.showActivityModal(taskId);
+                    break;
+                case 'notes':
+                    this.showNotesModal(taskId);
                     break;
                 case 'duplicate':
                     this.duplicateTask(taskId);
@@ -2151,6 +2184,161 @@ class TaskManager {
             console.error('Delete template error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    showNotesModal(taskId) {
+        this.currentNotesTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        const editor = document.getElementById('notesEditor');
+        editor.innerHTML = task.formattedNotes || task.notes || '';
+        document.getElementById('notesHistoryPanel').classList.add('hidden');
+        document.getElementById('notesModal').classList.remove('hidden');
+    }
+
+    hideNotesModal() {
+        document.getElementById('notesModal').classList.add('hidden');
+        this.currentNotesTaskId = null;
+    }
+
+    applyFormat(format) {
+        const editor = document.getElementById('notesEditor');
+        editor.focus();
+
+        if (format.startsWith('formatBlock')) {
+            const blockType = format.split('-')[1];
+            document.execCommand('formatBlock', false, blockType);
+        } else {
+            document.execCommand(format, false, null);
+        }
+    }
+
+    async saveNotes() {
+        if (!this.currentNotesTaskId) return;
+
+        const editor = document.getElementById('notesEditor');
+        const formattedNotes = editor.innerHTML;
+        const notes = editor.innerText;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentNotesTaskId}/notes`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ notes, formattedNotes })
+            });
+
+            if (response.ok) {
+                const updatedTask = await response.json();
+                const index = this.tasks.findIndex(t => t._id === this.currentNotesTaskId);
+                if (index !== -1) {
+                    this.tasks[index] = updatedTask;
+                }
+                this.renderTasks();
+                this.showMessage('Notes saved successfully!', 'success');
+                this.hideNotesModal();
+            } else {
+                this.showMessage('Failed to save notes', 'error');
+            }
+        } catch (error) {
+            console.error('Save notes error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async showNotesHistory() {
+        if (!this.currentNotesTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentNotesTaskId}/notes-history`, {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const history = await response.json();
+                this.renderNotesHistory(history);
+                document.getElementById('notesHistoryPanel').classList.remove('hidden');
+            } else {
+                this.showMessage('Failed to load notes history', 'error');
+            }
+        } catch (error) {
+            console.error('Load notes history error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    hideNotesHistory() {
+        document.getElementById('notesHistoryPanel').classList.add('hidden');
+    }
+
+    renderNotesHistory(history) {
+        const historyList = document.getElementById('notesHistoryList');
+        historyList.innerHTML = '';
+
+        if (!history || history.length === 0) {
+            historyList.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>No history available</p></div>';
+            return;
+       }
+
+        history.forEach((item, index) => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'notes-history-item';
+            historyItem.innerHTML = `
+                <div class="notes-history-item-header">
+                    <span class="notes-history-item-version">Version ${history.length - index}</span>
+                    <span class="notes-history-item-date">${this.formatTimeAgo(item.updatedAt)}</span>
+                </div>
+                <div class="notes-history-item-preview">${this.escapeHtml(item.notes.substring(0, 100))}${item.notes.length > 100 ? '...' : ''}</div>
+            `;
+            historyItem.addEventListener('click', () => {
+                this.restoreNotes(index);
+            });
+            historyList.appendChild(historyItem);
+        });
+    }
+
+    async restoreNotes(historyIndex) {
+        if (!this.currentNotesTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentNotesTaskId}/notes/restore/${historyIndex}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const updatedTask = await response.json();
+                const index = this.tasks.findIndex(t => t._id === this.currentNotesTaskId);
+                if (index !== -1) {
+                    this.tasks[index] = updatedTask;
+                }
+                const editor = document.getElementById('notesEditor');
+                editor.innerHTML = updatedTask.formattedNotes || updatedTask.notes || '';
+                this.renderTasks();
+                this.showMessage('Notes restored successfully!', 'success');
+            } else {
+                this.showMessage('Failed to restore notes', 'error');
+            }
+        } catch (error) {
+            console.error('Restore notes error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    formatTimeAgo(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffMs = now - time;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return time.toLocaleDateString();
     }
 
     escapeHtml(text) {
