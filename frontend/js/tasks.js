@@ -18,6 +18,8 @@ class TaskManager {
         this.advancedSearchActive = false; // Track if advanced search is active
         this.currentMoveCategoryTaskId = null; // Track task for category move
         this.currentNotesTaskId = null; // Track current task for notes editing
+        this.currentCalendarDate = new Date(); // Track current calendar date
+        this.calendarTasks = {}; // Store tasks grouped by date for calendar
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -3062,7 +3064,8 @@ class TaskManager {
     }
 
     // Calendar Methods
-    showCalendarModal() {
+    async showCalendarModal() {
+        await this.loadCalendarTasks();
         this.renderCalendar();
         document.getElementById('calendarModal').classList.remove('hidden');
     }
@@ -3073,7 +3076,27 @@ class TaskManager {
 
     changeMonth(delta) {
         this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + delta);
-        this.renderCalendar();
+        this.loadCalendarTasks().then(() => this.renderCalendar());
+    }
+
+    async loadCalendarTasks() {
+        const year = this.currentCalendarDate.getFullYear();
+        const month = this.currentCalendarDate.getMonth();
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/calendar?year=${year}&month=${month}`, {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.calendarTasks = await response.json();
+            } else {
+                this.calendarTasks = {};
+            }
+        } catch (error) {
+            console.error('Load calendar tasks error:', error);
+            this.calendarTasks = {};
+        }
     }
 
     renderCalendar() {
@@ -3094,19 +3117,6 @@ class TaskManager {
         // Get previous month's last days for padding
         const prevMonthLastDay = new Date(year, month, 0).getDate();
         
-        // Get tasks grouped by date
-        const tasksByDate = {};
-        this.tasks.forEach(task => {
-            if (task.dueDate) {
-                const taskDate = new Date(task.dueDate);
-                const dateKey = `${taskDate.getFullYear()}-${taskDate.getMonth()}-${taskDate.getDate()}`;
-                if (!tasksByDate[dateKey]) {
-                    tasksByDate[dateKey] = [];
-                }
-                tasksByDate[dateKey].push(task);
-            }
-        });
-        
         // Render calendar days
         const calendarDays = document.getElementById('calendarDays');
         calendarDays.innerHTML = '';
@@ -3124,8 +3134,8 @@ class TaskManager {
             const isToday = today.getDate() === day && 
                            today.getMonth() === month && 
                            today.getFullYear() === year;
-            const dateKey = `${year}-${month}-${day}`;
-            const dayTasks = tasksByDate[dateKey] || [];
+            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayTasks = this.calendarTasks[dateKey] || [];
             const dayElement = this.createCalendarDay(day, false, dayTasks, year, month, isToday);
             calendarDays.appendChild(dayElement);
         }

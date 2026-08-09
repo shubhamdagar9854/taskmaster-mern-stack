@@ -1178,6 +1178,36 @@ router.patch('/:id/notes/restore/:historyIndex', authenticateToken, async (req, 
   }
 });
 
+// Get tasks for calendar view
+router.get('/calendar', authenticateToken, async (req, res) => {
+  try {
+    const { year, month } = req.query;
+    const tasks = await Task.find({ user: req.userId });
+
+    // Filter tasks for the specified month
+    const calendarTasks = tasks.filter(task => {
+      if (!task.dueDate) return false;
+      const dueDate = new Date(task.dueDate);
+      return dueDate.getFullYear() === parseInt(year) && dueDate.getMonth() === parseInt(month);
+    });
+
+    // Group tasks by date
+    const tasksByDate = {};
+    calendarTasks.forEach(task => {
+      const dateKey = new Date(task.dueDate).toISOString().split('T')[0];
+      if (!tasksByDate[dateKey]) {
+        tasksByDate[dateKey] = [];
+      }
+      tasksByDate[dateKey].push(task);
+    });
+
+    res.json(tasksByDate);
+  } catch (error) {
+    console.error('Get calendar tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {
