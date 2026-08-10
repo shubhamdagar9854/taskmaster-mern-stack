@@ -1721,23 +1721,34 @@ class TaskManager {
     }
 
     showDependencyGraphModal() {
-        this.loadDependencyGraph();
-        document.getElementById('dependencyGraphModal').classList.remove('hidden');
+        // Show a prompt to select which task to view dependencies for
+        const taskSelect = prompt('Enter task ID to view dependencies (or leave empty for all tasks):');
+        if (taskSelect !== null) {
+            this.loadDependencyGraph(taskSelect);
+        }
     }
 
     hideDependencyGraphModal() {
         document.getElementById('dependencyGraphModal').classList.add('hidden');
     }
 
-    async loadDependencyGraph() {
+    async loadDependencyGraph(taskId = null) {
         try {
-            const response = await fetch('http://localhost:5002/api/tasks/dependencies/graph', {
+            let url = 'http://localhost:5002/api/tasks/dependencies/graph';
+            if (taskId) {
+                url = `http://localhost:5002/api/tasks/${taskId}/dependency-graph`;
+            }
+
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
             });
 
             if (response.ok) {
                 const graph = await response.json();
-                this.renderDependencyGraph(graph);
+                this.renderDependencyGraph(graph, taskId);
+            } else {
+                const container = document.getElementById('dependencyGraphContainer');
+                container.innerHTML = '<div class="no-dependencies"><p>Failed to load dependency graph.</p></div>';
             }
         } catch (error) {
             console.error('Load dependency graph error:', error);
@@ -1745,7 +1756,102 @@ class TaskManager {
         }
     }
 
-    renderDependencyGraph(graph) {
+    renderDependencyGraph(graph, taskId = null) {
+        const container = document.getElementById('dependencyGraphContainer');
+        container.innerHTML = '';
+
+        if (taskId) {
+            // Render single task dependency view
+            this.renderSingleTaskDependencies(graph);
+        } else {
+            // Render all tasks dependency view
+            this.renderAllTasksDependencies(graph);
+        }
+    }
+
+    renderSingleTaskDependencies(data) {
+        const container = document.getElementById('dependencyGraphContainer');
+        
+        if (!data.currentTask) {
+            container.innerHTML = '<div class="no-dependencies"><p>Task not found.</p></div>';
+            return;
+        }
+
+        let html = `
+            <div class="dependency-view">
+                <div class="current-task-card">
+                    <h4>Current Task</h4>
+                    <div class="task-card">
+                        <span class="priority-badge priority-${data.currentTask.priority}">${data.currentTask.priority}</span>
+                        <span class="task-title">${this.escapeHtml(data.currentTask.title)}</span>
+                        ${data.currentTask.completed ? '<span class="status-badge completed">Completed</span>' : '<span class="status-badge pending">Pending</span>'}
+                    </div>
+                </div>
+        `;
+
+        if (data.blockingTasks && data.blockingTasks.length > 0) {
+            html += `
+                <div class="blocking-tasks-section">
+                    <h4>Blocking Tasks (${data.blockingTasks.length})</h4>
+                    <p class="section-description">These tasks must be completed before the current task can start:</p>
+                    <div class="tasks-list">
+            `;
+            data.blockingTasks.forEach(task => {
+                html += `
+                    <div class="task-card ${task.completed ? 'completed' : ''}">
+                        <span class="priority-badge priority-${task.priority}">${task.priority}</span>
+                        <span class="task-title">${this.escapeHtml(task.title)}</span>
+                        ${task.completed ? '<span class="status-badge completed">✓ Completed</span>' : '<span class="status-badge pending">Pending</span>'}
+                    </div>
+                `;
+            });
+            html += `
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="blocking-tasks-section">
+                    <h4>Blocking Tasks</h4>
+                    <p class="section-description">No blocking tasks. This task can be started anytime.</p>
+                </div>
+            `;
+        }
+
+        if (data.blockedTasks && data.blockedTasks.length > 0) {
+            html += `
+                <div class="blocked-tasks-section">
+                    <h4>Blocked Tasks (${data.blockedTasks.length})</h4>
+                    <p class="section-description">These tasks are waiting for the current task to complete:</p>
+                    <div class="tasks-list">
+            `;
+            data.blockedTasks.forEach(task => {
+                html += `
+                    <div class="task-card ${task.completed ? 'completed' : ''}">
+                        <span class="priority-badge priority-${task.priority}">${task.priority}</span>
+                        <span class="task-title">${this.escapeHtml(task.title)}</span>
+                        ${task.completed ? '<span class="status-badge completed">✓ Completed</span>' : '<span class="status-badge pending">Pending</span>'}
+                    </div>
+                `;
+            });
+            html += `
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="blocked-tasks-section">
+                    <h4>Blocked Tasks</h4>
+                    <p class="section-description">No tasks are blocked by this task.</p>
+                </div>
+            `;
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    renderAllTasksDependencies(graph) {
         const container = document.getElementById('dependencyGraphContainer');
         container.innerHTML = '';
 

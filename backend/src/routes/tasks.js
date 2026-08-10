@@ -1208,6 +1208,39 @@ router.get('/calendar', authenticateToken, async (req, res) => {
   }
 });
 
+// Get dependency graph data
+router.get('/:id/dependency-graph', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Get all user tasks
+    const allTasks = await Task.find({ user: req.userId });
+
+    // Get tasks that this task depends on (blocking tasks)
+    const blockingTasks = task.dependencies ? task.dependencies.map(depId => 
+      allTasks.find(t => t._id.toString() === depId.toString())
+    ).filter(Boolean) : [];
+
+    // Get tasks that depend on this task (blocked tasks)
+    const blockedTasks = allTasks.filter(t => 
+      t.dependencies && t.dependencies.includes(req.params.id)
+    );
+
+    res.json({
+      currentTask: task,
+      blockingTasks,
+      blockedTasks
+    });
+  } catch (error) {
+    console.error('Get dependency graph error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Add reaction to comment
 router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
   try {

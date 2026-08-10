@@ -3128,6 +3128,79 @@ body {
     justify-content: flex-end;
 }
 
+.dependency-view {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.current-task-card h4,
+.blocking-tasks-section h4,
+.blocked-tasks-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.section-description {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.task-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.task-card.completed {
+    opacity: 0.6;
+    background: var(--success-color-light);
+}
+
+.task-card .task-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.completed {
+    background: var(--success-color);
+    color: white;
+}
+
+.status-badge.pending {
+    background: var(--warning-color);
+    color: white;
+}
+
 .activity-log-list {
     max-height: 400px;
     overflow-y: auto;
