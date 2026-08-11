@@ -70,6 +70,92 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Export tasks
+router.get('/export', authenticateToken, async (req, res) => {
+  try {
+    const { format } = req.query;
+    const tasks = await Task.find({ user: req.userId });
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename=tasks-export.json');
+      res.json(tasks);
+    } else if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=tasks-export.csv');
+
+      const csvHeader = 'ID,Title,Description,Priority,Category,Due Date,Completed,Notes,Created At,Updated At\n';
+      const csvRows = tasks.map(task => {
+        return [
+          task._id,
+          `"${task.title.replace(/"/g, '""')}"`,
+          `"${(task.description || '').replace(/"/g, '""')}"`,
+          task.priority,
+          task.category,
+          task.dueDate || '',
+          task.completed,
+          `"${(task.notes || '').replace(/"/g, '""')}"`,
+          task.createdAt,
+          task.updatedAt
+        ].join(',');
+      }).join('\n');
+
+      res.send(csvHeader + csvRows);
+    } else {
+      res.status(400).json({ message: 'Invalid format. Use json or csv' });
+    }
+  } catch (error) {
+    console.error('Export tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Import tasks
+router.post('/import', authenticateToken, async (req, res) => {
+  try {
+    const { tasks, format } = req.body;
+
+    if (!tasks || !Array.isArray(tasks)) {
+      return res.status(400).json({ message: 'Invalid tasks data' });
+    }
+
+    const importedTasks = [];
+    const errors = [];
+
+    for (const taskData of tasks) {
+      try {
+        // Remove _id to create new tasks
+        const { _id, ...taskToCreate } = taskData;
+        
+        // Set user and timestamps
+        taskToCreate.user = req.userId;
+        taskToCreate.createdAt = new Date();
+        taskToCreate.updatedAt = new Date();
+
+        const newTask = await Task.create(taskToCreate);
+        importedTasks.push(newTask);
+      } catch (error) {
+        errors.push({
+          task: taskData.title || 'Unknown',
+          error: error.message
+        });
+      }
+    }
+
+    logActivity(null, req.userId, 'tasks_imported', `Imported ${importedTasks.length} tasks`);
+
+    res.json({
+      imported: importedTasks.length,
+      errors: errors.length,
+      tasks: importedTasks,
+      errorDetails: errors
+    });
+  } catch (error) {
+    console.error('Import tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {

@@ -409,6 +409,36 @@ class TaskManager {
             this.hideDependencyGraphModal();
         });
 
+        // Export/Import
+        document.getElementById('showExportImportBtn').addEventListener('click', () => {
+            this.showExportImportModal();
+        });
+
+        document.getElementById('closeExportImportModal').addEventListener('click', () => {
+            this.hideExportImportModal();
+        });
+
+        document.getElementById('exportJsonBtn').addEventListener('click', () => {
+            this.exportTasks('json');
+        });
+
+        document.getElementById('exportCsvBtn').addEventListener('click', () => {
+            this.exportTasks('csv');
+        });
+
+        document.getElementById('importJsonBtn').addEventListener('click', () => {
+            this.importTasks();
+        });
+
+        // Templates modal
+        document.getElementById('showTemplatesBtn').addEventListener('click', () => {
+            this.showTemplatesModal();
+        });
+
+        document.getElementById('closeTemplatesModal').addEventListener('click', () => {
+            this.hideTemplatesModal();
+        });
+
         // Bulk actions
         document.getElementById('bulkActionsBtn').addEventListener('click', () => {
             this.toggleBulkMode();
@@ -2447,6 +2477,82 @@ class TaskManager {
         if (diffHours < 24) return `${diffHours}h ago`;
         if (diffDays < 7) return `${diffDays}d ago`;
         return time.toLocaleDateString();
+    }
+
+    showExportImportModal() {
+        document.getElementById('exportImportModal').classList.remove('hidden');
+    }
+
+    hideExportImportModal() {
+        document.getElementById('exportImportModal').classList.add('hidden');
+        document.getElementById('importFileInput').value = '';
+    }
+
+    async exportTasks(format) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/export?format=${format}`, {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tasks-export.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                this.showMessage(`Tasks exported as ${format.toUpperCase()} successfully!`, 'success');
+            } else {
+                this.showMessage('Failed to export tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Export tasks error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async importTasks() {
+        const fileInput = document.getElementById('importFileInput');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            this.showMessage('Please select a JSON file to import', 'error');
+            return;
+        }
+
+        try {
+            const text = await file.text();
+            const tasks = JSON.parse(text);
+
+            if (!Array.isArray(tasks)) {
+                this.showMessage('Invalid JSON file format', 'error');
+                return;
+            }
+
+            const response = await fetch('http://localhost:5002/api/tasks/import', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ tasks, format: 'json' })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await this.loadTasks();
+                this.showMessage(`Imported ${data.imported} tasks successfully!${data.errors > 0 ? ` (${data.errors} errors)` : ''}`, 'success');
+                this.hideExportImportModal();
+            } else {
+                this.showMessage('Failed to import tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Import tasks error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     escapeHtml(text) {

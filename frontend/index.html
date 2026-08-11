@@ -106,6 +106,9 @@
                         <button id="showDependencyGraphBtn" class="btn btn-outline">
                             <i class="fas fa-project-diagram"></i> Dependencies
                         </button>
+                        <button id="showExportImportBtn" class="btn btn-outline">
+                            <i class="fas fa-file-export"></i> Export/Import
+                        </button>
                         <button id="showTemplatesBtn" class="btn btn-outline">
                             <i class="fas fa-layer-group"></i> Templates
                         </button>
@@ -1104,6 +1107,43 @@
                         <div class="modal-body">
                             <div class="dependency-graph-container" id="dependencyGraphContainer">
                                 <!-- Dependency graph will be dynamically added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export/Import Modal -->
+                <div id="exportImportModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Export/Import Tasks</h3>
+                            <button id="closeExportImportModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="export-import-section">
+                                <h4>Export Tasks</h4>
+                                <p class="section-description">Export all your tasks to a file for backup or sharing.</p>
+                                <div class="export-buttons">
+                                    <button id="exportJsonBtn" class="btn btn-primary">
+                                        <i class="fas fa-file-code"></i> Export as JSON
+                                    </button>
+                                    <button id="exportCsvBtn" class="btn btn-outline">
+                                        <i class="fas fa-file-csv"></i> Export as CSV
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="export-import-section">
+                                <h4>Import Tasks</h4>
+                                <p class="section-description">Import tasks from a JSON file. This will create new tasks.</p>
+                                <div class="import-section">
+                                    <input type="file" id="importFileInput" accept=".json" class="form-input">
+                                    <button id="importJsonBtn" class="btn btn-primary">
+                                        <i class="fas fa-file-import"></i> Import from JSON
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

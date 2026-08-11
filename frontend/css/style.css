@@ -3201,6 +3201,37 @@ body {
     color: white;
 }
 
+.export-import-section {
+    margin-bottom: 24px;
+}
+
+.export-import-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.export-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.import-section {
+    margin-top: 12px;
+}
+
+.import-section .form-input {
+    margin-bottom: 12px;
+}
+
+.divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 24px 0;
+}
+
 .activity-log-list {
     max-height: 400px;
     overflow-y: auto;
