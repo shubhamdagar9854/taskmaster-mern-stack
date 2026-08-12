@@ -20,6 +20,7 @@ class TaskManager {
         this.currentNotesTaskId = null; // Track current task for notes editing
         this.currentCalendarDate = new Date(); // Track current calendar date
         this.calendarTasks = {}; // Store tasks grouped by date for calendar
+        this.searchTimeout = null; // Debounce timer for search
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -72,13 +73,33 @@ class TaskManager {
             this.saveTaskUpdate();
         });
 
-        // Search tasks
+        // Search tasks with real-time results
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            this.searchQuery = e.target.value.trim();
-            if (this.searchQuery.length > 0) {
-                this.advancedSearch();
+            const query = e.target.value.trim();
+            
+            // Clear previous timeout
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
+
+            if (query.length > 0) {
+                // Debounce search
+                this.searchTimeout = setTimeout(() => {
+                    this.performRealTimeSearch(query);
+                }, 300);
             } else {
+                // Hide results and load all tasks
+                document.getElementById('searchResults').classList.add('hidden');
+                this.searchQuery = '';
                 this.loadTasks();
+            }
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', (e) => {
+            const searchContainer = document.querySelector('.search-container');
+            if (searchContainer && !searchContainer.contains(e.target)) {
+                document.getElementById('searchResults').classList.add('hidden');
             }
         });
 
@@ -2553,6 +2574,73 @@ class TaskManager {
             console.error('Import tasks error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    async performRealTimeSearch(query) {
+        const searchResults = document.getElementById('searchResults');
+        
+        // Show loading state
+        searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+        searchResults.classList.remove('hidden');
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/search?q=${encodeURIComponent(query)}&limit=10`, {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const tasks = await response.json();
+                this.renderSearchResults(tasks, query);
+            } else {
+                searchResults.innerHTML = '<div class="search-no-results">Failed to search</div>';
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            searchResults.innerHTML = '<div class="search-no-results">Network error</div>';
+        }
+    }
+
+    renderSearchResults(tasks, query) {
+        const searchResults = document.getElementById('searchResults');
+        
+        if (!tasks || tasks.length === 0) {
+            searchResults.innerHTML = '<div class="search-no-results">No tasks found</div>';
+            return;
+        }
+
+        searchResults.innerHTML = '';
+        
+        tasks.forEach(task => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'search-result-item';
+            
+            const highlightedTitle = this.highlightText(task.title, query);
+            const priorityBadge = this.getPriorityBadge(task.priority);
+            
+            resultItem.innerHTML = `
+                <div class="search-result-title">${highlightedTitle}</div>
+                <div class="search-result-meta">
+                    ${priorityBadge}
+                    <span class="category-badge ${task.category || 'other'}">${this.getCategoryIcon(task.category)} ${task.category || 'other'}</span>
+                    ${task.completed ? '<span class="status-badge completed">Completed</span>' : '<span class="status-badge pending">Active</span>'}
+                </div>
+            `;
+            
+            resultItem.addEventListener('click', () => {
+                this.searchQuery = query;
+                this.tasks = [task];
+                this.renderTasks();
+                searchResults.classList.add('hidden');
+            });
+            
+            searchResults.appendChild(resultItem);
+        });
+    }
+
+    highlightText(text, query) {
+        if (!text || !query) return text;
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<span class="search-result-highlight">$1</span>');
     }
 
     escapeHtml(text) {

@@ -156,6 +156,35 @@ router.post('/import', authenticateToken, async (req, res) => {
   }
 });
 
+// Search tasks with real-time results
+router.get('/search', authenticateToken, async (req, res) => {
+  try {
+    const { q, limit = 10 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+
+    const tasks = await Task.find({ 
+      user: req.userId,
+      isTemplate: false,
+      $or: [
+        { title: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { notes: { $regex: q, $options: 'i' } },
+        { tags: { $in: [new RegExp(q, 'i')] } }
+      ]
+    })
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Search tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {

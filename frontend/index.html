@@ -149,10 +149,11 @@
 
                 <!-- Search Bar -->
                 <div class="search-container">
-                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search tasks...">
-                    <button id="advancedSearchBtn" class="btn btn-outline btn-sm">
-                        <i class="fas fa-filter"></i> Filters
-                    </button>
+                    <div class="search-wrapper">
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search tasks...">
+                        <i class="fas fa-search search-icon"></i>
+                        <div id="searchResults" class="search-results hidden"></div>
+                    </div>
                 </div>
 
                 <!-- Filter Options -->
