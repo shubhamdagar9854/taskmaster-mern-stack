@@ -21,6 +21,7 @@ class TaskManager {
         this.currentCalendarDate = new Date(); // Track current calendar date
         this.calendarTasks = {}; // Store tasks grouped by date for calendar
         this.searchTimeout = null; // Debounce timer for search
+        this.draggedTask = null; // Track currently dragged task
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -480,6 +481,9 @@ class TaskManager {
         document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
             this.bulkDelete();
         });
+
+        // Initialize drag and drop
+        this.initDragAndDrop();
     }
 
     showAddTaskForm() {
@@ -910,6 +914,7 @@ class TaskManager {
             const taskElement = document.createElement('div');
             taskElement.className = `task-item ${task.completed ? 'completed' : ''} ${this.selectedTasks.has(task._id) ? 'bulk-selected' : ''}`;
             taskElement.dataset.taskId = task._id;
+            taskElement.draggable = true;
             
             taskElement.innerHTML = `
                 <input type="checkbox" class="task-bulk-checkbox" data-bulk-select="${task._id}" ${this.selectedTasks.has(task._id) ? 'checked' : ''}>
@@ -2641,6 +2646,102 @@ class TaskManager {
         if (!text || !query) return text;
         const regex = new RegExp(`(${query})`, 'gi');
         return text.replace(regex, '<span class="search-result-highlight">$1</span>');
+    }
+
+    initDragAndDrop() {
+        const taskList = document.getElementById('taskList');
+        
+        taskList.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('task-item')) {
+                this.draggedTask = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+
+        taskList.addEventListener('dragend', (e) => {
+            if (e.target.classList.contains('task-item')) {
+                e.target.classList.remove('dragging');
+                this.draggedTask = null;
+            }
+        });
+
+        taskList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem && taskItem !== this.draggedTask) {
+                const rect = taskItem.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                
+                if (e.clientY < midY) {
+                    taskItem.style.borderTop = '3px solid #3b82f6';
+                    taskItem.style.borderBottom = '';
+                } else {
+                    taskItem.style.borderBottom = '3px solid #3b82f6';
+                    taskItem.style.borderTop = '';
+                }
+            }
+        });
+
+        taskList.addEventListener('dragleave', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                taskItem.style.borderTop = '';
+                taskItem.style.borderBottom = '';
+            }
+        });
+
+        taskList.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const taskItem = e.target.closest('.task-item');
+            
+            if (taskItem && this.draggedTask && taskItem !== this.draggedTask) {
+                taskItem.style.borderTop = '';
+                taskItem.style.borderBottom = '';
+                
+                const draggedId = this.draggedTask.dataset.taskId;
+                const targetId = taskItem.dataset.taskId;
+                
+                await this.reorderTasks(draggedId, targetId);
+            }
+        });
+    }
+
+    async reorderTasks(draggedId, targetId) {
+        const taskElements = Array.from(document.querySelectorAll('.task-item'));
+        const draggedIndex = taskElements.findIndex(el => el.dataset.taskId === draggedId);
+        const targetIndex = taskElements.findIndex(el => el.dataset.taskId === targetId);
+        
+        const taskOrders = taskElements.map((el, index) => ({
+            taskId: el.dataset.taskId,
+            order: index
+        }));
+        
+        // Swap the orders
+        const temp = taskOrders[draggedIndex].order;
+        taskOrders[draggedIndex].order = taskOrders[targetIndex].order;
+        taskOrders[targetIndex].order = temp;
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/reorder', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ taskOrders })
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage('Tasks reordered successfully!', 'success');
+            } else {
+                this.showMessage('Failed to reorder tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Reorder tasks error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     escapeHtml(text) {

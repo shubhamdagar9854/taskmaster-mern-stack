@@ -595,6 +595,11 @@ body {
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
 }
 
+.task-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
 .task-item.completed {
     opacity: 0.7;
     background: #f0fff4;

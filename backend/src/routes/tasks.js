@@ -185,6 +185,32 @@ router.get('/search', authenticateToken, async (req, res) => {
   }
 });
 
+// Reorder tasks
+router.patch('/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { taskOrders } = req.body;
+
+    if (!taskOrders || !Array.isArray(taskOrders)) {
+      return res.status(400).json({ message: 'Invalid task orders data' });
+    }
+
+    // Update order for each task
+    for (const item of taskOrders) {
+      await Task.findOneAndUpdate(
+        { _id: item.taskId, user: req.userId },
+        { order: item.order }
+      );
+    }
+
+    logActivity(null, req.userId, 'tasks_reordered', 'Tasks reordered');
+
+    res.json({ message: 'Tasks reordered successfully' });
+  } catch (error) {
+    console.error('Reorder tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {
