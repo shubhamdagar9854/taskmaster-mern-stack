@@ -211,6 +211,107 @@ router.patch('/reorder', authenticateToken, async (req, res) => {
   }
 });
 
+// Get notifications
+router.get('/notifications', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId, isTemplate: false });
+    const notifications = [];
+    const now = new Date();
+
+    tasks.forEach(task => {
+      // Due date notifications
+      if (task.dueDate) {
+        const dueDate = new Date(task.dueDate);
+        const diffHours = Math.floor((dueDate - now) / (1000 * 60 * 60));
+        
+        if (diffHours <= 24 && diffHours > 0 && !task.completed) {
+          notifications.push({
+            id: `due-${task._id}`,
+            type: 'due_soon',
+            title: 'Task Due Soon',
+            message: `"${task.title}" is due in ${diffHours} hours`,
+            taskId: task._id,
+            priority: task.priority,
+            createdAt: now
+          });
+        } else if (diffHours <= 0 && diffHours > -24 && !task.completed) {
+          notifications.push({
+            id: `overdue-${task._id}`,
+            type: 'overdue',
+            title: 'Task Overdue',
+            message: `"${task.title}" is overdue by ${Math.abs(diffHours)} hours`,
+            taskId: task._id,
+            priority: task.priority,
+            createdAt: now
+          });
+        }
+      }
+
+      // Reminder notifications
+      if (task.reminder && task.reminder.enabled && !task.reminder.sent) {
+        const reminderTime = new Date(task.reminder.time);
+        const diffMinutes = Math.floor((reminderTime - now) / (1000 * 60));
+        
+        if (diffMinutes <= 0 && diffMinutes > -60 && !task.completed) {
+          notifications.push({
+            id: `reminder-${task._id}`,
+            type: 'reminder',
+            title: 'Task Reminder',
+            message: `"${task.title}" reminder`,
+            taskId: task._id,
+            priority: task.priority,
+            createdAt: now
+          });
+        }
+      }
+
+      // Subtask completion notifications
+      if (task.subtasks && task.subtasks.length > 0) {
+        const completedSubtasks = task.subtasks.filter(st => st.completed).length;
+        const totalSubtasks = task.subtasks.length;
+        
+        if (completedSubtasks > 0 && completedSubtasks < totalSubtasks && !task.completed) {
+          const lastSubtask = task.subtasks[task.subtasks.length - 1];
+          if (lastSubtask.completed) {
+            notifications.push({
+              id: `subtask-${task._id}`,
+              type: 'subtask_completed',
+              title: 'Subtask Completed',
+              message: `Subtask "${lastSubtask.title}" completed in "${task.title}"`,
+              taskId: task._id,
+              priority: 'low',
+              createdAt: now
+            });
+          }
+        }
+      }
+    });
+
+    // Sort by priority and date
+    notifications.sort((a, b) => {
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+
+    res.json(notifications.slice(0, 20)); // Limit to 20 notifications
+  } catch (error) {
+    console.error('Get notifications error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Mark notification as read
+router.patch('/notifications/:id/read', authenticateToken, async (req, res) => {
+  try {
+    // For now, just return success
+    // In a full implementation, you'd store read notifications in the database
+    res.json({ message: 'Notification marked as read' });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {

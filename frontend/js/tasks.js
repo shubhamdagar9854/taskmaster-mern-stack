@@ -22,6 +22,8 @@ class TaskManager {
         this.calendarTasks = {}; // Store tasks grouped by date for calendar
         this.searchTimeout = null; // Debounce timer for search
         this.draggedTask = null; // Track currently dragged task
+        this.notifications = []; // Store notifications
+        this.notificationRefreshInterval = null; // Auto-refresh interval
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -484,6 +486,133 @@ class TaskManager {
 
         // Initialize drag and drop
         this.initDragAndDrop();
+
+        // Initialize notifications
+        this.initNotifications();
+    }
+
+    initNotifications() {
+        // Notification button click
+        document.getElementById('notificationBtn').addEventListener('click', () => {
+            this.toggleNotificationsDropdown();
+        });
+
+        // Clear notifications
+        document.getElementById('clearNotificationsBtn').addEventListener('click', () => {
+            this.clearNotifications();
+        });
+
+        // Close notifications when clicking outside
+        document.addEventListener('click', (e) => {
+            const notificationBtn = document.getElementById('notificationBtn');
+            const dropdown = document.getElementById('notificationsDropdown');
+            if (!notificationBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Load notifications initially
+        this.loadNotifications();
+
+        // Auto-refresh notifications every 5 minutes
+        this.notificationRefreshInterval = setInterval(() => {
+            this.loadNotifications();
+        }, 5 * 60 * 1000);
+    }
+
+    async loadNotifications() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/notifications', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.notifications = await response.json();
+                this.updateNotificationBadge();
+                this.renderNotifications();
+            }
+        } catch (error) {
+            console.error('Load notifications error:', error);
+        }
+    }
+
+    updateNotificationBadge() {
+        const badge = document.getElementById('notificationBadge');
+        const count = this.notifications.length;
+        
+        if (count > 0) {
+            badge.textContent = count > 9 ? '9+' : count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    renderNotifications() {
+        const notificationsList = document.getElementById('notificationsList');
+        
+        if (!this.notifications || this.notifications.length === 0) {
+            notificationsList.innerHTML = `
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            `;
+            return;
+        }
+
+        notificationsList.innerHTML = '';
+        
+        this.notifications.forEach(notification => {
+            const item = document.createElement('div');
+            item.className = `notification-item priority-${notification.priority}`;
+            
+            const timeAgo = this.formatTimeAgo(notification.createdAt);
+            
+            item.innerHTML = `
+                <div class="notification-item-header">
+                    <span class="notification-title">${notification.title}</span>
+                    <span class="notification-time">${timeAgo}</span>
+                </div>
+                <div class="notification-message">${notification.message}</div>
+            `;
+            
+            item.addEventListener('click', () => {
+                this.handleNotificationClick(notification);
+            });
+            
+            notificationsList.appendChild(item);
+        });
+    }
+
+    toggleNotificationsDropdown() {
+        const dropdown = document.getElementById('notificationsDropdown');
+        dropdown.classList.toggle('hidden');
+        
+        if (!dropdown.classList.contains('hidden')) {
+            this.loadNotifications();
+        }
+    }
+
+    clearNotifications() {
+        this.notifications = [];
+        this.updateNotificationBadge();
+        this.renderNotifications();
+        document.getElementById('notificationsDropdown').classList.add('hidden');
+    }
+
+    handleNotificationClick(notification) {
+        // Navigate to the task
+        if (notification.taskId) {
+            const task = this.tasks.find(t => t._id === notification.taskId);
+            if (task) {
+                this.tasks = [task];
+                this.renderTasks();
+            }
+        }
+        
+        // Close dropdown
+        document.getElementById('notificationsDropdown').classList.add('hidden');
     }
 
     showAddTaskForm() {

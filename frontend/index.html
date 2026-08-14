@@ -187,12 +187,16 @@
                 </div>
 
                 <!-- View Options -->
-                <div class="view-container">
-                    <button id="listViewBtn" class="view-btn active" title="List View">
-                        <i class="fas fa-list"></i>
+                <div class="header-actions">
+                    <button id="notificationBtn" class="btn-icon notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationBadge" class="notification-badge hidden">0</span>
                     </button>
-                    <button id="kanbanViewBtn" class="view-btn" title="Kanban View">
-                        <i class="fas fa-columns"></i>
+                    <button id="darkModeToggle" class="btn-icon">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="logoutBtn" class="btn-icon">
+                        <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
 
@@ -1155,6 +1159,15 @@
                     <i class="fas fa-clipboard-list"></i>
                     <h3>No tasks yet</h3>
                     <p>Start by adding your first task!</p>
+                </div>
+
+                <!-- Notifications Dropdown -->
+                <div id="notificationsDropdown" class="notifications-dropdown hidden">
+                    <div class="notifications-header">
+                        <h4>Notifications</h4>
+                        <button id="clearNotificationsBtn" class="btn btn-sm btn-outline">Clear All</button>
+                    </div>
+                    <div id="notificationsList" class="notifications-list"></div>
                 </div>
             </div>
         </div>
