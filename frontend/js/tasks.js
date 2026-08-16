@@ -615,6 +615,92 @@ class TaskManager {
         document.getElementById('notificationsDropdown').classList.add('hidden');
     }
 
+    async loadStatistics() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/statistics', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const stats = await response.json();
+                this.renderStatistics(stats);
+            }
+        } catch (error) {
+            console.error('Load statistics error:', error);
+        }
+    }
+
+    renderStatistics(stats) {
+        // Update overview stats
+        document.getElementById('totalTasks').textContent = stats.overview.total;
+        document.getElementById('completedTasks').textContent = stats.overview.completed;
+        document.getElementById('activeTasks').textContent = stats.overview.active;
+        document.getElementById('favoriteTasks').textContent = stats.overview.favorites;
+        document.getElementById('completionRate').textContent = `${stats.overview.completionRate}%`;
+        document.getElementById('overdueTasks').textContent = stats.dueDates.overdue;
+
+        // Render priority chart
+        this.renderBarChart('priorityChart', stats.priorities, ['high', 'medium', 'low']);
+        
+        // Render category chart
+        this.renderBarChart('categoryChart', stats.categories, ['work', 'personal', 'shopping', 'health', 'finance', 'other']);
+        
+        // Render weekly activity chart
+        this.renderWeeklyActivityChart(stats.weeklyActivity);
+    }
+
+    renderBarChart(containerId, data, labels) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        const maxValue = Math.max(...Object.values(data), 1);
+        
+        labels.forEach(label => {
+            const value = data[label] || 0;
+            const heightPercent = (value / maxValue) * 100;
+            
+            const barChart = document.createElement('div');
+            barChart.className = 'bar-chart';
+            
+            barChart.innerHTML = `
+                <div class="bar ${label}" style="height: ${heightPercent}%">
+                    <span class="bar-value">${value}</span>
+                </div>
+                <span class="bar-label">${label.charAt(0).toUpperCase() + label.slice(1)}</span>
+            `;
+            
+            container.appendChild(barChart);
+        });
+    }
+
+    renderWeeklyActivityChart(data) {
+        const container = document.getElementById('weeklyActivityChart');
+        container.innerHTML = '';
+        
+        const maxValue = Math.max(data.completedLast7Days, data.createdLast7Days, 1);
+        
+        const activities = [
+            { label: 'Completed', value: data.completedLast7Days, class: 'completed' },
+            { label: 'Created', value: data.createdLast7Days, class: 'created' }
+        ];
+        
+        activities.forEach(activity => {
+            const heightPercent = (activity.value / maxValue) * 100;
+            
+            const barChart = document.createElement('div');
+            barChart.className = 'bar-chart';
+            
+            barChart.innerHTML = `
+                <div class="bar ${activity.class}" style="height: ${heightPercent}%">
+                    <span class="bar-value">${activity.value}</span>
+                </div>
+                <span class="bar-label">${activity.label}</span>
+            `;
+            
+            container.appendChild(barChart);
+        });
+    }
+
     showAddTaskForm() {
         document.getElementById('addTaskForm').style.display = 'block';
         document.getElementById('taskTitle').focus();
@@ -1688,6 +1774,7 @@ class TaskManager {
             if (response.ok) {
                 this.tasks = await response.json();
                 this.renderTasks();
+                this.loadStatistics(); // Load statistics after tasks
             } else {
                 this.showMessage('Failed to load tasks', 'error');
             }

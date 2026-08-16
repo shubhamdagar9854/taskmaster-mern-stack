@@ -893,19 +893,116 @@ body {
 
 .stat-card {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 1rem;
+    border-radius: 16px;
+    padding: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+.charts-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chart-container h4 {
+    margin: 0 0 1rem 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.dark-mode .chart-container h4 {
+    color: #e2e8f0;
+}
+
+.chart {
+    min-height: 200px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    gap: 8px;
+    padding: 1rem 0;
+}
+
+.bar-chart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.bar {
+    width: 40px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+    position: relative;
+}
+
+.bar-label {
+    font-size: 11px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.dark-mode .bar-label {
+    color: #9ca3af;
+}
+
+.bar-value {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.dark-mode .bar-value {
+    color: #e2e8f0;
+}
+
+.bar.high {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.bar.medium {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.bar.low {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.bar.work { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.bar.personal { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.bar.shopping { background: linear-gradient(135deg, #ec4899, #db2777); }
+.bar.health { background: linear-gradient(135deg, #10b981, #059669); }
+.bar.finance { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.bar.other { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.bar.completed { background: linear-gradient(135deg, #10b981, #059669); }
+.bar.created { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+.dark-mode .chart-container {
+    background: rgba(30, 41, 59, 0.9);
 }
 
 .stat-icon {

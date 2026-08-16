@@ -312,6 +312,109 @@ router.patch('/notifications/:id/read', authenticateToken, async (req, res) => {
   }
 });
 
+// Get comprehensive statistics
+router.get('/statistics', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId, isTemplate: false });
+    
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.completed).length;
+    const activeTasks = totalTasks - completedTasks;
+    const favoriteTasks = tasks.filter(t => t.isFavorite).length;
+    const archivedTasks = tasks.filter(t => t.isArchived).length;
+    
+    // Priority breakdown
+    const priorityBreakdown = {
+      high: tasks.filter(t => t.priority === 'high').length,
+      medium: tasks.filter(t => t.priority === 'medium').length,
+      low: tasks.filter(t => t.priority === 'low').length
+    };
+    
+    // Category breakdown
+    const categoryBreakdown = {
+      work: tasks.filter(t => t.category === 'work').length,
+      personal: tasks.filter(t => t.category === 'personal').length,
+      shopping: tasks.filter(t => t.category === 'shopping').length,
+      health: tasks.filter(t => t.category === 'health').length,
+      finance: tasks.filter(t => t.category === 'finance').length,
+      other: tasks.filter(t => t.category === 'other').length
+    };
+    
+    // Due date breakdown
+    const now = new Date();
+    const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < now && !t.completed).length;
+    const dueTodayTasks = tasks.filter(t => {
+      if (!t.dueDate || t.completed) return false;
+      const dueDate = new Date(t.dueDate);
+      return dueDate.toDateString() === now.toDateString();
+    }).length;
+    const dueThisWeekTasks = tasks.filter(t => {
+      if (!t.dueDate || t.completed) return false;
+      const dueDate = new Date(t.dueDate);
+      const diffDays = Math.floor((dueDate - now) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 7;
+    }).length;
+    
+    // Subtask statistics
+    const totalSubtasks = tasks.reduce((sum, t) => sum + (t.subtasks?.length || 0), 0);
+    const completedSubtasks = tasks.reduce((sum, t) => 
+      sum + (t.subtasks?.filter(st => st.completed).length || 0), 0);
+    
+    // Time tracking statistics
+    const tasksWithTimeTracking = tasks.filter(t => t.timeTracking?.enabled);
+    const totalTimeSpent = tasks.reduce((sum, t) => 
+      sum + (t.timeTracking?.timeSpent || 0), 0);
+    const totalTimeSpentHours = Math.floor(totalTimeSpent / 3600);
+    const totalTimeSpentMinutes = Math.floor((totalTimeSpent % 3600) / 60);
+    
+    // Completion rate (last 7 days)
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const tasksCompletedLast7Days = tasks.filter(t => 
+      t.completed && t.updatedAt && new Date(t.updatedAt) >= sevenDaysAgo
+    ).length;
+    
+    // Tasks created last 7 days
+    const tasksCreatedLast7Days = tasks.filter(t => 
+      t.createdAt && new Date(t.createdAt) >= sevenDaysAgo
+    ).length;
+
+    res.json({
+      overview: {
+        total: totalTasks,
+        completed: completedTasks,
+        active: activeTasks,
+        favorites: favoriteTasks,
+        archived: archivedTasks,
+        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+      },
+      priorities: priorityBreakdown,
+      categories: categoryBreakdown,
+      dueDates: {
+        overdue: overdueTasks,
+        today: dueTodayTasks,
+        thisWeek: dueThisWeekTasks
+      },
+      subtasks: {
+        total: totalSubtasks,
+        completed: completedSubtasks,
+        completionRate: totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0
+      },
+      timeTracking: {
+        tasksWithTracking: tasksWithTimeTracking.length,
+        totalTimeSpent: totalTimeSpent,
+        formattedTime: `${totalTimeSpentHours}h ${totalTimeSpentMinutes}m`
+      },
+      weeklyActivity: {
+        completedLast7Days: tasksCompletedLast7Days,
+        createdLast7Days: tasksCreatedLast7Days
+      }
+    });
+  } catch (error) {
+    console.error('Get statistics error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {

@@ -217,18 +217,48 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon pending">⏳</div>
+                        <div class="stat-icon active">🔥</div>
                         <div class="stat-info">
-                            <div class="stat-value" id="pendingTasks">0</div>
-                            <div class="stat-label">Pending</div>
+                            <div class="stat-value" id="activeTasks">0</div>
+                            <div class="stat-label">Active</div>
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon overdue">🔴</div>
+                        <div class="stat-icon favorites">⭐</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="favoriteTasks">0</div>
+                            <div class="stat-label">Favorites</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon completion">📈</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="completionRate">0%</div>
+                            <div class="stat-label">Completion Rate</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon overdue">⚠️</div>
                         <div class="stat-info">
                             <div class="stat-value" id="overdueTasks">0</div>
                             <div class="stat-label">Overdue</div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div id="chartsSection" class="charts-section">
+                    <div class="chart-container">
+                        <h4>Priority Distribution</h4>
+                        <div id="priorityChart" class="chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Category Distribution</h4>
+                        <div id="categoryChart" class="chart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <h4>Weekly Activity</h4>
+                        <div id="weeklyActivityChart" class="chart"></div>
                     </div>
                 </div>
 
