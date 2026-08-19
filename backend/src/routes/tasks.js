@@ -415,6 +415,63 @@ router.get('/statistics', authenticateToken, async (req, res) => {
   }
 });
 
+// Duplicate task
+router.post('/:id/duplicate', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+    
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const duplicatedTask = new Task({
+      ...task.toObject(),
+      _id: undefined,
+      title: `${task.title} (Copy)`,
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      order: 0
+    });
+
+    await duplicatedTask.save();
+    logActivity(duplicatedTask._id, req.userId, 'task_duplicated', `Duplicated task: ${task.title}`);
+
+    res.json(duplicatedTask);
+  } catch (error) {
+    console.error('Duplicate task error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Move task to category
+router.patch('/:id/move-category', authenticateToken, async (req, res) => {
+  try {
+    const { category } = req.body;
+    
+    if (!category) {
+      return res.status(400).json({ message: 'Category is required' });
+    }
+
+    const task = await Task.findOneAndUpdate(
+      { _id: req.params.id, user: req.userId },
+      { category },
+      { new: true }
+    );
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    logActivity(task._id, req.userId, 'task_category_changed', `Moved task to ${category}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Move task category error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {

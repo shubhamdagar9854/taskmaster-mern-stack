@@ -24,6 +24,7 @@ class TaskManager {
         this.draggedTask = null; // Track currently dragged task
         this.notifications = []; // Store notifications
         this.notificationRefreshInterval = null; // Auto-refresh interval
+        this.contextMenuTaskId = null; // Track task for context menu
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -489,6 +490,182 @@ class TaskManager {
 
         // Initialize notifications
         this.initNotifications();
+
+        // Initialize context menu
+        this.initContextMenu();
+    }
+
+    initContextMenu() {
+        const taskList = document.getElementById('taskList');
+        
+        // Right-click on task items
+        taskList.addEventListener('contextmenu', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                e.preventDefault();
+                this.contextMenuTaskId = taskItem.dataset.taskId;
+                this.showContextMenu(e.clientX, e.clientY);
+            }
+        });
+
+        // Context menu item clicks
+        document.getElementById('contextMenu').addEventListener('click', (e) => {
+            const action = e.target.closest('.context-menu-item')?.dataset.action;
+            if (action) {
+                this.handleContextMenuAction(action);
+                this.hideContextMenu();
+            }
+        });
+
+        // Hide context menu on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#contextMenu')) {
+                this.hideContextMenu();
+            }
+        });
+    }
+
+    showContextMenu(x, y) {
+        const contextMenu = document.getElementById('contextMenu');
+        contextMenu.classList.remove('hidden');
+        
+        // Position menu
+        const menuWidth = 200;
+        const menuHeight = 250;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        let finalX = x;
+        let finalY = y;
+        
+        if (x + menuWidth > windowWidth) {
+            finalX = windowWidth - menuWidth - 10;
+        }
+        
+        if (y + menuHeight > windowHeight) {
+            finalY = windowHeight - menuHeight - 10;
+        }
+        
+        contextMenu.style.left = `${finalX}px`;
+        contextMenu.style.top = `${finalY}px`;
+    }
+
+    hideContextMenu() {
+        document.getElementById('contextMenu').classList.add('hidden');
+        this.contextMenuTaskId = null;
+    }
+
+    async handleContextMenuAction(action) {
+        if (!this.contextMenuTaskId) return;
+
+        switch (action) {
+            case 'duplicate':
+                await this.duplicateTask(this.contextMenuTaskId);
+                break;
+            case 'archive':
+                await this.toggleArchive(this.contextMenuTaskId, true);
+                break;
+            case 'unarchive':
+                await this.toggleArchive(this.contextMenuTaskId, false);
+                break;
+            case 'move-category':
+                this.showMoveCategoryModal(this.contextMenuTaskId);
+                break;
+            case 'set-priority':
+                this.showSetPriorityModal(this.contextMenuTaskId);
+                break;
+            case 'toggle-favorite':
+                await this.toggleFavorite(this.contextMenuTaskId);
+                break;
+            case 'delete':
+                await this.deleteTask(this.contextMenuTaskId);
+                break;
+        }
+    }
+
+    async duplicateTask(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/duplicate`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage('Task duplicated successfully!', 'success');
+            } else {
+                this.showMessage('Failed to duplicate task', 'error');
+            }
+        } catch (error) {
+            console.error('Duplicate task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async toggleArchive(taskId, archive) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ isArchived: archive })
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage(archive ? 'Task archived!' : 'Task unarchived!', 'success');
+            } else {
+                this.showMessage('Failed to update task', 'error');
+            }
+        } catch (error) {
+            console.error('Toggle archive error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    showMoveCategoryModal(taskId) {
+        this.currentMoveCategoryTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        if (task) {
+            document.getElementById('editTaskCategory').value = task.category;
+            this.showEditTaskModal(taskId);
+        }
+    }
+
+    showSetPriorityModal(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (task) {
+            document.getElementById('editTaskPriority').value = task.priority;
+            this.showEditTaskModal(taskId);
+        }
+    }
+
+    async toggleFavorite(taskId) {
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ isFavorite: !task.isFavorite })
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage(!task.isFavorite ? 'Task favorited!' : 'Task unfavorited!', 'success');
+            } else {
+                this.showMessage('Failed to update task', 'error');
+            }
+        } catch (error) {
+            console.error('Toggle favorite error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     initNotifications() {

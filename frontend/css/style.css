@@ -615,6 +615,69 @@ body {
     margin-bottom: 8px;
 }
 
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 2000;
+    min-width: 200px;
+    overflow: hidden;
+}
+
+.dark-mode .context-menu {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #1f2937;
+    transition: background 0.2s ease;
+}
+
+.dark-mode .context-menu-item {
+    color: #e2e8f0;
+}
+
+.context-menu-item:hover {
+    background: #f3f4f6;
+}
+
+.dark-mode .context-menu-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.context-menu-item i {
+    width: 16px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.dark-mode .context-menu-item i {
+    color: #9ca3af;
+}
+
+.context-menu-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 4px 0;
+}
+
+.dark-mode .context-menu-divider {
+    background: #475569;
+}
+
 .sort-container {
     display: flex;
     align-items: center;
