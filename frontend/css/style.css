@@ -751,6 +751,41 @@ body {
     min-width: 150px;
 }
 
+.tags-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.task-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+.dark-mode .task-tag {
+    background: rgba(14, 165, 233, 0.2);
+    color: #7dd3fc;
+}
+
+.task-tags-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.dark-mode .task-tags-label {
+    color: #e2e8f0;
+}
+
 .filter-label {
     display: block;
     margin-bottom: 0.5rem;

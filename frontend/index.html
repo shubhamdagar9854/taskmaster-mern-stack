@@ -167,6 +167,12 @@
                         <option value="archived">Archived</option>
                         <option value="shared">Shared with Me</option>
                     </select>
+                    <div class="tags-filter">
+                        <label for="tagFilter" class="filter-label">Tags:</label>
+                        <select id="tagFilter" class="filter-select">
+                            <option value="">All Tags</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Sort Options -->
@@ -275,8 +281,12 @@
                             <textarea id="taskDescription" rows="3"></textarea>
                         </div>
                         <div class="form-group">
+                            <label for="taskTags">Tags (comma separated)</label>
+                            <input type="text" id="taskTags" placeholder="e.g., urgent, work, project">
+                        </div>
+                        <div class="form-group">
                             <label for="taskPriority">Priority</label>
-                            <select id="taskPriority" class="form-select">
+                            <select id="taskPriority">
                                 <option value="low">Low</option>
                                 <option value="medium" selected>Medium</option>
                                 <option value="high">High</option>
@@ -404,6 +414,10 @@
                         <div class="form-group">
                             <label for="editTaskDescription">Description</label>
                             <textarea id="editTaskDescription" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTaskTags">Tags (comma separated)</label>
+                            <input type="text" id="editTaskTags" placeholder="e.g., urgent, work, project">
                         </div>
                         <div class="form-group">
                             <label for="editTaskPriority">Priority</label>

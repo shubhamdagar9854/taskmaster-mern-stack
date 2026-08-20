@@ -237,6 +237,10 @@ const taskSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  tags: [{
+    type: String,
+    trim: true
+  }],
   completed: {
     type: Boolean,
     default: false

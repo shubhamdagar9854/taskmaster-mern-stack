@@ -113,6 +113,12 @@ class TaskManager {
             this.renderTasks();
         });
 
+        // Tag filter
+        document.getElementById('tagFilter').addEventListener('change', (e) => {
+            this.activeTagFilter = e.target.value;
+            this.renderTasks();
+        });
+
         // Sort tasks
         document.getElementById('taskSort').addEventListener('change', (e) => {
             this.sortBy = e.target.value;
@@ -956,7 +962,8 @@ class TaskManager {
         const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null, type: reminderType } : { enabled: false, time: null, type: 'in-app' };
 
         // Collect tags
-        const tags = [...this.currentTags];
+        const tagsString = document.getElementById('taskTags').value;
+        const tags = this.parseTags(tagsString);
 
         // Collect time tracking
         const timeTrackingEnabled = document.getElementById('taskTimeTrackingEnabled').checked;
@@ -1090,7 +1097,7 @@ class TaskManager {
         
         // Load tags
         this.currentEditTags = task.tags ? [...task.tags] : [];
-        this.renderTags('editTaskTags', this.currentEditTags);
+        document.getElementById('editTaskTags').value = this.currentEditTags.join(', ');
         
         // Load time tracking
         if (task.timeTracking && task.timeTracking.enabled) {
@@ -1163,7 +1170,7 @@ class TaskManager {
         document.getElementById('editTaskReminderTime').style.display = 'none';
         document.getElementById('editTaskReminderType').style.display = 'none';
         this.currentEditTags = [];
-        document.getElementById('editTaskTags').innerHTML = '';
+        document.getElementById('editTaskTags').value = '';
         document.getElementById('editTaskTimeTrackingEnabled').checked = false;
         document.getElementById('editTaskAttachmentsList').innerHTML = '';
         document.getElementById('editTaskDependenciesList').innerHTML = '';
@@ -1194,7 +1201,8 @@ class TaskManager {
         const reminder = reminderEnabled ? { enabled: true, time: reminderTime || null, type: reminderType } : { enabled: false, time: null, type: 'in-app' };
 
         // Collect tags
-        const tags = [...this.currentEditTags];
+        const tagsString = document.getElementById('editTaskTags').value;
+        const tags = this.parseTags(tagsString);
 
         // Collect time tracking
         const timeTrackingEnabled = document.getElementById('editTaskTimeTrackingEnabled').checked;
@@ -1318,10 +1326,10 @@ class TaskManager {
                     <span class="category-badge ${task.category || 'other'}">${this.getCategoryIcon(task.category)} ${task.category || 'other'}</span>
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+                    ${task.tags && task.tags.length > 0 ? `<div class="task-tags">${this.renderTags(task.tags)}</div>` : ''}
                     ${task.formattedNotes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${task.formattedNotes}</div>` : ''}
                     ${this.renderSubtasksDisplay(task.subtasks)}
                     ${this.renderReminderBadge(task.reminder)}
-                    ${this.renderTagsDisplay(task.tags)}
                     ${this.renderTimeTracking(task.timeTracking, task._id)}
                     ${this.renderAttachmentsDisplay(task.attachments)}
                     ${this.renderDependenciesDisplay(task.dependencies)}
@@ -1952,6 +1960,7 @@ class TaskManager {
                 this.tasks = await response.json();
                 this.renderTasks();
                 this.loadStatistics(); // Load statistics after tasks
+                this.loadUserTags(); // Load user tags
             } else {
                 this.showMessage('Failed to load tasks', 'error');
             }
@@ -1959,6 +1968,46 @@ class TaskManager {
             console.error('Load tasks error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    async loadUserTags() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/tags/all', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.userTags = await response.json();
+                this.populateTagFilter();
+            }
+        } catch (error) {
+            console.error('Load user tags error:', error);
+        }
+    }
+
+    populateTagFilter() {
+        const tagFilter = document.getElementById('tagFilter');
+        tagFilter.innerHTML = '<option value="">All Tags</option>';
+        
+        this.userTags.forEach(tag => {
+            const option = document.createElement('option');
+            option.value = tag;
+            option.textContent = tag;
+            tagFilter.appendChild(option);
+        });
+    }
+
+    parseTags(tagsString) {
+        if (!tagsString) return [];
+        return tagsString.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    }
+
+    renderTags(tags) {
+        if (!tags || tags.length === 0) return '';
+        
+        return tags.map(tag => `
+            <span class="task-tag">${this.escapeHtml(tag)}</span>
+        `).join('');
     }
 
     async advancedSearch() {

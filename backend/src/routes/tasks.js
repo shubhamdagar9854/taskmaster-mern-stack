@@ -472,6 +472,77 @@ router.patch('/:id/move-category', authenticateToken, async (req, res) => {
   }
 });
 
+// Add tag to task
+router.post('/:id/tags', authenticateToken, async (req, res) => {
+  try {
+    const { tag } = req.body;
+    
+    if (!tag) {
+      return res.status(400).json({ message: 'Tag is required' });
+    }
+
+    const task = await Task.findOneAndUpdate(
+      { _id: req.params.id, user: req.userId },
+      { $addToSet: { tags: tag } },
+      { new: true }
+    );
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    logActivity(task._id, req.userId, 'tag_added', `Added tag: ${tag}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Add tag error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove tag from task
+router.delete('/:id/tags/:tag', authenticateToken, async (req, res) => {
+  try {
+    const { tag } = req.params;
+
+    const task = await Task.findOneAndUpdate(
+      { _id: req.params.id, user: req.userId },
+      { $pull: { tags: tag } },
+      { new: true }
+    );
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    logActivity(task._id, req.userId, 'tag_removed', `Removed tag: ${tag}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Remove tag error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all user tags
+router.get('/tags/all', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId, isTemplate: false });
+    const allTags = new Set();
+    
+    tasks.forEach(task => {
+      if (task.tags) {
+        task.tags.forEach(tag => allTags.add(tag));
+      }
+    });
+
+    res.json(Array.from(allTags));
+  } catch (error) {
+    console.error('Get tags error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {
