@@ -241,6 +241,24 @@ const taskSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  history: [{
+    action: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    changes: {
+      type: Map,
+      of: String
+    }
+  }],
   completed: {
     type: Boolean,
     default: false

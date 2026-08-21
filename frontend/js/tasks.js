@@ -25,6 +25,7 @@ class TaskManager {
         this.notifications = []; // Store notifications
         this.notificationRefreshInterval = null; // Auto-refresh interval
         this.contextMenuTaskId = null; // Track task for context menu
+        this.currentHistoryTaskId = null; // Track task for history modal
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
         this.advancedFilters = {
@@ -499,6 +500,106 @@ class TaskManager {
 
         // Initialize context menu
         this.initContextMenu();
+
+        // Initialize task history modal
+        this.initTaskHistoryModal();
+    }
+
+    initTaskHistoryModal() {
+        document.getElementById('closeTaskHistoryModal').addEventListener('click', () => {
+            this.hideTaskHistoryModal();
+        });
+    }
+
+    async showTaskHistoryModal(taskId) {
+        this.currentHistoryTaskId = taskId;
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/history`, {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const history = await response.json();
+                this.renderTaskHistory(history);
+                document.getElementById('taskHistoryModal').classList.remove('hidden');
+            } else {
+                this.showMessage('Failed to load task history', 'error');
+            }
+        } catch (error) {
+            console.error('Load task history error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    hideTaskHistoryModal() {
+        document.getElementById('taskHistoryModal').classList.add('hidden');
+        this.currentHistoryTaskId = null;
+    }
+
+    renderTaskHistory(history) {
+        const historyList = document.getElementById('taskHistoryList');
+        
+        if (!history || history.length === 0) {
+            historyList.innerHTML = `
+                <div class="task-history-empty">
+                    <i class="fas fa-history"></i>
+                    <p>No history available</p>
+                </div>
+            `;
+            return;
+        }
+
+        historyList.innerHTML = history.map(entry => {
+            const iconClass = this.getHistoryIconClass(entry.action);
+            const icon = this.getHistoryIcon(entry.action);
+            const timestamp = new Date(entry.timestamp).toLocaleString();
+            
+            return `
+                <div class="task-history-item">
+                    <div class="task-history-icon ${iconClass}">
+                        <i class="fas fa-${icon}"></i>
+                    </div>
+                    <div class="task-history-content">
+                        <div class="task-history-action">${this.formatAction(entry.action)}</div>
+                        <div class="task-history-description">${entry.description}</div>
+                        <div class="task-history-timestamp">${timestamp}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    getHistoryIconClass(action) {
+        const iconMap = {
+            'task_created': 'created',
+            'task_updated': 'updated',
+            'task_toggled': 'completed',
+            'task_archived': 'archived',
+            'task_favorited': 'favorited'
+        };
+        return iconMap[action] || '';
+    }
+
+    getHistoryIcon(action) {
+        const iconMap = {
+            'task_created': 'plus',
+            'task_updated': 'edit',
+            'task_toggled': 'check',
+            'task_archived': 'archive',
+            'task_favorited': 'star'
+        };
+        return iconMap[action] || 'clock';
+    }
+
+    formatAction(action) {
+        const actionMap = {
+            'task_created': 'Task Created',
+            'task_updated': 'Task Updated',
+            'task_toggled': 'Status Changed',
+            'task_archived': 'Archive Changed',
+            'task_favorited': 'Favorite Changed'
+        };
+        return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
     initContextMenu() {
@@ -579,6 +680,9 @@ class TaskManager {
                 break;
             case 'set-priority':
                 this.showSetPriorityModal(this.contextMenuTaskId);
+                break;
+            case 'view-history':
+                await this.showTaskHistoryModal(this.contextMenuTaskId);
                 break;
             case 'toggle-favorite':
                 await this.toggleFavorite(this.contextMenuTaskId);

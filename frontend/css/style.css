@@ -615,6 +615,90 @@ body {
     margin-bottom: 8px;
 }
 
+.task-history-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.task-history-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.dark-mode .task-history-item {
+    border-color: #475569;
+}
+
+.task-history-item:last-child {
+    border-bottom: none;
+}
+
+.task-history-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e0f2fe;
+    color: #0369a1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.task-history-icon.created { background: #dcfce7; color: #16a34a; }
+.task-history-icon.updated { background: #fef3c7; color: #d97706; }
+.task-history-icon.completed { background: #dbeafe; color: #2563eb; }
+.task-history-icon.archived { background: #f3e8ff; color: #9333ea; }
+.task-history-icon.favorited { background: #fef9c3; color: #ca8a04; }
+
+.dark-mode .task-history-icon {
+    background: rgba(14, 165, 233, 0.2);
+    color: #7dd3fc;
+}
+
+.task-history-content {
+    flex: 1;
+}
+
+.task-history-action {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.dark-mode .task-history-action {
+    color: #e2e8f0;
+}
+
+.task-history-description {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.dark-mode .task-history-description {
+    color: #9ca3af;
+}
+
+.task-history-timestamp {
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+.task-history-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+}
+
+.task-history-empty i {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
 .context-menu {
     position: fixed;
     background: white;

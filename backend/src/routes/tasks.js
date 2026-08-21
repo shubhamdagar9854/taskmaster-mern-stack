@@ -543,6 +543,36 @@ router.get('/tags/all', authenticateToken, async (req, res) => {
   }
 });
 
+// Get task history
+router.get('/:id/history', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+    
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.json(task.history || []);
+  } catch (error) {
+    console.error('Get task history error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Helper function to add history entry
+function addHistoryEntry(taskId, action, description, changes = {}) {
+  Task.findByIdAndUpdate(taskId, {
+    $push: {
+      history: {
+        action,
+        description,
+        timestamp: new Date(),
+        changes
+      }
+    }
+  }).catch(error => console.error('Add history entry error:', error));
+}
+
 // Get all tasks for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -598,7 +628,12 @@ router.post('/', authenticateToken, async (req, res) => {
       isTemplate: isTemplate || false,
       templateName,
       recurring,
-      user: req.userId
+      user: req.userId,
+      history: [{
+        action: 'task_created',
+        description: 'Task created',
+        timestamp: new Date()
+      }]
     });
 
     logActivity(task, 'created', 'Task created');
@@ -637,6 +672,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     if (changes.length > 0) {
       logActivity(task, 'updated', changes.join(', '));
+      addHistoryEntry(task._id, 'task_updated', changes.join(', '));
     }
 
     Object.assign(task, { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring });
@@ -679,6 +715,7 @@ router.patch('/:id/toggle', authenticateToken, async (req, res) => {
 
     task.completed = !task.completed;
     logActivity(task, 'toggled', task.completed ? 'Task marked as completed' : 'Task marked as incomplete');
+    addHistoryEntry(task._id, 'task_toggled', task.completed ? 'Task marked as completed' : 'Task marked as incomplete');
     await task.save();
 
     res.json(task);
@@ -699,6 +736,7 @@ router.patch('/:id/favorite', authenticateToken, async (req, res) => {
 
     task.isFavorite = !task.isFavorite;
     logActivity(task, 'favorited', task.isFavorite ? 'Task added to favorites' : 'Task removed from favorites');
+    addHistoryEntry(task._id, 'task_favorited', task.isFavorite ? 'Task added to favorites' : 'Task removed from favorites');
     await task.save();
 
     res.json(task);
@@ -719,6 +757,7 @@ router.patch('/:id/archive', authenticateToken, async (req, res) => {
 
     task.isArchived = !task.isArchived;
     logActivity(task, 'archived', task.isArchived ? 'Task archived' : 'Task unarchived');
+    addHistoryEntry(task._id, 'task_archived', task.isArchived ? 'Task archived' : 'Task unarchived');
     await task.save();
 
     res.json(task);
