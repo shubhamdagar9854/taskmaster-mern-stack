@@ -1192,56 +1192,34 @@ router.post('/search', authenticateToken, async (req, res) => {
   }
 });
 
-// Send reminder notification
 router.post('/:id/reminder/send', authenticateToken, async (req, res) => {
   try {
     const { type } = req.body;
     const task = await Task.findOne({ _id: req.params.id, user: req.userId });
-
+    
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
     if (!task.reminder || !task.reminder.enabled) {
-      return res.status(400).json({ message: 'Reminder not enabled for this task' });
+      return res.status(400).json({ message: 'No reminder set for this task' });
     }
 
-    // Simulate sending reminder based on type
+    // Send reminder based on type
     let notificationSent = false;
-    let notificationDetails = {};
-
+    
     switch (type) {
       case 'email':
+        // Send email reminder (placeholder - integrate with email service)
         notificationSent = true;
-        notificationDetails = {
-          type: 'email',
-          message: `Reminder sent via email for task: ${task.title}`,
-          sentAt: new Date()
-        };
         break;
-      case 'push':
+      case 'sms':
+        // Send SMS reminder (placeholder - integrate with SMS service)
         notificationSent = true;
-        notificationDetails = {
-          type: 'push',
-          message: `Push notification sent for task: ${task.title}`,
-          sentAt: new Date()
-        };
         break;
       case 'in-app':
+        // Send in-app notification
         notificationSent = true;
-        notificationDetails = {
-          type: 'in-app',
-          message: `In-app notification created for task: ${task.title}`,
-          sentAt: new Date()
-        };
-        break;
-      case 'all':
-        notificationSent = true;
-        notificationDetails = {
-          type: 'all',
-          message: `All notifications sent for task: ${task.title}`,
-          sentAt: new Date()
-        };
         break;
       default:
         return res.status(400).json({ message: 'Invalid reminder type' });
@@ -1256,11 +1234,59 @@ router.post('/:id/reminder/send', authenticateToken, async (req, res) => {
 
     res.json({
       success: notificationSent,
-      notificationDetails,
       task
     });
   } catch (error) {
     console.error('Send reminder error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Schedule reminder for task
+router.post('/:id/reminder/schedule', authenticateToken, async (req, res) => {
+  try {
+    const { time, type } = req.body;
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+    
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const reminder = {
+      enabled: true,
+      time: time || task.dueDate,
+      type: type || 'in-app',
+      scheduled: true,
+      sent: false
+    };
+
+    task.reminder = reminder;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'reminder_scheduled', `Reminder scheduled for ${time}`);
+    addHistoryEntry(task._id, 'reminder_scheduled', `Reminder scheduled for ${time}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Schedule reminder error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get due reminders
+router.get('/reminders/due', authenticateToken, async (req, res) => {
+  try {
+    const now = new Date();
+    const tasks = await Task.find({
+      user: req.userId,
+      'reminder.enabled': true,
+      'reminder.time': { $lte: now },
+      'reminder.sent': false
+    });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Get due reminders error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

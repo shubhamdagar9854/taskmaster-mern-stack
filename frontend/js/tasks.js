@@ -602,6 +602,52 @@ class TaskManager {
         return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
+    async scheduleReminder(taskId, time, type) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/reminder/schedule`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ time, type })
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage('Reminder scheduled successfully!', 'success');
+            } else {
+                this.showMessage('Failed to schedule reminder', 'error');
+            }
+        } catch (error) {
+            console.error('Schedule reminder error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async sendReminder(taskId, type) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/reminder/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ type })
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage('Reminder sent successfully!', 'success');
+            } else {
+                this.showMessage('Failed to send reminder', 'error');
+            }
+        } catch (error) {
+            console.error('Send reminder error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     initContextMenu() {
         const taskList = document.getElementById('taskList');
         
@@ -680,6 +726,19 @@ class TaskManager {
                 break;
             case 'set-priority':
                 this.showSetPriorityModal(this.contextMenuTaskId);
+                break;
+            case 'schedule-reminder':
+                const reminderTime = prompt('Enter reminder time (YYYY-MM-DDTHH:MM):');
+                if (reminderTime) {
+                    const reminderType = prompt('Enter reminder type (in-app, email, sms, all):', 'in-app');
+                    await this.scheduleReminder(this.contextMenuTaskId, reminderTime, reminderType);
+                }
+                break;
+            case 'send-reminder':
+                const sendType = prompt('Enter reminder type (in-app, email, sms):', 'in-app');
+                if (sendType) {
+                    await this.sendReminder(this.contextMenuTaskId, sendType);
+                }
                 break;
             case 'view-history':
                 await this.showTaskHistoryModal(this.contextMenuTaskId);
