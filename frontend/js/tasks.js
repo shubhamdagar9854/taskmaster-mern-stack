@@ -648,6 +648,96 @@ class TaskManager {
         }
     }
 
+    async addDependency(taskId, dependencyId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/dependencies`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ dependencyId })
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage('Dependency added successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to add dependency', 'error');
+            }
+        } catch (error) {
+            console.error('Add dependency error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async removeDependency(taskId, dependencyId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/dependencies/${dependencyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                await this.loadTasks();
+                this.showMessage('Dependency removed successfully!', 'success');
+            } else {
+                this.showMessage('Failed to remove dependency', 'error');
+            }
+        } catch (error) {
+            console.error('Remove dependency error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async checkDependencyStatus(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/dependencies/status`, {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                return await response.json();
+            }
+            return null;
+        } catch (error) {
+            console.error('Check dependency status error:', error);
+            return null;
+        }
+    }
+
+    renderDependencies(task) {
+        if (!task.dependencies || task.dependencies.length === 0) return '';
+
+        const dependenciesHtml = task.dependencies.map(dep => {
+            const isCompleted = dep.completed;
+            const statusClass = isCompleted ? 'completed' : 'pending';
+            const statusIcon = isCompleted ? '✓' : '○';
+            return `
+                <span class="task-dependency-badge ${statusClass}">
+                    ${statusIcon} ${this.escapeHtml(dep.title)}
+                </span>
+            `;
+        }).join('');
+
+        return `
+            <div class="task-dependencies">
+                <div class="task-dependencies-header">
+                    <i class="fas fa-link"></i>
+                    <span>Dependencies (${task.dependencies.length})</span>
+                </div>
+                <div class="task-dependencies-list">
+                    ${dependenciesHtml}
+                </div>
+            </div>
+        `;
+    }
+
     initContextMenu() {
         const taskList = document.getElementById('taskList');
         
@@ -726,6 +816,12 @@ class TaskManager {
                 break;
             case 'set-priority':
                 this.showSetPriorityModal(this.contextMenuTaskId);
+                break;
+            case 'add-dependency':
+                const depId = prompt('Enter dependency task ID:');
+                if (depId) {
+                    await this.addDependency(this.contextMenuTaskId, depId);
+                }
                 break;
             case 'schedule-reminder':
                 const reminderTime = prompt('Enter reminder time (YYYY-MM-DDTHH:MM):');
@@ -1490,12 +1586,12 @@ class TaskManager {
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
                     ${task.tags && task.tags.length > 0 ? `<div class="task-tags">${this.renderTags(task.tags)}</div>` : ''}
+                    ${this.renderDependencies(task)}
                     ${task.formattedNotes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${task.formattedNotes}</div>` : ''}
                     ${this.renderSubtasksDisplay(task.subtasks)}
                     ${this.renderReminderBadge(task.reminder)}
                     ${this.renderTimeTracking(task.timeTracking, task._id)}
                     ${this.renderAttachmentsDisplay(task.attachments)}
-                    ${this.renderDependenciesDisplay(task.dependencies)}
                     ${this.renderRecurringBadge(task.recurring)}
                     ${this.getDueDateBadge(task.dueDate)}
                 </div>
