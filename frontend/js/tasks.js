@@ -738,6 +738,29 @@ class TaskManager {
         `;
     }
 
+    async createTemplate(taskId, templateName) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/create-template`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ templateName })
+            });
+
+            if (response.ok) {
+                this.showMessage('Template created successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to create template', 'error');
+            }
+        } catch (error) {
+            console.error('Create template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     initContextMenu() {
         const taskList = document.getElementById('taskList');
         
@@ -804,6 +827,12 @@ class TaskManager {
         switch (action) {
             case 'duplicate':
                 await this.duplicateTask(this.contextMenuTaskId);
+                break;
+            case 'create-template':
+                const templateName = prompt('Enter template name:');
+                if (templateName) {
+                    await this.createTemplate(this.contextMenuTaskId, templateName);
+                }
                 break;
             case 'archive':
                 await this.toggleArchive(this.contextMenuTaskId, true);

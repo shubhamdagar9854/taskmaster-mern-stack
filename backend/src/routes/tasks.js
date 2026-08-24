@@ -1536,15 +1536,31 @@ router.patch('/:id/move-category', authenticateToken, async (req, res) => {
 // Create template from task
 router.post('/:id/create-template', authenticateToken, async (req, res) => {
   try {
+    const { templateName } = req.body;
     const originalTask = await Task.findOne({ _id: req.params.id, user: req.userId });
 
     if (!originalTask) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    if (!templateName) {
+      return res.status(400).json({ message: 'Template name is required' });
+    }
+
+    // Check if template with same name exists
+    const existingTemplate = await Task.findOne({ 
+      user: req.userId, 
+      isTemplate: true, 
+      templateName 
+    });
+
+    if (existingTemplate) {
+      return res.status(400).json({ message: 'Template with this name already exists' });
+    }
+
     // Create a template task
     const templateTask = new Task({
-      title: `${originalTask.title} (Template)`,
+      title: originalTask.title,
       description: originalTask.description,
       priority: originalTask.priority,
       category: originalTask.category,
@@ -1555,12 +1571,19 @@ router.post('/:id/create-template', authenticateToken, async (req, res) => {
       completed: false,
       isFavorite: false,
       isArchived: false,
-      isTemplate: true
+      isTemplate: true,
+      templateName,
+      history: [{
+        action: 'template_created',
+        description: `Template created from task: ${originalTask.title}`,
+        timestamp: new Date()
+      }]
     });
 
     const savedTemplate = await templateTask.save();
 
-    logActivity(savedTemplate._id, req.userId, 'template_created', `Template created from ${originalTask.title}`);
+    logActivity(savedTemplate._id, req.userId, 'template_created', `Template created: ${templateName}`);
+    addHistoryEntry(savedTemplate._id, 'template_created', `Template created from task: ${originalTask.title}`);
 
     res.json(savedTemplate);
   } catch (error) {
@@ -1591,23 +1614,30 @@ router.post('/templates/:id/create-task', authenticateToken, async (req, res) =>
 
     // Create a new task from template
     const newTask = new Task({
-      title: template.title.replace(' (Template)', ''),
+      title: template.title,
       description: template.description,
       priority: template.priority,
       category: template.category,
       notes: template.notes,
-      subtasks: template.subtasks,
+      subtasks: template.subtasks ? template.subtasks.map(sub => ({ ...sub, completed: false })) : [],
       tags: template.tags,
       user: req.userId,
       completed: false,
       isFavorite: false,
       isArchived: false,
-      isTemplate: false
+      isTemplate: false,
+      history: [{
+        action: 'task_created',
+        description: `Task created from template: ${template.templateName || template.title}`,
+        timestamp: new Date()
+      }]
     });
 
     const savedTask = await newTask.save();
+    await savedTask.populate('dependencies');
 
-    logActivity(savedTask._id, req.userId, 'task_from_template', `Task created from template ${template.title}`);
+    logActivity(savedTask._id, req.userId, 'task_from_template', `Task created from template ${template.templateName || template.title}`);
+    addHistoryEntry(savedTask._id, 'task_created', `Task created from template: ${template.templateName || template.title}`);
 
     res.json(savedTask);
   } catch (error) {
