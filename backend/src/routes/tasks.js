@@ -1134,9 +1134,9 @@ router.delete('/bulk', authenticateToken, async (req, res) => {
 // Advanced search tasks
 router.post('/search', authenticateToken, async (req, res) => {
   try {
-    const { query, priority, category, status, dueDateFrom, dueDateTo, tags } = req.body;
+    const { query, priority, category, status, dueDateFrom, dueDateTo, tags, subtasks, attachments, dependencies, recurring } = req.body;
 
-    const searchFilter = { user: req.userId };
+    const searchFilter = { user: req.userId, isTemplate: false };
 
     // Text search in title and description
     if (query && query.trim()) {
@@ -1181,6 +1181,46 @@ router.post('/search', authenticateToken, async (req, res) => {
       if (tagArray.length > 0) {
         searchFilter.tags = { $in: tagArray };
       }
+    }
+
+    // Subtasks filter
+    if (subtasks === 'yes') {
+      searchFilter.subtasks = { $exists: true, $not: { $size: 0 } };
+    } else if (subtasks === 'no') {
+      searchFilter.$or = [
+        { subtasks: { $exists: false } },
+        { subtasks: { $size: 0 } }
+      ];
+    }
+
+    // Attachments filter
+    if (attachments === 'yes') {
+      searchFilter.attachments = { $exists: true, $not: { $size: 0 } };
+    } else if (attachments === 'no') {
+      searchFilter.$or = [
+        { attachments: { $exists: false } },
+        { attachments: { $size: 0 } }
+      ];
+    }
+
+    // Dependencies filter
+    if (dependencies === 'yes') {
+      searchFilter.dependencies = { $exists: true, $not: { $size: 0 } };
+    } else if (dependencies === 'no') {
+      searchFilter.$or = [
+        { dependencies: { $exists: false } },
+        { dependencies: { $size: 0 } }
+      ];
+    }
+
+    // Recurring filter
+    if (recurring === 'yes') {
+      searchFilter['recurring.enabled'] = true;
+    } else if (recurring === 'no') {
+      searchFilter.$or = [
+        { recurring: { $exists: false } },
+        { 'recurring.enabled': false }
+      ];
     }
 
     const tasks = await Task.find(searchFilter).sort({ createdAt: -1 });
