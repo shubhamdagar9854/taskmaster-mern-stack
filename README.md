@@ -495,7 +495,190 @@ NODE_ENV=production
 
 ---
 
-## 🚀 **Future Enhancements**
+## � **Recent Updates & Changelog**
+
+### **Latest Features (August 2026)**
+
+#### **🔗 Task Dependencies with Visual Blocking**
+- Link tasks together with dependency relationships
+- Visual blocking indicator for tasks with incomplete dependencies
+- Circular dependency prevention
+- Self-dependency prevention
+- Dependency status checking (completed/pending)
+- Dependent tasks tracking
+- Context menu integration for quick dependency management
+- Color-coded dependency badges (green for completed, yellow for pending)
+- Activity logging and history tracking for all dependency operations
+
+#### **📋 Enhanced Task Templates**
+- Create custom-named templates from existing tasks
+- Duplicate template name prevention
+- Reset subtasks when creating tasks from templates
+- Template management modal with create/use/delete actions
+- History tracking for template creation and usage
+- Context menu integration for quick template creation
+- Activity logging for all template operations
+
+#### **🔍 Advanced Search with Multiple Filters**
+- Enhanced search with subtasks presence filter (yes/no)
+- Attachments presence filter (yes/no)
+- Dependencies presence filter (yes/no)
+- Recurring status filter (yes/no)
+- Template exclusion from search results
+- Complex filter combinations support
+- Optimized MongoDB queries for performance
+- Active filters count display
+- Quick filter application and clearing
+
+#### **🏷️ Task Tags/Labels System**
+- Custom tags for task organization
+- Tag filter dropdown in task list
+- Tag input fields in add/edit task forms
+- Tag badges in task display
+- Add/remove tags via API
+- All user tags fetching
+- Tag-based task filtering
+- Color-coded tag badges with dark mode support
+
+#### **📜 Task History/Audit Log**
+- Complete audit trail for all task changes
+- History modal with timeline view
+- Action descriptions with timestamps
+- Change tracking for all modifications
+- Context menu integration for viewing history
+- Icon-based action indicators
+- Formatted action descriptions
+- History entry for task creation, updates, toggles, favorites, archives
+
+#### **🔔 Multi-Type Task Reminders**
+- Email reminders
+- SMS reminders
+- In-app notifications
+- Reminder scheduling with custom times
+- Reminder type selection
+- Due reminders fetching
+- Reminder history tracking
+- Context menu integration for scheduling and sending
+- Activity logging for reminder operations
+
+#### **📊 Comprehensive Statistics Dashboard**
+- Task completion rate
+- Priority distribution
+- Category breakdown
+- Due date analysis
+- Time tracking summary
+- Productivity insights
+- Visual charts and graphs
+- Real-time statistics calculation
+- Modal-based statistics display
+
+#### **📅 Calendar View**
+- Monthly calendar with task display
+- Month navigation controls
+- Task indicators on calendar days
+- Date-based task filtering
+- Backend API for calendar tasks
+- Responsive calendar layout
+- Today's date highlighting
+- Task count per day display
+
+#### **📤 Export/Import Tasks**
+- Export tasks to JSON format
+- Import tasks from JSON
+- Export modal with format selection
+- Import modal with file upload
+- Data validation during import
+- Bulk task creation from import
+- Export/Import modal integration
+
+#### **💬 Task Comments with Reactions & Replies**
+- Add comments to tasks
+- Delete comments
+- Emoji reactions on comments
+- Threaded replies to comments
+- Comments modal with full history
+- Reaction counts display
+- Reply threading visualization
+- User identification in comments
+
+#### **📎 Task Attachments**
+- Upload file attachments
+- Delete attachments
+- Attachment display in task list
+- File type icons
+- Attachment count display
+- Size and date information
+- Download attachments
+- Attachment modal management
+
+#### **⏱️ Time Tracking**
+- Start/stop timer for tasks
+- Manual time entry
+- Time spent display
+- Timer reset functionality
+- Time tracking history
+- Total time calculation
+- Timer badge in task list
+- Time statistics in dashboard
+
+#### **🔄 Recurring Tasks**
+- Set recurring intervals (daily, weekly, monthly)
+- Custom recurring patterns
+- Auto-create recurring tasks
+- Recurring task completion
+- Recurring badge display
+- Recurring history tracking
+- Skip recurring instances
+- Edit recurring patterns
+
+#### **📤 Task Sharing**
+- Share tasks via email
+- Shared tasks view
+- Share history tracking
+- Share status indicators
+- Email notification on share
+- Share permissions management
+- Shared task modal
+- Activity logging for shares
+
+#### **📂 Bulk Actions**
+- Bulk select tasks
+- Bulk delete tasks
+- Bulk update tasks
+- Bulk archive tasks
+- Bulk category change
+- Bulk priority change
+- Bulk actions modal
+- Selection counter display
+
+#### **🎯 Context Menu Quick Actions**
+- Right-click context menu
+- Duplicate task
+- Create template
+- Archive/Unarchive
+- Move to category
+- Set priority
+- Toggle favorite
+- Delete task
+- Add dependency
+- Schedule reminder
+- Send reminder
+- View history
+- Share task
+
+#### **🔔 Notifications System**
+- In-app notification dropdown
+- Notification badges
+- Clear all notifications
+- Notification history
+- Real-time notification updates
+- Notification types (success, error, info, warning)
+- Notification auto-dismiss
+- Notification sound support
+
+---
+
+## �🚀 **Future Enhancements**
 
 ### **Planned Features**
 - [x] **Task Categories** - Organize tasks by categories ✅
