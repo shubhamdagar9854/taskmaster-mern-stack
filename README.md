@@ -13,6 +13,7 @@ A complete full-stack task management application demonstrating modern web devel
 - [Why This Project?](#-why-this-project)
 - [Project Overview](#-project-overview)
 - [Key Features](#-key-features)
+- [Recent Updates & Changelog](#-recent-updates--changelog)
 - [Tech Stack](#️-tech-stack)
 - [Project Structure](#-project-structure)
 - [Installation & Setup](#-installation--setup)
@@ -24,6 +25,8 @@ A complete full-stack task management application demonstrating modern web devel
 - [Screenshots](#-screenshots)
 - [Deployment](#-deployment)
 - [Troubleshooting](#-troubleshooting)
+- [Contributing Guidelines](#-contributing-guidelines)
+- [License](#-license)
 - [Future Enhancements](#-future-enhancements)
 - [Support & Contact](#-support--contact)
 
@@ -678,7 +681,204 @@ NODE_ENV=production
 
 ---
 
-## �🚀 **Future Enhancements**
+## 🤝 **Contributing Guidelines**
+
+We welcome contributions from the community! Here's how you can help make TaskMaster better.
+
+### **How to Contribute**
+
+#### **1. Fork the Repository**
+```bash
+# Fork the repository on GitHub
+# Clone your fork locally
+git clone https://github.com/YOUR_USERNAME/taskmaster-mern-stack.git
+cd taskmaster-mern-stack
+```
+
+#### **2. Create a Branch**
+```bash
+# Create a new branch for your feature
+git checkout -b feature/your-feature-name
+```
+
+#### **3. Make Your Changes**
+- Write clean, readable code
+- Follow the existing code style
+- Add comments for complex logic
+- Test your changes thoroughly
+- Update documentation if needed
+
+#### **4. Commit Your Changes**
+```bash
+# Add your changes
+git add .
+
+# Commit with a descriptive message
+git commit -m "feat: add your feature description"
+```
+
+#### **5. Push to Your Fork**
+```bash
+# Push your branch to your fork
+git push origin feature/your-feature-name
+```
+
+#### **6. Create a Pull Request**
+- Go to the original repository on GitHub
+- Click "New Pull Request"
+- Select your branch
+- Describe your changes in the PR description
+- Submit the PR for review
+
+### **Code Style Guidelines**
+
+#### **JavaScript/Node.js**
+- Use camelCase for variables and functions
+- Use PascalCase for classes and constructors
+- Use UPPER_CASE for constants
+- Add JSDoc comments for functions
+- Use meaningful variable names
+- Keep functions small and focused
+- Use async/await for asynchronous code
+
+#### **CSS**
+- Use kebab-case for class names
+- Group related styles together
+- Use CSS variables for colors
+- Follow BEM naming convention where applicable
+- Keep specificity low
+- Use flexbox and grid for layouts
+
+#### **Git Commit Messages**
+Follow conventional commits format:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `style:` - Code style changes
+- `refactor:` - Code refactoring
+- `test:` - Test additions/changes
+- `chore:` - Maintenance tasks
+
+Example:
+```bash
+git commit -m "feat: add task dependencies feature"
+git commit -m "fix: resolve memory leak in search function"
+git commit -m "docs: update API documentation"
+```
+
+### **What to Contribute**
+
+#### **Feature Requests**
+- Check existing issues first
+- Describe the feature clearly
+- Explain why it's needed
+- Provide use cases if possible
+
+#### **Bug Reports**
+- Provide clear steps to reproduce
+- Include expected vs actual behavior
+- Add screenshots if applicable
+- Mention your environment (OS, browser, Node version)
+
+#### **Documentation**
+- Fix typos and grammar
+- Improve clarity
+- Add examples
+- Translate to other languages
+
+#### **Code Contributions**
+- Fix bugs
+- Add new features
+- Improve performance
+- Refactor code
+- Add tests
+
+### **Development Guidelines**
+
+#### **Before Starting**
+- Read the existing code
+- Understand the project structure
+- Check for similar existing features
+- Discuss major changes in an issue first
+
+#### **During Development**
+- Write clean, maintainable code
+- Follow existing patterns
+- Add appropriate error handling
+- Test your changes thoroughly
+- Update relevant documentation
+
+#### **Before Submitting**
+- Test your changes locally
+- Ensure no console errors
+- Check responsive design
+- Verify on multiple browsers
+- Update README if needed
+
+### **Review Process**
+1. Automated checks (if any)
+2. Code review by maintainers
+3. Feedback and requested changes
+4. Approval and merge
+
+### **Community Guidelines**
+- Be respectful and constructive
+- Welcome new contributors
+- Provide helpful feedback
+- Focus on what is best for the community
+- Show empathy towards other community members
+
+---
+
+## 📄 **License**
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+### **MIT License Summary**
+
+```
+MIT License
+
+Copyright (c) 2024 Shubham Dagar
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### **What You Can Do**
+- ✅ Use the code for personal and commercial projects
+- ✅ Modify the code to fit your needs
+- ✅ Distribute the code
+- ✅ Sublicense the code
+- ✅ Use the code in proprietary software
+
+### **What You Must Do**
+- ⚠️ Include the copyright notice in all copies
+- ⚠️ Include the license notice in all copies
+- ⚠️ State significant changes to the original code
+
+### **What You Cannot Do**
+- ❌ Hold the author liable for any damages
+- ❌ Claim the code as your own without attribution
+
+---
+
+## 🚀 **Future Enhancements**
 
 ### **Planned Features**
 - [x] **Task Categories** - Organize tasks by categories ✅
