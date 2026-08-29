@@ -761,6 +761,33 @@ class TaskManager {
         }
     }
 
+    async togglePin(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/pin`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.showMessage(task.isPinned ? 'Task pinned!' : 'Task unpinned!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to pin task', 'error');
+            }
+        } catch (error) {
+            console.error('Toggle pin error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     initContextMenu() {
         const taskList = document.getElementById('taskList');
         
@@ -833,6 +860,9 @@ class TaskManager {
                 if (templateName) {
                     await this.createTemplate(this.contextMenuTaskId, templateName);
                 }
+                break;
+            case 'pin':
+                await this.togglePin(this.contextMenuTaskId);
                 break;
             case 'archive':
                 await this.toggleArchive(this.contextMenuTaskId, true);
@@ -1600,7 +1630,7 @@ class TaskManager {
         // Add tasks
         filteredTasks.forEach(task => {
             const taskElement = document.createElement('div');
-            taskElement.className = `task-item ${task.completed ? 'completed' : ''} ${this.selectedTasks.has(task._id) ? 'bulk-selected' : ''}`;
+            taskElement.className = `task-item ${task.completed ? 'completed' : ''} ${task.isPinned ? 'task-pinned' : ''} ${this.selectedTasks.has(task._id) ? 'bulk-selected' : ''}`;
             taskElement.dataset.taskId = task._id;
             taskElement.draggable = true;
             
@@ -5734,6 +5764,13 @@ class TaskManager {
 
     sortTasks(tasks) {
         const sorted = [...tasks];
+        
+        // Always put pinned tasks at the top
+        sorted.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return 0;
+        });
         
         switch (this.sortBy) {
             case 'newest':

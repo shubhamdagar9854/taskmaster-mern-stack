@@ -786,6 +786,25 @@ body {
     color: #fca5a5;
 }
 
+.task-pinned {
+    border-left: 4px solid #9b59b6 !important;
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.1) 0%, rgba(155, 89, 182, 0.05) 100%);
+}
+
+.task-pinned::before {
+    content: '📌';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* Dark mode for pinned tasks */
+.dark-mode .task-pinned {
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.2) 0%, rgba(155, 89, 182, 0.1) 100%);
+}
+
 .context-menu {
     position: fixed;
     background: white;

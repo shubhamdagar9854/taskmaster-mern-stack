@@ -210,6 +210,10 @@ const taskSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isPinned: {
+    type: Boolean,
+    default: false
+  },
   sharedWith: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

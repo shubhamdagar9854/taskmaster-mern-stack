@@ -767,6 +767,28 @@ router.patch('/:id/archive', authenticateToken, async (req, res) => {
   }
 });
 
+// Pin task
+router.patch('/:id/pin', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    task.isPinned = !task.isPinned;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'task_pinned', `Task ${task.isPinned ? 'pinned' : 'unpinned'}`);
+    addHistoryEntry(task._id, 'task_pinned', `Task ${task.isPinned ? 'pinned' : 'unpinned'}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Pin task error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get due reminders
 router.get('/reminders/due', authenticateToken, async (req, res) => {
   try {
