@@ -51,7 +51,16 @@ class TaskManager {
     }
 
     setupEventListeners() {
-        // Add task button
+        // Progress input
+        document.getElementById('taskProgress').addEventListener('input', (e) => {
+            document.getElementById('progressValue').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('editTaskProgress').addEventListener('input', (e) => {
+            document.getElementById('editProgressValue').textContent = e.target.value + '%';
+        });
+
+        // Subtask buttons
         document.getElementById('addTaskBtn').addEventListener('click', () => {
             this.showAddTaskForm();
         });
@@ -738,6 +747,23 @@ class TaskManager {
         `;
     }
 
+    renderProgressBar(task) {
+        const progress = task.progress || 0;
+        const colorClass = progress === 100 ? 'completed' : progress >= 50 ? 'half' : 'low';
+        
+        return `
+            <div class="task-progress">
+                <div class="task-progress-bar">
+                    <div class="task-progress-fill ${colorClass}" style="width: ${progress}%"></div>
+                </div>
+                <div class="task-progress-label">
+                    <span>Progress</span>
+                    <span>${progress}%</span>
+                </div>
+            </div>
+        `;
+    }
+
     async createTemplate(taskId, templateName) {
         try {
             const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/create-template`, {
@@ -1301,6 +1327,9 @@ class TaskManager {
         const recurringInterval = parseInt(document.getElementById('taskRecurringInterval').value) || 1;
         const recurring = recurringEnabled ? { enabled: true, frequency: recurringFrequency, interval: recurringInterval } : { enabled: false, frequency: 'daily', interval: 1 };
 
+        // Collect progress
+        const progress = parseInt(document.getElementById('taskProgress').value) || 0;
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
@@ -1320,7 +1349,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring, progress })
             });
 
             const data = await response.json();
@@ -1536,12 +1565,15 @@ class TaskManager {
         const recurringInterval = parseInt(document.getElementById('editTaskRecurringInterval').value) || 1;
         const recurring = recurringEnabled ? { enabled: true, frequency: recurringFrequency, interval: recurringInterval } : { enabled: false, frequency: 'daily', interval: 1 };
 
+        // Collect progress
+        const progress = parseInt(document.getElementById('editTaskProgress').value) || 0;
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring, progress });
         this.hideEditTaskForm();
     }
 
@@ -1648,6 +1680,7 @@ class TaskManager {
                     ${this.renderDependencies(task)}
                     ${task.formattedNotes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${task.formattedNotes}</div>` : ''}
                     ${this.renderSubtasksDisplay(task.subtasks)}
+                    ${this.renderProgressBar(task)}
                     ${this.renderReminderBadge(task.reminder)}
                     ${this.renderTimeTracking(task.timeTracking, task._id)}
                     ${this.renderAttachmentsDisplay(task.attachments)}

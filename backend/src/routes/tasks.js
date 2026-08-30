@@ -767,6 +767,43 @@ router.patch('/:id/archive', authenticateToken, async (req, res) => {
   }
 });
 
+// Update task progress
+router.patch('/:id/progress', authenticateToken, async (req, res) => {
+  try {
+    const { progress } = req.body;
+
+    if (progress < 0 || progress > 100) {
+      return res.status(400).json({ message: 'Progress must be between 0 and 100' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const oldProgress = task.progress;
+    task.progress = progress;
+
+    // Auto-complete task if progress is 100%
+    if (progress === 100 && !task.completed) {
+      task.completed = true;
+    } else if (progress < 100 && task.completed) {
+      task.completed = false;
+    }
+
+    await task.save();
+
+    logActivity(task._id, req.userId, 'progress_updated', `Progress updated from ${oldProgress}% to ${progress}%`);
+    addHistoryEntry(task._id, 'progress_updated', `Progress updated from ${oldProgress}% to ${progress}%`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Update progress error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

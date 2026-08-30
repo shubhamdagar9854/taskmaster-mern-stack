@@ -214,6 +214,12 @@ const taskSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  progress: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
   sharedWith: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

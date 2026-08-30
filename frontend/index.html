@@ -297,13 +297,18 @@
                             <input type="datetime-local" id="taskReminderTime" class="form-input">
                         </div>
                         <div class="form-group">
-                            <label for="taskReminderType">Reminder Type:</label>
-                            <select id="taskReminderType" class="form-select">
-                                <option value="in-app">In-App Notification</option>
+                            <label>Reminder Type</label>
+                            <select id="taskReminderType" class="form-input">
+                                <option value="in-app">In-App</option>
                                 <option value="email">Email</option>
                                 <option value="sms">SMS</option>
-                                <option value="all">All Types</option>
+                                <option value="all">All</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Progress (%)</label>
+                            <input type="range" id="taskProgress" class="form-input" min="0" max="100" value="0">
+                            <span id="progressValue">0%</span>
                         </div>
                         <div class="form-group">
                             <label for="taskCategory">Category</label>
@@ -468,6 +473,11 @@
                                 <option value="sms">SMS</option>
                                 <option value="all">All Types</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Progress (%)</label>
+                            <input type="range" id="editTaskProgress" class="form-input" min="0" max="100" value="0">
+                            <span id="editProgressValue">0%</span>
                         </div>
                         <div class="form-group">
                             <label>Tags (Optional)</label>
