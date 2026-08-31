@@ -220,6 +220,11 @@ const taskSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
+  colorLabel: {
+    type: String,
+    enum: ['default', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'],
+    default: 'default'
+  },
   sharedWith: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

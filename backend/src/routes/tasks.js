@@ -804,6 +804,36 @@ router.patch('/:id/progress', authenticateToken, async (req, res) => {
   }
 });
 
+// Update task color label
+router.patch('/:id/color-label', authenticateToken, async (req, res) => {
+  try {
+    const { colorLabel } = req.body;
+
+    const validColors = ['default', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'];
+    if (!validColors.includes(colorLabel)) {
+      return res.status(400).json({ message: 'Invalid color label' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const oldColor = task.colorLabel;
+    task.colorLabel = colorLabel;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'color_label_updated', `Color label changed from ${oldColor} to ${colorLabel}`);
+    addHistoryEntry(task._id, 'color_label_updated', `Color label changed from ${oldColor} to ${colorLabel}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Update color label error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

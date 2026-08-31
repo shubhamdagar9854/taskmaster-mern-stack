@@ -867,11 +867,14 @@ input[type="range"] {
     background: #e5e7eb;
     outline: none;
     -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
+    -moz-appearance: none;
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -901,6 +904,71 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode #progressValue,
 .dark-mode #editProgressValue {
     color: #a78bfa;
+}
+
+/* Task Color Labels */
+.task-item.color-red {
+    border-left: 4px solid #ef4444 !important;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.task-item.color-orange {
+    border-left: 4px solid #f97316 !important;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(249, 115, 22, 0.02) 100%);
+}
+
+.task-item.color-yellow {
+    border-left: 4px solid #eab308 !important;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.05) 0%, rgba(234, 179, 8, 0.02) 100%);
+}
+
+.task-item.color-green {
+    border-left: 4px solid #22c55e !important;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.02) 100%);
+}
+
+.task-item.color-blue {
+    border-left: 4px solid #3b82f6 !important;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+}
+
+.task-item.color-purple {
+    border-left: 4px solid #a855f7 !important;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.05) 0%, rgba(168, 85, 247, 0.02) 100%);
+}
+
+.task-item.color-pink {
+    border-left: 4px solid #ec4899 !important;
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(236, 72, 153, 0.02) 100%);
+}
+
+/* Dark mode for color labels */
+.dark-mode .task-item.color-red {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
+}
+
+.dark-mode .task-item.color-orange {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.08) 100%);
+}
+
+.dark-mode .task-item.color-yellow {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(234, 179, 8, 0.08) 100%);
+}
+
+.dark-mode .task-item.color-green {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
+}
+
+.dark-mode .task-item.color-blue {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+}
+
+.dark-mode .task-item.color-purple {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.08) 100%);
+}
+
+.dark-mode .task-item.color-pink {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%);
 }
 
 .context-menu {

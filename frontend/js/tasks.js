@@ -814,6 +814,60 @@ class TaskManager {
         }
     }
 
+    showColorPicker(taskId) {
+        const colors = [
+            { value: 'default', label: 'Default', emoji: '⚪' },
+            { value: 'red', label: 'Red', emoji: '🔴' },
+            { value: 'orange', label: 'Orange', emoji: '🟠' },
+            { value: 'yellow', label: 'Yellow', emoji: '🟡' },
+            { value: 'green', label: 'Green', emoji: '🟢' },
+            { value: 'blue', label: 'Blue', emoji: '🔵' },
+            { value: 'purple', label: 'Purple', emoji: '🟣' },
+            { value: 'pink', label: 'Pink', emoji: '🩷' }
+        ];
+
+        const colorOptions = colors.map(c => `${c.emoji} ${c.label}`).join('\n');
+        const selectedIndex = prompt(`Select a color:\n\n${colorOptions}\n\nEnter number (1-8):`);
+
+        if (selectedIndex !== null) {
+            const index = parseInt(selectedIndex) - 1;
+            if (index >= 0 && index < colors.length) {
+                this.updateColorLabel(taskId, colors[index].value);
+            } else {
+                this.showMessage('Invalid selection', 'error');
+            }
+        }
+    }
+
+    async updateColorLabel(taskId, colorLabel) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/color-label`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ colorLabel })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.showMessage('Color label updated!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to update color', 'error');
+            }
+        } catch (error) {
+            console.error('Update color label error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     initContextMenu() {
         const taskList = document.getElementById('taskList');
         
@@ -889,6 +943,9 @@ class TaskManager {
                 break;
             case 'pin':
                 await this.togglePin(this.contextMenuTaskId);
+                break;
+            case 'set-color':
+                this.showColorPicker(this.contextMenuTaskId);
                 break;
             case 'archive':
                 await this.toggleArchive(this.contextMenuTaskId, true);
@@ -1330,6 +1387,9 @@ class TaskManager {
         // Collect progress
         const progress = parseInt(document.getElementById('taskProgress').value) || 0;
 
+        // Collect color label
+        const colorLabel = document.getElementById('taskColorLabel').value;
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
@@ -1349,7 +1409,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring, progress })
+                body: JSON.stringify({ title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring, progress, colorLabel })
             });
 
             const data = await response.json();
@@ -1568,12 +1628,15 @@ class TaskManager {
         // Collect progress
         const progress = parseInt(document.getElementById('editTaskProgress').value) || 0;
 
+        // Collect color label
+        const colorLabel = document.getElementById('editTaskColorLabel').value;
+
         if (!title) {
             this.showMessage('Task title is required', 'error');
             return;
         }
 
-        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring, progress });
+        await this.updateTask(this.currentEditTaskId, { title, description, priority, dueDate: dueDate || null, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring, progress, colorLabel });
         this.hideEditTaskForm();
     }
 
@@ -1662,7 +1725,8 @@ class TaskManager {
         // Add tasks
         filteredTasks.forEach(task => {
             const taskElement = document.createElement('div');
-            taskElement.className = `task-item ${task.completed ? 'completed' : ''} ${task.isPinned ? 'task-pinned' : ''} ${this.selectedTasks.has(task._id) ? 'bulk-selected' : ''}`;
+            const colorClass = task.colorLabel && task.colorLabel !== 'default' ? `color-${task.colorLabel}` : '';
+            taskElement.className = `task-item ${task.completed ? 'completed' : ''} ${task.isPinned ? 'task-pinned' : ''} ${colorClass} ${this.selectedTasks.has(task._id) ? 'bulk-selected' : ''}`;
             taskElement.dataset.taskId = task._id;
             taskElement.draggable = true;
             

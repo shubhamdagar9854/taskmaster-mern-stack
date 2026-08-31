@@ -311,6 +311,19 @@
                             <span id="progressValue">0%</span>
                         </div>
                         <div class="form-group">
+                            <label>Color Label</label>
+                            <select id="taskColorLabel" class="form-input">
+                                <option value="default">Default</option>
+                                <option value="red">🔴 Red</option>
+                                <option value="orange">🟠 Orange</option>
+                                <option value="yellow">🟡 Yellow</option>
+                                <option value="green">🟢 Green</option>
+                                <option value="blue">🔵 Blue</option>
+                                <option value="purple">🟣 Purple</option>
+                                <option value="pink">🩷 Pink</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label for="taskCategory">Category</label>
                             <select id="taskCategory" class="form-select">
                                 <option value="work">💼 Work</option>
@@ -478,6 +491,19 @@
                             <label>Progress (%)</label>
                             <input type="range" id="editTaskProgress" class="form-input" min="0" max="100" value="0">
                             <span id="editProgressValue">0%</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Color Label</label>
+                            <select id="editTaskColorLabel" class="form-input">
+                                <option value="default">Default</option>
+                                <option value="red">🔴 Red</option>
+                                <option value="orange">🟠 Orange</option>
+                                <option value="yellow">🟡 Yellow</option>
+                                <option value="green">🟢 Green</option>
+                                <option value="blue">🔵 Blue</option>
+                                <option value="purple">🟣 Purple</option>
+                                <option value="pink">🩷 Pink</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Tags (Optional)</label>
@@ -1251,6 +1277,9 @@
                     </div>
                     <div class="context-menu-item" data-action="pin">
                         <i class="fas fa-thumbtack"></i> Pin Task
+                    </div>
+                    <div class="context-menu-item" data-action="set-color">
+                        <i class="fas fa-palette"></i> Set Color
                     </div>
                     <div class="context-menu-item" data-action="archive">
                         <i class="fas fa-archive"></i> Archive
