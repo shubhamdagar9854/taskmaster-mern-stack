@@ -834,6 +834,66 @@ router.patch('/:id/color-label', authenticateToken, async (req, res) => {
   }
 });
 
+// Snooze task
+router.patch('/:id/snooze', authenticateToken, async (req, res) => {
+  try {
+    const { minutes } = req.body;
+
+    if (!minutes || minutes < 1) {
+      return res.status(400).json({ message: 'Invalid snooze duration' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const oldDueDate = task.dueDate;
+    const newDueDate = new Date(Date.now() + minutes * 60 * 1000);
+    task.dueDate = newDueDate;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'task_snoozed', `Task snoozed for ${minutes} minutes`);
+    addHistoryEntry(task._id, 'task_snoozed', `Task snoozed for ${minutes} minutes (from ${oldDueDate} to ${newDueDate})`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Snooze task error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Postpone task
+router.patch('/:id/postpone', authenticateToken, async (req, res) => {
+  try {
+    const { days } = req.body;
+
+    if (!days || days < 1) {
+      return res.status(400).json({ message: 'Invalid postpone duration' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const oldDueDate = task.dueDate || new Date();
+    const newDueDate = new Date(oldDueDate.getTime() + days * 24 * 60 * 60 * 1000);
+    task.dueDate = newDueDate;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'task_postponed', `Task postponed by ${days} days`);
+    addHistoryEntry(task._id, 'task_postponed', `Task postponed by ${days} days (from ${oldDueDate} to ${newDueDate})`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Postpone task error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

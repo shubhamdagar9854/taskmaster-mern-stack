@@ -48,6 +48,111 @@ class TaskManager {
 
     init() {
         this.setupEventListeners();
+        this.initKeyboardShortcuts();
+    }
+
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ignore if user is typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+                return;
+            }
+
+            // Ctrl/Cmd + N: New task
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                this.showAddTaskForm();
+            }
+
+            // Ctrl/Cmd + F: Focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+
+            // Escape: Close modals
+            if (e.key === 'Escape') {
+                this.hideAddTaskForm();
+                this.hideEditTaskForm();
+                this.hideContextMenu();
+                this.hideAdvancedSearchModal();
+            }
+
+            // Delete: Delete selected task (if one is selected)
+            if (e.key === 'Delete' && this.selectedTasks.size === 1) {
+                const taskId = Array.from(this.selectedTasks)[0];
+                if (confirm('Are you sure you want to delete this task?')) {
+                    this.deleteTask(taskId);
+                }
+            }
+
+            // Space: Toggle completion of first selected task
+            if (e.key === ' ' && this.selectedTasks.size === 1) {
+                e.preventDefault();
+                const taskId = Array.from(this.selectedTasks)[0];
+                const task = this.tasks.find(t => t._id === taskId);
+                if (task) {
+                    this.toggleTask(taskId);
+                }
+            }
+
+            // Ctrl/Cmd + A: Select all tasks
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                e.preventDefault();
+                this.selectAllTasks();
+            }
+
+            // Ctrl/Cmd + D: Deselect all
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                this.deselectAllTasks();
+            }
+
+            // 1-5: Set filter
+            if (e.key === '1') {
+                document.getElementById('taskFilter').value = 'all';
+                this.filter = 'all';
+                this.renderTasks();
+            }
+            if (e.key === '2') {
+                document.getElementById('taskFilter').value = 'active';
+                this.filter = 'active';
+                this.renderTasks();
+            }
+            if (e.key === '3') {
+                document.getElementById('taskFilter').value = 'completed';
+                this.filter = 'completed';
+                this.renderTasks();
+            }
+            if (e.key === '4') {
+                document.getElementById('taskFilter').value = 'favorites';
+                this.filter = 'favorites';
+                this.renderTasks();
+            }
+            if (e.key === '5') {
+                document.getElementById('taskFilter').value = 'archived';
+                this.filter = 'archived';
+                this.renderTasks();
+            }
+        });
+    }
+
+    selectAllTasks() {
+        this.tasks.forEach(task => this.selectedTasks.add(task._id));
+        this.renderTasks();
+    }
+
+    deselectAllTasks() {
+        this.selectedTasks.clear();
+        this.renderTasks();
+    }
+
+    showKeyboardShortcutsModal() {
+        document.getElementById('keyboardShortcutsModal').classList.remove('hidden');
+    }
+
+    hideKeyboardShortcutsModal() {
+        document.getElementById('keyboardShortcutsModal').classList.add('hidden');
     }
 
     setupEventListeners() {
@@ -58,6 +163,16 @@ class TaskManager {
 
         document.getElementById('editTaskProgress').addEventListener('input', (e) => {
             document.getElementById('editProgressValue').textContent = e.target.value + '%';
+        });
+
+        // Keyboard shortcuts button
+        document.getElementById('keyboardShortcutsBtn').addEventListener('click', () => {
+            this.showKeyboardShortcutsModal();
+        });
+
+        // Close keyboard shortcuts modal
+        document.querySelector('[data-action="close-keyboard-shortcuts"]').addEventListener('click', () => {
+            this.hideKeyboardShortcutsModal();
         });
 
         // Subtask buttons
@@ -868,6 +983,82 @@ class TaskManager {
         }
     }
 
+    async snoozeTask(taskId) {
+        const minutes = prompt('Snooze for how many minutes? (e.g., 15, 30, 60)');
+        if (minutes === null) return;
+
+        const minutesNum = parseInt(minutes);
+        if (isNaN(minutesNum) || minutesNum < 1) {
+            this.showMessage('Please enter a valid number', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/snooze`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ minutes: minutesNum })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.showMessage(`Task snoozed for ${minutesNum} minutes!`, 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to snooze task', 'error');
+            }
+        } catch (error) {
+            console.error('Snooze task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async postponeTask(taskId) {
+        const days = prompt('Postpone for how many days? (e.g., 1, 2, 7)');
+        if (days === null) return;
+
+        const daysNum = parseInt(days);
+        if (isNaN(daysNum) || daysNum < 1) {
+            this.showMessage('Please enter a valid number', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/postpone`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ days: daysNum })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.showMessage(`Task postponed by ${daysNum} days!`, 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to postpone task', 'error');
+            }
+        } catch (error) {
+            console.error('Postpone task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     initContextMenu() {
         const taskList = document.getElementById('taskList');
         
@@ -946,6 +1137,12 @@ class TaskManager {
                 break;
             case 'set-color':
                 this.showColorPicker(this.contextMenuTaskId);
+                break;
+            case 'snooze':
+                this.snoozeTask(this.contextMenuTaskId);
+                break;
+            case 'postpone':
+                this.postponeTask(this.contextMenuTaskId);
                 break;
             case 'archive':
                 await this.toggleArchive(this.contextMenuTaskId, true);
