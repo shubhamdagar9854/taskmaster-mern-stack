@@ -43,6 +43,7 @@ class TaskManager {
         this.currentCalendarDate = new Date();
         this.currentView = 'list'; // 'list' or 'kanban'
         this.notificationsShown = false;
+        this.currentNotesTaskId = null;
         this.init();
     }
 
@@ -76,6 +77,8 @@ class TaskManager {
                 this.hideEditTaskForm();
                 this.hideContextMenu();
                 this.hideAdvancedSearchModal();
+                this.hideKeyboardShortcutsModal();
+                this.hideNotesModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -155,6 +158,89 @@ class TaskManager {
         document.getElementById('keyboardShortcutsModal').classList.add('hidden');
     }
 
+    showNotesModal(taskId) {
+        this.currentNotesTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        const editor = document.getElementById('notesEditor');
+        
+        if (task && task.formattedNotes) {
+            editor.innerHTML = task.formattedNotes;
+        } else if (task && task.notes) {
+            editor.innerHTML = task.notes;
+        } else {
+            editor.innerHTML = '';
+        }
+        
+        document.getElementById('notesModal').classList.remove('hidden');
+    }
+
+    hideNotesModal() {
+        document.getElementById('notesModal').classList.add('hidden');
+        this.currentNotesTaskId = null;
+    }
+
+    async saveNotes() {
+        if (!this.currentNotesTaskId) return;
+
+        const editor = document.getElementById('notesEditor');
+        const formattedNotes = editor.innerHTML;
+        const notes = editor.innerText;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentNotesTaskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ notes, formattedNotes })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentNotesTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.showMessage('Notes saved successfully!', 'success');
+                this.hideNotesModal();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to save notes', 'error');
+            }
+        } catch (error) {
+            console.error('Save notes error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    initNotesToolbar() {
+        const toolbar = document.querySelector('.notes-toolbar');
+        const editor = document.getElementById('notesEditor');
+
+        toolbar.addEventListener('click', (e) => {
+            const btn = e.target.closest('.toolbar-btn');
+            if (!btn) return;
+
+            const command = btn.dataset.command;
+            const value = btn.dataset.value || null;
+
+            if (command === 'createLink') {
+                const url = prompt('Enter URL:');
+                if (url) {
+                    document.execCommand(command, false, url);
+                }
+            } else if (command === 'formatBlock') {
+                document.execCommand(command, false, value);
+            } else {
+                document.execCommand(command, false, null);
+            }
+
+            editor.focus();
+        });
+    }
+
     setupEventListeners() {
         // Progress input
         document.getElementById('taskProgress').addEventListener('input', (e) => {
@@ -174,6 +260,22 @@ class TaskManager {
         document.querySelector('[data-action="close-keyboard-shortcuts"]').addEventListener('click', () => {
             this.hideKeyboardShortcutsModal();
         });
+
+        // Notes modal
+        document.querySelector('[data-action="close-notes"]').addEventListener('click', () => {
+            this.hideNotesModal();
+        });
+
+        document.getElementById('saveNotesBtn').addEventListener('click', () => {
+            this.saveNotes();
+        });
+
+        document.getElementById('cancelNotesBtn').addEventListener('click', () => {
+            this.hideNotesModal();
+        });
+
+        // Initialize notes toolbar
+        this.initNotesToolbar();
 
         // Subtask buttons
         document.getElementById('addTaskBtn').addEventListener('click', () => {
@@ -1143,6 +1245,9 @@ class TaskManager {
                 break;
             case 'postpone':
                 this.postponeTask(this.contextMenuTaskId);
+                break;
+            case 'notes':
+                this.showNotesModal(this.contextMenuTaskId);
                 break;
             case 'archive':
                 await this.toggleArchive(this.contextMenuTaskId, true);

@@ -1021,6 +1021,143 @@ input[type="range"]::-moz-range-thumb {
     color: #9ca3af;
 }
 
+/* Notes Modal */
+.notes-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px 8px 0 0;
+    border-bottom: none;
+}
+
+.toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #374151;
+}
+
+.toolbar-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.toolbar-btn:active {
+    background: #e5e7eb;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: #d1d5db;
+    margin: 6px 4px;
+}
+
+.notes-editor {
+    min-height: 200px;
+    max-height: 400px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 0 0 8px 8px;
+    overflow-y: auto;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.notes-editor:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.notes-editor h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 16px 0 8px 0;
+}
+
+.notes-editor h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 14px 0 8px 0;
+}
+
+.notes-editor h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 12px 0 8px 0;
+}
+
+.notes-editor ul,
+.notes-editor ol {
+    margin: 8px 0;
+    padding-left: 24px;
+}
+
+.notes-editor li {
+    margin: 4px 0;
+}
+
+.notes-editor a {
+    color: #8b5cf6;
+    text-decoration: underline;
+}
+
+.notes-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    justify-content: flex-end;
+}
+
+/* Dark mode for notes */
+.dark-mode .notes-toolbar {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.dark-mode .toolbar-btn {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+}
+
+.dark-mode .toolbar-btn:hover {
+    background: #4b5563;
+    border-color: #6b7280;
+}
+
+.dark-mode .toolbar-divider {
+    background: #4b5563;
+}
+
+.dark-mode .notes-editor {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+
+.dark-mode .notes-editor:focus {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+}
+
+.dark-mode .notes-editor a {
+    color: #a78bfa;
+}
+
 .context-menu {
     position: fixed;
     background: white;

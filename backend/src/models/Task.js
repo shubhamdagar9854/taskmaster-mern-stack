@@ -225,6 +225,10 @@ const taskSchema = new mongoose.Schema({
     enum: ['default', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'],
     default: 'default'
   },
+  formattedNotes: {
+    type: String,
+    default: ''
+  },
   sharedWith: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

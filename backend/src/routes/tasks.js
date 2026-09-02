@@ -603,7 +603,7 @@ router.get('/templates', authenticateToken, async (req, res) => {
 // Create a new task
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring } = req.body;
+    const { title, description, priority, dueDate, category, notes, formattedNotes, subtasks, reminder, tags, timeTracking, dependencies, isTemplate, templateName, recurring, progress, colorLabel } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
@@ -620,6 +620,7 @@ router.post('/', authenticateToken, async (req, res) => {
       dueDate,
       category,
       notes,
+      formattedNotes,
       subtasks,
       reminder,
       tags,
@@ -628,6 +629,8 @@ router.post('/', authenticateToken, async (req, res) => {
       isTemplate: isTemplate || false,
       templateName,
       recurring,
+      progress: progress || 0,
+      colorLabel: colorLabel || 'default',
       user: req.userId,
       history: [{
         action: 'task_created',
@@ -649,7 +652,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // Update a task
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring } = req.body;
+    const { title, description, priority, dueDate, category, notes, formattedNotes, subtasks, reminder, tags, timeTracking, dependencies, recurring, progress, colorLabel } = req.body;
 
     const task = await Task.findOne({ _id: req.params.id, user: req.userId });
 
@@ -665,17 +668,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (dueDate !== undefined && dueDate !== task.dueDate) changes.push('due date updated');
     if (category && category !== task.category) changes.push(`category changed to ${category}`);
     if (notes !== undefined && notes !== task.notes) changes.push('notes updated');
+    if (formattedNotes !== undefined && formattedNotes !== task.formattedNotes) changes.push('formatted notes updated');
     if (subtasks) changes.push('subtasks updated');
     if (tags) changes.push('tags updated');
     if (dependencies) changes.push('dependencies updated');
     if (recurring) changes.push('recurring settings updated');
+    if (progress !== undefined && progress !== task.progress) changes.push(`progress updated to ${progress}%`);
+    if (colorLabel !== undefined && colorLabel !== task.colorLabel) changes.push(`color label changed to ${colorLabel}`);
 
     if (changes.length > 0) {
       logActivity(task, 'updated', changes.join(', '));
       addHistoryEntry(task._id, 'task_updated', changes.join(', '));
     }
 
-    Object.assign(task, { title, description, priority, dueDate, category, notes, subtasks, reminder, tags, timeTracking, dependencies, recurring });
+    Object.assign(task, { title, description, priority, dueDate, category, notes, formattedNotes, subtasks, reminder, tags, timeTracking, dependencies, recurring, progress, colorLabel });
     await task.save();
     await task.populate('dependencies');
     res.json(task);
