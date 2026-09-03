@@ -201,6 +201,9 @@
                     <button id="keyboardShortcutsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-keyboard"></i> Shortcuts
                     </button>
+                    <button id="statisticsBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-chart-bar"></i> Statistics
+                    </button>
                     <button id="darkModeToggle" class="btn btn-outline btn-sm">
                         <i class="fas fa-moon"></i>
                     </button>
@@ -1249,6 +1252,114 @@
                                         <i class="fas fa-file-import"></i> Import from JSON
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Dashboard Modal -->
+                <div id="statisticsModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>📊 Task Statistics Dashboard</h3>
+                            <button class="modal-close" data-action="close-statistics">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="stats-overview">
+                                <div class="stat-card-large">
+                                    <div class="stat-icon-large total">📊</div>
+                                    <div class="stat-info-large">
+                                        <div class="stat-value-large" id="statTotalTasks">0</div>
+                                        <div class="stat-label-large">Total Tasks</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card-large">
+                                    <div class="stat-icon-large completed">✅</div>
+                                    <div class="stat-info-large">
+                                        <div class="stat-value-large" id="statCompletedTasks">0</div>
+                                        <div class="stat-label-large">Completed</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card-large">
+                                    <div class="stat-icon-large active">⏳</div>
+                                    <div class="stat-info-large">
+                                        <div class="stat-value-large" id="statActiveTasks">0</div>
+                                        <div class="stat-label-large">Active</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card-large">
+                                    <div class="stat-icon-large rate">📈</div>
+                                    <div class="stat-info-large">
+                                        <div class="stat-value-large" id="statCompletionRate">0%</div>
+                                        <div class="stat-label-large">Completion Rate</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="stats-grid">
+                                <div class="stat-section">
+                                    <h4>📌 Task Status</h4>
+                                    <div class="stat-row">
+                                        <span>Pinned Tasks</span>
+                                        <span id="statPinnedTasks">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Favorite Tasks</span>
+                                        <span id="statFavoriteTasks">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Archived Tasks</span>
+                                        <span id="statArchivedTasks">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Overdue Tasks</span>
+                                        <span id="statOverdueTasks" class="stat-warning">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Due This Week</span>
+                                        <span id="statTasksDueThisWeek">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="stat-section">
+                                    <h4>🎯 Priority Distribution</h4>
+                                    <div class="stat-row">
+                                        <span>🔴 High Priority</span>
+                                        <span id="statHighPriority">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>🟡 Medium Priority</span>
+                                        <span id="statMediumPriority">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>🟢 Low Priority</span>
+                                        <span id="statLowPriority">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="stat-section">
+                                    <h4>📁 Category Distribution</h4>
+                                    <div id="categoryDistribution" class="category-distribution">
+                                        <!-- Dynamic content -->
+                                    </div>
+                                </div>
+
+                                <div class="stat-section">
+                                    <h4>🎨 Color Labels</h4>
+                                    <div id="colorLabelDistribution" class="color-distribution">
+                                        <!-- Dynamic content -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="stat-progress-section">
+                                <h4>📈 Average Progress</h4>
+                                <div class="progress-bar-large">
+                                    <div class="progress-fill-large" id="statAverageProgress" style="width: 0%"></div>
+                                </div>
+                                <div class="progress-label" id="statAverageProgressLabel">0%</div>
                             </div>
                         </div>
                     </div>

@@ -900,6 +900,75 @@ router.patch('/:id/postpone', authenticateToken, async (req, res) => {
   }
 });
 
+// Get task statistics
+router.get('/statistics', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId });
+    
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.completed).length;
+    const activeTasks = totalTasks - completedTasks;
+    const pinnedTasks = tasks.filter(t => t.isPinned).length;
+    const archivedTasks = tasks.filter(t => t.isArchived).length;
+    const favoriteTasks = tasks.filter(t => t.isFavorite).length;
+    
+    // Priority distribution
+    const priorityDistribution = {
+      high: tasks.filter(t => t.priority === 'high').length,
+      medium: tasks.filter(t => t.priority === 'medium').length,
+      low: tasks.filter(t => t.priority === 'low').length
+    };
+    
+    // Category distribution
+    const categoryDistribution = {};
+    tasks.forEach(task => {
+      const category = task.category || 'other';
+      categoryDistribution[category] = (categoryDistribution[category] || 0) + 1;
+    });
+    
+    // Completion rate
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    
+    // Average progress
+    const totalProgress = tasks.reduce((sum, task) => sum + (task.progress || 0), 0);
+    const averageProgress = totalTasks > 0 ? Math.round(totalProgress / totalTasks) : 0;
+    
+    // Tasks due this week
+    const now = new Date();
+    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const tasksDueThisWeek = tasks.filter(t => t.dueDate && new Date(t.dueDate) >= now && new Date(t.dueDate) <= weekFromNow).length;
+    
+    // Overdue tasks
+    const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < now && !t.completed).length;
+    
+    // Color label distribution
+    const colorLabelDistribution = {};
+    tasks.forEach(task => {
+      const color = task.colorLabel || 'default';
+      colorLabelDistribution[color] = (colorLabelDistribution[color] || 0) + 1;
+    });
+
+    res.json({
+      totalTasks,
+      completedTasks,
+      activeTasks,
+      pinnedTasks,
+      archivedTasks,
+      favoriteTasks,
+      priorityDistribution,
+      categoryDistribution,
+      completionRate,
+      averageProgress,
+      tasksDueThisWeek,
+      overdueTasks,
+      colorLabelDistribution
+    });
+  } catch (error) {
+    console.error('Get statistics error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

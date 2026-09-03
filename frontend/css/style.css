@@ -1158,6 +1158,251 @@ input[type="range"]::-moz-range-thumb {
     color: #a78bfa;
 }
 
+/* Statistics Dashboard Modal */
+.modal-large {
+    max-width: 900px;
+}
+
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card-large {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-icon-large {
+    font-size: 40px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.stat-icon-large.total {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon-large.completed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.stat-icon-large.active {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-icon-large.rate {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-info-large {
+    flex: 1;
+}
+
+.stat-value-large {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+}
+
+.stat-label-large {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.stat-section {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-section h4 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-row span:first-child {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.stat-row span:last-child {
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.stat-warning {
+    color: #ef4444 !important;
+}
+
+.category-distribution,
+.color-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-item,
+.color-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.category-item span:first-child,
+.color-item span:first-child {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.category-item span:last-child,
+.color-item span:last-child {
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.stat-progress-section {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.stat-progress-section h4 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.progress-bar-large {
+    width: 100%;
+    height: 24px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill-large {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.5s ease;
+    border-radius: 12px;
+}
+
+.progress-label {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+/* Dark mode for statistics */
+.dark-mode .stat-card-large {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.dark-mode .stat-value-large {
+    color: #e5e7eb;
+}
+
+.dark-mode .stat-label-large {
+    color: #9ca3af;
+}
+
+.dark-mode .stat-section {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.dark-mode .stat-section h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .stat-row span:first-child {
+    color: #9ca3af;
+}
+
+.dark-mode .stat-row span:last-child {
+    color: #e5e7eb;
+}
+
+.dark-mode .category-item,
+.dark-mode .color-item {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.dark-mode .category-item span:first-child,
+.dark-mode .color-item span:first-child {
+    color: #9ca3af;
+}
+
+.dark-mode .category-item span:last-child,
+.dark-mode .color-item span:last-child {
+    color: #e5e7eb;
+}
+
+.dark-mode .stat-progress-section {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.dark-mode .stat-progress-section h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .progress-bar-large {
+    background: #374151;
+}
+
+.dark-mode .progress-label {
+    color: #9ca3af;
+}
+
 .context-menu {
     position: fixed;
     background: white;

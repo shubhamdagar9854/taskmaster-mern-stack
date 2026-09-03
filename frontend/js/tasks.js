@@ -79,6 +79,7 @@ class TaskManager {
                 this.hideAdvancedSearchModal();
                 this.hideKeyboardShortcutsModal();
                 this.hideNotesModal();
+                this.hideStatisticsModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -156,6 +157,95 @@ class TaskManager {
 
     hideKeyboardShortcutsModal() {
         document.getElementById('keyboardShortcutsModal').classList.add('hidden');
+    }
+
+    async showStatisticsModal() {
+        document.getElementById('statisticsModal').classList.remove('hidden');
+        await this.loadStatistics();
+    }
+
+    hideStatisticsModal() {
+        document.getElementById('statisticsModal').classList.add('hidden');
+    }
+
+    async loadStatistics() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/statistics', {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const stats = await response.json();
+                this.renderStatistics(stats);
+            } else {
+                this.showMessage('Failed to load statistics', 'error');
+            }
+        } catch (error) {
+            console.error('Load statistics error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    renderStatistics(stats) {
+        // Overview cards
+        document.getElementById('statTotalTasks').textContent = stats.totalTasks;
+        document.getElementById('statCompletedTasks').textContent = stats.completedTasks;
+        document.getElementById('statActiveTasks').textContent = stats.activeTasks;
+        document.getElementById('statCompletionRate').textContent = stats.completionRate + '%';
+
+        // Task status
+        document.getElementById('statPinnedTasks').textContent = stats.pinnedTasks;
+        document.getElementById('statFavoriteTasks').textContent = stats.favoriteTasks;
+        document.getElementById('statArchivedTasks').textContent = stats.archivedTasks;
+        document.getElementById('statOverdueTasks').textContent = stats.overdueTasks;
+        document.getElementById('statTasksDueThisWeek').textContent = stats.tasksDueThisWeek;
+
+        // Priority distribution
+        document.getElementById('statHighPriority').textContent = stats.priorityDistribution.high;
+        document.getElementById('statMediumPriority').textContent = stats.priorityDistribution.medium;
+        document.getElementById('statLowPriority').textContent = stats.priorityDistribution.low;
+
+        // Category distribution
+        const categoryContainer = document.getElementById('categoryDistribution');
+        categoryContainer.innerHTML = '';
+        Object.entries(stats.categoryDistribution).forEach(([category, count]) => {
+            const item = document.createElement('div');
+            item.className = 'category-item';
+            item.innerHTML = `
+                <span>${this.getCategoryIcon(category)} ${category}</span>
+                <span>${count}</span>
+            `;
+            categoryContainer.appendChild(item);
+        });
+
+        // Color label distribution
+        const colorContainer = document.getElementById('colorLabelDistribution');
+        colorContainer.innerHTML = '';
+        const colorEmojis = {
+            default: '⚪',
+            red: '🔴',
+            orange: '🟠',
+            yellow: '🟡',
+            green: '🟢',
+            blue: '🔵',
+            purple: '🟣',
+            pink: '🩷'
+        };
+        Object.entries(stats.colorLabelDistribution).forEach(([color, count]) => {
+            const item = document.createElement('div');
+            item.className = 'color-item';
+            item.innerHTML = `
+                <span>${colorEmojis[color] || '⚪'} ${color}</span>
+                <span>${count}</span>
+            `;
+            colorContainer.appendChild(item);
+        });
+
+        // Average progress
+        document.getElementById('statAverageProgress').style.width = stats.averageProgress + '%';
+        document.getElementById('statAverageProgressLabel').textContent = stats.averageProgress + '%';
     }
 
     showNotesModal(taskId) {
@@ -256,9 +346,19 @@ class TaskManager {
             this.showKeyboardShortcutsModal();
         });
 
+        // Statistics button
+        document.getElementById('statisticsBtn').addEventListener('click', () => {
+            this.showStatisticsModal();
+        });
+
         // Close keyboard shortcuts modal
         document.querySelector('[data-action="close-keyboard-shortcuts"]').addEventListener('click', () => {
             this.hideKeyboardShortcutsModal();
+        });
+
+        // Close statistics modal
+        document.querySelector('[data-action="close-statistics"]').addEventListener('click', () => {
+            this.hideStatisticsModal();
         });
 
         // Notes modal
