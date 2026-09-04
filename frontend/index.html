@@ -1257,6 +1257,32 @@
                     </div>
                 </div>
 
+                <!-- Dependencies Modal -->
+                <div id="dependenciesModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>🔗 Task Dependencies</h3>
+                            <button class="modal-close" data-action="close-dependencies">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Add Dependency</label>
+                                <select id="dependencySelect" class="form-select">
+                                    <option value="">Select a task...</option>
+                                </select>
+                                <button id="addDependencyBtn" class="btn btn-primary" style="margin-top: 8px;">
+                                    <i class="fas fa-plus"></i> Add Dependency
+                                </button>
+                            </div>
+                            <div id="dependenciesList" class="dependencies-list">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Statistics Dashboard Modal -->
                 <div id="statisticsModal" class="modal hidden">
                     <div class="modal-content modal-large">
@@ -1320,6 +1346,10 @@
                                     <div class="stat-row">
                                         <span>Due This Week</span>
                                         <span id="statTasksDueThisWeek">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Blocked Tasks</span>
+                                        <span id="statBlockedTasks" class="stat-warning">0</span>
                                     </div>
                                 </div>
 
@@ -1528,6 +1558,9 @@
                     </div>
                     <div class="context-menu-item" data-action="notes">
                         <i class="fas fa-sticky-note"></i> Edit Notes
+                    </div>
+                    <div class="context-menu-item" data-action="dependencies">
+                        <i class="fas fa-link"></i> Dependencies
                     </div>
                     <div class="context-menu-item" data-action="archive">
                         <i class="fas fa-archive"></i> Archive

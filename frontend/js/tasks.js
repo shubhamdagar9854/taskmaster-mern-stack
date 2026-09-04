@@ -44,6 +44,7 @@ class TaskManager {
         this.currentView = 'list'; // 'list' or 'kanban'
         this.notificationsShown = false;
         this.currentNotesTaskId = null;
+        this.currentDependenciesTaskId = null;
         this.init();
     }
 
@@ -80,6 +81,7 @@ class TaskManager {
                 this.hideKeyboardShortcutsModal();
                 this.hideNotesModal();
                 this.hideStatisticsModal();
+                this.hideDependenciesModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -201,6 +203,7 @@ class TaskManager {
         document.getElementById('statArchivedTasks').textContent = stats.archivedTasks;
         document.getElementById('statOverdueTasks').textContent = stats.overdueTasks;
         document.getElementById('statTasksDueThisWeek').textContent = stats.tasksDueThisWeek;
+        document.getElementById('statBlockedTasks').textContent = stats.blockedTasks;
 
         // Priority distribution
         document.getElementById('statHighPriority').textContent = stats.priorityDistribution.high;
@@ -267,6 +270,137 @@ class TaskManager {
     hideNotesModal() {
         document.getElementById('notesModal').classList.add('hidden');
         this.currentNotesTaskId = null;
+    }
+
+    showDependenciesModal(taskId) {
+        this.currentDependenciesTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        
+        // Populate dependency select with available tasks
+        const select = document.getElementById('dependencySelect');
+        select.innerHTML = '<option value="">Select a task...</option>';
+        
+        this.tasks
+            .filter(t => t._id !== taskId && !(task.dependencies || []).includes(t._id))
+            .forEach(t => {
+                const option = document.createElement('option');
+                option.value = t._id;
+                option.textContent = t.title;
+                select.appendChild(option);
+            });
+        
+        this.renderDependenciesList(task);
+        document.getElementById('dependenciesModal').classList.remove('hidden');
+    }
+
+    hideDependenciesModal() {
+        document.getElementById('dependenciesModal').classList.add('hidden');
+        this.currentDependenciesTaskId = null;
+    }
+
+    renderDependenciesList(task) {
+        const container = document.getElementById('dependenciesList');
+        const dependencies = task.dependencies || [];
+        
+        if (dependencies.length === 0) {
+            container.innerHTML = '<div class="no-dependencies">No dependencies added yet</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        dependencies.forEach(depId => {
+            const depTask = this.tasks.find(t => t._id === depId);
+            if (!depTask) return;
+
+            const isCompleted = depTask.completed;
+            const statusClass = isCompleted ? 'completed' : 'blocking';
+            const statusText = isCompleted ? '✅ Completed' : '🔴 Blocking';
+
+            const item = document.createElement('div');
+            item.className = `dependency-item ${statusClass}`;
+            item.innerHTML = `
+                <div class="dependency-info">
+                    <div class="dependency-title">${depTask.title}</div>
+                    <div class="dependency-status ${statusClass}">${statusText}</div>
+                </div>
+                <button class="remove-dependency-btn" data-dependency-id="${depId}">
+                    <i class="fas fa-times"></i> Remove
+                </button>
+            `;
+            container.appendChild(item);
+        });
+
+        // Add event listeners to remove buttons
+        container.querySelectorAll('.remove-dependency-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const depId = e.target.closest('.remove-dependency-btn').dataset.dependencyId;
+                this.removeDependency(task._id, depId);
+            });
+        });
+    }
+
+    async addDependency(taskId, dependencyId) {
+        if (!dependencyId) {
+            this.showMessage('Please select a task', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/dependencies`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ dependencyId })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderDependenciesList(task);
+                document.getElementById('dependencySelect').value = '';
+                this.showMessage('Dependency added successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to add dependency', 'error');
+            }
+        } catch (error) {
+            console.error('Add dependency error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async removeDependency(taskId, dependencyId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/dependencies/${dependencyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderDependenciesList(task);
+                this.showMessage('Dependency removed successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to remove dependency', 'error');
+            }
+        } catch (error) {
+            console.error('Remove dependency error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     async saveNotes() {
@@ -359,6 +493,16 @@ class TaskManager {
         // Close statistics modal
         document.querySelector('[data-action="close-statistics"]').addEventListener('click', () => {
             this.hideStatisticsModal();
+        });
+
+        // Dependencies modal
+        document.querySelector('[data-action="close-dependencies"]').addEventListener('click', () => {
+            this.hideDependenciesModal();
+        });
+
+        document.getElementById('addDependencyBtn').addEventListener('click', () => {
+            const dependencyId = document.getElementById('dependencySelect').value;
+            this.addDependency(this.currentDependenciesTaskId, dependencyId);
         });
 
         // Notes modal
@@ -1348,6 +1492,9 @@ class TaskManager {
                 break;
             case 'notes':
                 this.showNotesModal(this.contextMenuTaskId);
+                break;
+            case 'dependencies':
+                this.showDependenciesModal(this.contextMenuTaskId);
                 break;
             case 'archive':
                 await this.toggleArchive(this.contextMenuTaskId, true);

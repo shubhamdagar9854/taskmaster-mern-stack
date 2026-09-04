@@ -1403,6 +1403,107 @@ input[type="range"]::-moz-range-thumb {
     color: #9ca3af;
 }
 
+/* Dependencies Modal */
+.dependencies-list {
+    margin-top: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dependency-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.dependency-item.completed {
+    background: #f0fdf4;
+    border-color: #22c55e;
+}
+
+.dependency-item.blocking {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+.dependency-info {
+    flex: 1;
+}
+
+.dependency-title {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.dependency-status {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.dependency-status.completed {
+    color: #22c55e;
+}
+
+.dependency-status.blocking {
+    color: #ef4444;
+}
+
+.remove-dependency-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.remove-dependency-btn:hover {
+    background: #dc2626;
+}
+
+.no-dependencies {
+    text-align: center;
+    color: #6b7280;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Dark mode for dependencies */
+.dark-mode .dependency-item {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.dark-mode .dependency-item.completed {
+    background: #064e3b;
+    border-color: #059669;
+}
+
+.dark-mode .dependency-item.blocking {
+    background: #7f1d1d;
+    border-color: #dc2626;
+}
+
+.dark-mode .dependency-title {
+    color: #e5e7eb;
+}
+
+.dark-mode .dependency-status {
+    color: #9ca3af;
+}
+
+.dark-mode .no-dependencies {
+    color: #9ca3af;
+}
+
 .context-menu {
     position: fixed;
     background: white;

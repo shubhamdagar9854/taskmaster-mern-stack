@@ -948,6 +948,16 @@ router.get('/statistics', authenticateToken, async (req, res) => {
       colorLabelDistribution[color] = (colorLabelDistribution[color] || 0) + 1;
     });
 
+    // Blocked tasks
+    const blockedTasks = tasks.filter(t => {
+      if (!t.dependencies || t.dependencies.length === 0) return false;
+      const incompleteDeps = t.dependencies.filter(depId => {
+        const depTask = tasks.find(t => t._id.toString() === depId.toString());
+        return !depTask || !depTask.completed;
+      });
+      return incompleteDeps.length > 0 && !t.completed;
+    }).length;
+
     res.json({
       totalTasks,
       completedTasks,
@@ -961,10 +971,81 @@ router.get('/statistics', authenticateToken, async (req, res) => {
       averageProgress,
       tasksDueThisWeek,
       overdueTasks,
-      colorLabelDistribution
+      colorLabelDistribution,
+      blockedTasks
     });
   } catch (error) {
     console.error('Get statistics error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add task dependency
+router.post('/:id/dependencies', authenticateToken, async (req, res) => {
+  try {
+    const { dependencyId } = req.body;
+
+    if (!dependencyId) {
+      return res.status(400).json({ message: 'Dependency ID is required' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+    const dependencyTask = await Task.findOne({ _id: dependencyId, user: req.userId });
+
+    if (!task || !dependencyTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (task._id.toString() === dependencyId) {
+      return res.status(400).json({ message: 'Cannot add task as its own dependency' });
+    }
+
+    if (task.dependencies && task.dependencies.includes(dependencyId)) {
+      return res.status(400).json({ message: 'Dependency already exists' });
+    }
+
+    if (!task.dependencies) {
+      task.dependencies = [];
+    }
+
+    task.dependencies.push(dependencyId);
+    await task.save();
+
+    logActivity(task._id, req.userId, 'dependency_added', `Added dependency: ${dependencyTask.title}`);
+    addHistoryEntry(task._id, 'dependency_added', `Added dependency: ${dependencyTask.title}`);
+
+    await task.populate('dependencies');
+    res.json(task);
+  } catch (error) {
+    console.error('Add dependency error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove task dependency
+router.delete('/:id/dependencies/:dependencyId', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+    const dependencyTask = await Task.findOne({ _id: req.params.dependencyId, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (!task.dependencies || !task.dependencies.includes(req.params.dependencyId)) {
+      return res.status(400).json({ message: 'Dependency not found' });
+    }
+
+    task.dependencies = task.dependencies.filter(depId => depId.toString() !== req.params.dependencyId);
+    await task.save();
+
+    logActivity(task._id, req.userId, 'dependency_removed', `Removed dependency: ${dependencyTask?.title || 'Unknown'}`);
+    addHistoryEntry(task._id, 'dependency_removed', `Removed dependency: ${dependencyTask?.title || 'Unknown'}`);
+
+    await task.populate('dependencies');
+    res.json(task);
+  } catch (error) {
+    console.error('Remove dependency error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
