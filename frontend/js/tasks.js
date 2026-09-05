@@ -45,12 +45,17 @@ class TaskManager {
         this.notificationsShown = false;
         this.currentNotesTaskId = null;
         this.currentDependenciesTaskId = null;
+        this.currentReminderTaskId = null;
         this.init();
     }
 
     init() {
         this.setupEventListeners();
         this.initKeyboardShortcuts();
+        // Check reminders every minute
+        setInterval(() => this.checkReminders(), 60000);
+        // Initial check
+        this.checkReminders();
     }
 
     initKeyboardShortcuts() {
@@ -82,6 +87,7 @@ class TaskManager {
                 this.hideNotesModal();
                 this.hideStatisticsModal();
                 this.hideDependenciesModal();
+                this.hideReminderModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -298,6 +304,138 @@ class TaskManager {
         this.currentDependenciesTaskId = null;
     }
 
+    showReminderModal(taskId) {
+        this.currentReminderTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        
+        // Pre-fill with existing reminder if any
+        if (task && task.reminder && task.reminder.time) {
+            const reminderTime = new Date(task.reminder.time);
+            const offset = reminderTime.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(reminderTime.getTime() - offset).toISOString().slice(0, 16);
+            document.getElementById('reminderTime').value = localISOTime;
+            document.getElementById('reminderMessage').value = task.reminder.message || '';
+            document.getElementById('removeReminderBtn').classList.remove('hidden');
+        } else {
+            document.getElementById('reminderTime').value = '';
+            document.getElementById('reminderMessage').value = '';
+            document.getElementById('removeReminderBtn').classList.add('hidden');
+        }
+        
+        document.getElementById('reminderModal').classList.remove('hidden');
+    }
+
+    hideReminderModal() {
+        document.getElementById('reminderModal').classList.add('hidden');
+        this.currentReminderTaskId = null;
+    }
+
+    async setReminder() {
+        if (!this.currentReminderTaskId) return;
+
+        const reminderTime = document.getElementById('reminderTime').value;
+        const reminderMessage = document.getElementById('reminderMessage').value;
+
+        if (!reminderTime) {
+            this.showMessage('Please select a reminder time', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentReminderTaskId}/reminder`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ reminderTime, reminderMessage })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentReminderTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.showMessage('Reminder set successfully!', 'success');
+                this.hideReminderModal();
+                this.checkReminders();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to set reminder', 'error');
+            }
+        } catch (error) {
+            console.error('Set reminder error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async removeReminder() {
+        if (!this.currentReminderTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentReminderTaskId}/reminder`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentReminderTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.showMessage('Reminder removed successfully!', 'success');
+                this.hideReminderModal();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to remove reminder', 'error');
+            }
+        } catch (error) {
+            console.error('Remove reminder error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    setQuickReminder(minutes) {
+        const now = new Date();
+        const reminderTime = new Date(now.getTime() + minutes * 60000);
+        const offset = reminderTime.getTimezoneOffset() * 60000;
+        const localISOTime = new Date(reminderTime.getTime() - offset).toISOString().slice(0, 16);
+        document.getElementById('reminderTime').value = localISOTime;
+    }
+
+    async checkReminders() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/reminders/upcoming', {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const reminders = await response.json();
+                this.updateNotificationBadge(reminders.length);
+            }
+        } catch (error) {
+            console.error('Check reminders error:', error);
+        }
+    }
+
+    updateNotificationBadge(count) {
+        const badge = document.getElementById('notificationBadge');
+        if (count > 0) {
+            badge.textContent = count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
     renderDependenciesList(task) {
         const container = document.getElementById('dependenciesList');
         const dependencies = task.dependencies || [];
@@ -503,6 +641,27 @@ class TaskManager {
         document.getElementById('addDependencyBtn').addEventListener('click', () => {
             const dependencyId = document.getElementById('dependencySelect').value;
             this.addDependency(this.currentDependenciesTaskId, dependencyId);
+        });
+
+        // Reminder modal
+        document.querySelector('[data-action="close-reminder"]').addEventListener('click', () => {
+            this.hideReminderModal();
+        });
+
+        document.getElementById('setReminderBtn').addEventListener('click', () => {
+            this.setReminder();
+        });
+
+        document.getElementById('removeReminderBtn').addEventListener('click', () => {
+            this.removeReminder();
+        });
+
+        // Quick reminder options
+        document.querySelectorAll('.reminder-quick-options .btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const minutes = parseInt(e.target.closest('.btn').dataset.minutes);
+                this.setQuickReminder(minutes);
+            });
         });
 
         // Notes modal
@@ -1489,6 +1648,9 @@ class TaskManager {
                 break;
             case 'postpone':
                 this.postponeTask(this.contextMenuTaskId);
+                break;
+            case 'reminder':
+                this.showReminderModal(this.contextMenuTaskId);
                 break;
             case 'notes':
                 this.showNotesModal(this.contextMenuTaskId);
@@ -4259,7 +4421,7 @@ class TaskManager {
     }
 
     renderReminderBadge(reminder) {
-        if (!reminder || !reminder.enabled || !reminder.time) return '';
+        if (!reminder || !reminder.time) return '';
         
         const reminderDate = new Date(reminder.time);
         const formattedDate = reminderDate.toLocaleString();

@@ -1504,6 +1504,44 @@ input[type="range"]::-moz-range-thumb {
     color: #9ca3af;
 }
 
+/* Reminder Modal */
+.reminder-quick-options {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.reminder-quick-options .btn {
+    flex: 1;
+    min-width: 80px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.dark-mode .btn-danger {
+    background: #dc2626;
+}
+
+.dark-mode .btn-danger:hover {
+    background: #b91c1c;
+}
+
 .context-menu {
     position: fixed;
     background: white;

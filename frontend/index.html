@@ -1257,6 +1257,50 @@
                     </div>
                 </div>
 
+                <!-- Reminder Modal -->
+                <div id="reminderModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>⏰ Set Reminder</h3>
+                            <button class="modal-close" data-action="close-reminder">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="reminderTime">Reminder Time</label>
+                                <input type="datetime-local" id="reminderTime" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="reminderMessage">Reminder Message (Optional)</label>
+                                <textarea id="reminderMessage" class="form-textarea" rows="3" placeholder="Enter a custom message..."></textarea>
+                            </div>
+                            <div class="reminder-quick-options">
+                                <button class="btn btn-outline btn-sm" data-minutes="15">
+                                    <i class="fas fa-clock"></i> 15 min
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-minutes="30">
+                                    <i class="fas fa-clock"></i> 30 min
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-minutes="60">
+                                    <i class="fas fa-clock"></i> 1 hour
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-minutes="1440">
+                                    <i class="fas fa-clock"></i> 1 day
+                                </button>
+                            </div>
+                            <div class="modal-actions">
+                                <button id="setReminderBtn" class="btn btn-primary">
+                                    <i class="fas fa-bell"></i> Set Reminder
+                                </button>
+                                <button id="removeReminderBtn" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Remove Reminder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Dependencies Modal -->
                 <div id="dependenciesModal" class="modal hidden">
                     <div class="modal-content">
@@ -1555,6 +1599,9 @@
                     </div>
                     <div class="context-menu-item" data-action="postpone">
                         <i class="fas fa-calendar-plus"></i> Postpone
+                    </div>
+                    <div class="context-menu-item" data-action="reminder">
+                        <i class="fas fa-bell"></i> Set Reminder
                     </div>
                     <div class="context-menu-item" data-action="notes">
                         <i class="fas fa-sticky-note"></i> Edit Notes

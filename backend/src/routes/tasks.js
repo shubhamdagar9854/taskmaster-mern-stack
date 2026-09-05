@@ -1050,6 +1050,77 @@ router.delete('/:id/dependencies/:dependencyId', authenticateToken, async (req, 
   }
 });
 
+// Set task reminder
+router.post('/:id/reminder', authenticateToken, async (req, res) => {
+  try {
+    const { reminderTime, reminderMessage } = req.body;
+
+    if (!reminderTime) {
+      return res.status(400).json({ message: 'Reminder time is required' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    task.reminder = {
+      time: new Date(reminderTime),
+      message: reminderMessage || `Reminder for task: ${task.title}`,
+      sent: false
+    };
+    await task.save();
+
+    logActivity(task._id, req.userId, 'reminder_set', `Reminder set for ${new Date(reminderTime).toLocaleString()}`);
+    addHistoryEntry(task._id, 'reminder_set', `Reminder set for ${new Date(reminderTime).toLocaleString()}`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Set reminder error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove task reminder
+router.delete('/:id/reminder', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    task.reminder = null;
+    await task.save();
+
+    logActivity(task._id, req.userId, 'reminder_removed', 'Reminder removed');
+    addHistoryEntry(task._id, 'reminder_removed', 'Reminder removed');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Remove reminder error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get upcoming reminders
+router.get('/reminders/upcoming', authenticateToken, async (req, res) => {
+  try {
+    const now = new Date();
+    const tasks = await Task.find({ 
+      user: req.userId,
+      'reminder.time': { $gte: now },
+      'reminder.sent': false
+    }).sort({ 'reminder.time': 1 });
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Get upcoming reminders error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {
