@@ -46,6 +46,7 @@ class TaskManager {
         this.currentNotesTaskId = null;
         this.currentDependenciesTaskId = null;
         this.currentReminderTaskId = null;
+        this.templates = [];
         this.init();
     }
 
@@ -88,6 +89,8 @@ class TaskManager {
                 this.hideStatisticsModal();
                 this.hideDependenciesModal();
                 this.hideReminderModal();
+                this.hideTemplatesModal();
+                this.hideCreateTemplateModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -328,6 +331,195 @@ class TaskManager {
     hideReminderModal() {
         document.getElementById('reminderModal').classList.add('hidden');
         this.currentReminderTaskId = null;
+    }
+
+    showTemplatesModal() {
+        this.loadTemplates();
+        document.getElementById('templatesModal').classList.remove('hidden');
+    }
+
+    hideTemplatesModal() {
+        document.getElementById('templatesModal').classList.add('hidden');
+    }
+
+    async loadTemplates() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/templates', {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.templates = await response.json();
+                this.renderTemplates();
+            } else {
+                this.showMessage('Failed to load templates', 'error');
+            }
+        } catch (error) {
+            console.error('Load templates error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    renderTemplates() {
+        const container = document.getElementById('templatesList');
+        
+        if (this.templates.length === 0) {
+            container.innerHTML = '<div class="no-templates">No templates created yet. Click "Create Template" to get started!</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        this.templates.forEach(template => {
+            const card = document.createElement('div');
+            card.className = 'template-card';
+            card.innerHTML = `
+                <div class="template-header">
+                    <div class="template-name">${template.templateName}</div>
+                    <div class="template-actions">
+                        <button class="template-action-btn delete" data-template-id="${template._id}" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="template-title">${template.title}</div>
+                ${template.description ? `<div class="template-description">${template.description}</div>` : ''}
+                <div class="template-meta">
+                    ${template.priority ? `<div class="template-meta-item"><i class="fas fa-flag"></i> ${template.priority}</div>` : ''}
+                    ${template.category ? `<div class="template-meta-item"><i class="fas fa-folder"></i> ${template.category}</div>` : ''}
+                    ${template.subtasks && template.subtasks.length > 0 ? `<div class="template-meta-item"><i class="fas fa-tasks"></i> ${template.subtasks.length} subtasks</div>` : ''}
+                </div>
+                ${template.tags && template.tags.length > 0 ? `
+                    <div class="template-tags">
+                        ${template.tags.map(tag => `<span class="template-tag">${tag}</span>`).join('')}
+                    </div>
+                ` : ''}
+                <button class="btn btn-primary template-use-btn" data-template-id="${template._id}">
+                    <i class="fas fa-plus"></i> Use Template
+                </button>
+            `;
+            container.appendChild(card);
+        });
+
+        // Add event listeners
+        container.querySelectorAll('.template-use-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const templateId = e.target.closest('.template-use-btn').dataset.templateId;
+                this.useTemplate(templateId);
+            });
+        });
+
+        container.querySelectorAll('.template-action-btn.delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const templateId = e.target.closest('.template-action-btn').dataset.templateId;
+                if (confirm('Are you sure you want to delete this template?')) {
+                    this.deleteTemplate(templateId);
+                }
+            });
+        });
+    }
+
+    showCreateTemplateModal() {
+        document.getElementById('createTemplateModal').classList.remove('hidden');
+    }
+
+    hideCreateTemplateModal() {
+        document.getElementById('createTemplateModal').classList.add('hidden');
+        // Clear form
+        document.getElementById('templateName').value = '';
+        document.getElementById('templateTitle').value = '';
+        document.getElementById('templateDescription').value = '';
+        document.getElementById('templatePriority').value = 'medium';
+        document.getElementById('templateCategory').value = '';
+        document.getElementById('templateTags').value = '';
+        document.getElementById('templateSubtasks').value = '';
+    }
+
+    async createTemplate() {
+        const templateName = document.getElementById('templateName').value.trim();
+        const title = document.getElementById('templateTitle').value.trim();
+        const description = document.getElementById('templateDescription').value.trim();
+        const priority = document.getElementById('templatePriority').value;
+        const category = document.getElementById('templateCategory').value;
+        const tags = document.getElementById('templateTags').value.split(',').map(t => t.trim()).filter(t => t);
+        const subtasksText = document.getElementById('templateSubtasks').value;
+        const subtasks = subtasksText.split('\n').map(s => s.trim()).filter(s => s).map(s => ({ text: s, completed: false }));
+
+        if (!templateName || !title) {
+            this.showMessage('Template name and title are required', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/templates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ templateName, title, description, priority, category, tags, subtasks })
+            });
+
+            if (response.ok) {
+                this.showMessage('Template created successfully!', 'success');
+                this.hideCreateTemplateModal();
+                this.loadTemplates();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to create template', 'error');
+            }
+        } catch (error) {
+            console.error('Create template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async useTemplate(templateId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/templates/${templateId}/create`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                this.tasks.unshift(task);
+                this.renderTasks();
+                this.showMessage('Task created from template successfully!', 'success');
+                this.hideTemplatesModal();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to create task from template', 'error');
+            }
+        } catch (error) {
+            console.error('Use template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async deleteTemplate(templateId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/templates/${templateId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.showMessage('Template deleted successfully!', 'success');
+                this.loadTemplates();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to delete template', 'error');
+            }
+        } catch (error) {
+            console.error('Delete template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     async setReminder() {
@@ -623,6 +815,11 @@ class TaskManager {
             this.showStatisticsModal();
         });
 
+        // Templates button
+        document.getElementById('templatesBtn').addEventListener('click', () => {
+            this.showTemplatesModal();
+        });
+
         // Close keyboard shortcuts modal
         document.querySelector('[data-action="close-keyboard-shortcuts"]').addEventListener('click', () => {
             this.hideKeyboardShortcutsModal();
@@ -631,6 +828,32 @@ class TaskManager {
         // Close statistics modal
         document.querySelector('[data-action="close-statistics"]').addEventListener('click', () => {
             this.hideStatisticsModal();
+        });
+
+        // Templates modal
+        document.querySelector('[data-action="close-templates"]').addEventListener('click', () => {
+            this.hideTemplatesModal();
+        });
+
+        document.getElementById('createTemplateBtn').addEventListener('click', () => {
+            this.showCreateTemplateModal();
+        });
+
+        document.getElementById('refreshTemplatesBtn').addEventListener('click', () => {
+            this.loadTemplates();
+        });
+
+        // Create template modal
+        document.querySelector('[data-action="close-create-template"]').addEventListener('click', () => {
+            this.hideCreateTemplateModal();
+        });
+
+        document.getElementById('saveTemplateBtn').addEventListener('click', () => {
+            this.createTemplate();
+        });
+
+        document.getElementById('cancelTemplateBtn').addEventListener('click', () => {
+            this.hideCreateTemplateModal();
         });
 
         // Dependencies modal

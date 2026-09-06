@@ -1542,6 +1542,163 @@ input[type="range"]::-moz-range-thumb {
     background: #b91c1c;
 }
 
+/* Templates Modal */
+.templates-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    justify-content: space-between;
+}
+
+.templates-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.template-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s;
+}
+
+.template-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.template-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 12px;
+}
+
+.template-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.template-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.template-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #6b7280;
+    transition: color 0.2s;
+}
+
+.template-action-btn:hover {
+    color: #1f2937;
+}
+
+.template-action-btn.delete:hover {
+    color: #ef4444;
+}
+
+.template-title {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.template-description {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.template-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.template-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.template-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.template-tag {
+    background: #f3f4f6;
+    color: #4b5563;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.template-use-btn {
+    width: 100%;
+    margin-top: 12px;
+}
+
+.no-templates {
+    text-align: center;
+    color: #6b7280;
+    padding: 40px;
+    font-style: italic;
+}
+
+/* Dark mode for templates */
+.dark-mode .template-card {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.dark-mode .template-name {
+    color: #e5e7eb;
+}
+
+.dark-mode .template-title {
+    color: #d1d5db;
+}
+
+.dark-mode .template-description {
+    color: #9ca3af;
+}
+
+.dark-mode .template-meta-item {
+    color: #9ca3af;
+}
+
+.dark-mode .template-tag {
+    background: #4b5563;
+    color: #d1d5db;
+}
+
+.dark-mode .template-action-btn {
+    color: #9ca3af;
+}
+
+.dark-mode .template-action-btn:hover {
+    color: #e5e7eb;
+}
+
+.dark-mode .no-templates {
+    color: #9ca3af;
+}
+
 .context-menu {
     position: fixed;
     background: white;

@@ -201,6 +201,9 @@
                     <button id="keyboardShortcutsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-keyboard"></i> Shortcuts
                     </button>
+                    <button id="templatesBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-file-alt"></i> Templates
+                    </button>
                     <button id="statisticsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-chart-bar"></i> Statistics
                     </button>
@@ -1252,6 +1255,93 @@
                                         <i class="fas fa-file-import"></i> Import from JSON
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates Modal -->
+                <div id="templatesModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>📋 Task Templates</h3>
+                            <button class="modal-close" data-action="close-templates">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="templates-header">
+                                <button id="createTemplateBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create Template
+                                </button>
+                                <button id="refreshTemplatesBtn" class="btn btn-outline">
+                                    <i class="fas fa-sync"></i> Refresh
+                                </button>
+                            </div>
+                            <div id="templatesList" class="templates-list">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Template Modal -->
+                <div id="createTemplateModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>📝 Create Template</h3>
+                            <button class="modal-close" data-action="close-create-template">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="templateName">Template Name *</label>
+                                <input type="text" id="templateName" class="form-input" placeholder="e.g., Weekly Review">
+                            </div>
+                            <div class="form-group">
+                                <label for="templateTitle">Task Title *</label>
+                                <input type="text" id="templateTitle" class="form-input" placeholder="e.g., Complete weekly review">
+                            </div>
+                            <div class="form-group">
+                                <label for="templateDescription">Description</label>
+                                <textarea id="templateDescription" class="form-textarea" rows="3" placeholder="Task description..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="templatePriority">Priority</label>
+                                <select id="templatePriority" class="form-select">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="templateCategory">Category</label>
+                                <select id="templateCategory" class="form-select">
+                                    <option value="">Select category...</option>
+                                    <option value="work">Work</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="health">Health</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="templateTags">Tags (comma separated)</label>
+                                <input type="text" id="templateTags" class="form-input" placeholder="e.g., weekly, review, important">
+                            </div>
+                            <div class="form-group">
+                                <label for="templateSubtasks">Subtasks (one per line)</label>
+                                <textarea id="templateSubtasks" class="form-textarea" rows="4" placeholder="Subtask 1&#10;Subtask 2&#10;Subtask 3"></textarea>
+                            </div>
+                            <div class="modal-actions">
+                                <button id="saveTemplateBtn" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Template
+                                </button>
+                                <button id="cancelTemplateBtn" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
                             </div>
                         </div>
                     </div>

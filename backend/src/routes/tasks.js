@@ -1121,6 +1121,124 @@ router.get('/reminders/upcoming', authenticateToken, async (req, res) => {
   }
 });
 
+// Create task template
+router.post('/templates', authenticateToken, async (req, res) => {
+  try {
+    const { templateName, title, description, priority, category, tags, subtasks, dependencies, reminder, recurring } = req.body;
+
+    if (!templateName || !title) {
+      return res.status(400).json({ message: 'Template name and title are required' });
+    }
+
+    const template = new Task({
+      title,
+      description,
+      priority,
+      category,
+      tags,
+      subtasks,
+      dependencies,
+      reminder,
+      recurring,
+      isTemplate: true,
+      templateName,
+      user: req.userId,
+      history: [{
+        action: 'template_created',
+        description: 'Template created',
+        timestamp: new Date()
+      }]
+    });
+
+    await template.save();
+    res.status(201).json(template);
+  } catch (error) {
+    console.error('Create template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all templates
+router.get('/templates', authenticateToken, async (req, res) => {
+  try {
+    const templates = await Task.find({ 
+      user: req.userId, 
+      isTemplate: true 
+    }).sort({ createdAt: -1 });
+
+    res.json(templates);
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create task from template
+router.post('/templates/:templateId/create', authenticateToken, async (req, res) => {
+  try {
+    const template = await Task.findOne({ 
+      _id: req.params.templateId, 
+      user: req.userId, 
+      isTemplate: true 
+    });
+
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    const task = new Task({
+      title: template.title,
+      description: template.description,
+      priority: template.priority,
+      category: template.category,
+      tags: template.tags,
+      subtasks: template.subtasks,
+      dependencies: [],
+      reminder: template.reminder,
+      recurring: template.recurring,
+      isTemplate: false,
+      templateName: null,
+      user: req.userId,
+      history: [{
+        action: 'task_created',
+        description: `Task created from template: ${template.templateName}`,
+        timestamp: new Date()
+      }]
+    });
+
+    await task.save();
+    await task.populate('dependencies');
+    
+    logActivity(task._id, req.userId, 'task_created_from_template', `Task created from template: ${template.templateName}`);
+    
+    res.status(201).json(task);
+  } catch (error) {
+    console.error('Create from template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete template
+router.delete('/templates/:templateId', authenticateToken, async (req, res) => {
+  try {
+    const template = await Task.findOne({ 
+      _id: req.params.templateId, 
+      user: req.userId, 
+      isTemplate: true 
+    });
+
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    await Task.deleteOne({ _id: req.params.templateId });
+    res.json({ message: 'Template deleted successfully' });
+  } catch (error) {
+    console.error('Delete template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {
