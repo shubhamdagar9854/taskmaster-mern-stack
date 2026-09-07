@@ -1699,6 +1699,139 @@ input[type="range"]::-moz-range-thumb {
     color: #9ca3af;
 }
 
+/* Time Tracking Modal */
+.time-tracking-task-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.time-tracking-current {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.time-tracking-total {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.time-tracking-label {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.time-tracking-time {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1f2937;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 12px;
+}
+
+.time-tracking-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.time-tracking-sessions {
+    margin-bottom: 16px;
+}
+
+.time-tracking-sessions h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.sessions-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.session-time {
+    font-weight: 600;
+    color: #1f2937;
+    font-family: 'Courier New', monospace;
+}
+
+.session-date {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.time-tracking-footer {
+    text-align: center;
+}
+
+.no-sessions {
+    text-align: center;
+    color: #6b7280;
+    padding: 20px;
+    font-style: italic;
+}
+
+.dark-mode .no-sessions {
+    color: #9ca3af;
+}
+
+/* Dark mode for time tracking */
+.dark-mode .time-tracking-task-title {
+    color: #e5e7eb;
+}
+
+.dark-mode .time-tracking-current,
+.dark-mode .time-tracking-total {
+    background: #374151;
+}
+
+.dark-mode .time-tracking-label {
+    color: #9ca3af;
+}
+
+.dark-mode .time-tracking-time {
+    color: #e5e7eb;
+}
+
+.dark-mode .time-tracking-sessions h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .session-item {
+    background: #4b5563;
+    border-color: #6b7280;
+}
+
+.dark-mode .session-time {
+    color: #e5e7eb;
+}
+
+.dark-mode .session-date {
+    color: #9ca3af;
+}
+
 .context-menu {
     position: fixed;
     background: white;

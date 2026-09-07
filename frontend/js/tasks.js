@@ -47,6 +47,8 @@ class TaskManager {
         this.currentDependenciesTaskId = null;
         this.currentReminderTaskId = null;
         this.templates = [];
+        this.currentTimeTrackingTaskId = null;
+        this.timeTrackingInterval = null;
         this.init();
     }
 
@@ -91,6 +93,7 @@ class TaskManager {
                 this.hideReminderModal();
                 this.hideTemplatesModal();
                 this.hideCreateTemplateModal();
+                this.hideTimeTrackingModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -522,6 +525,186 @@ class TaskManager {
         }
     }
 
+    showTimeTrackingModal(taskId) {
+        this.currentTimeTrackingTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        
+        document.getElementById('timeTrackingTaskTitle').textContent = task.title;
+        this.renderTimeTracking(task);
+        document.getElementById('timeTrackingModal').classList.remove('hidden');
+    }
+
+    hideTimeTrackingModal() {
+        document.getElementById('timeTrackingModal').classList.add('hidden');
+        if (this.timeTrackingInterval) {
+            clearInterval(this.timeTrackingInterval);
+            this.timeTrackingInterval = null;
+        }
+        this.currentTimeTrackingTaskId = null;
+    }
+
+    renderTimeTracking(task) {
+        const timeTracking = task.timeTracking || { isRunning: false, totalTime: 0, sessions: [] };
+        
+        // Update total time
+        document.getElementById('totalTime').textContent = this.formatTime(timeTracking.totalTime);
+        
+        // Update current session time
+        if (timeTracking.isRunning && timeTracking.startTime) {
+            const startTime = new Date(timeTracking.startTime);
+            const currentTime = new Date();
+            const elapsed = Math.floor((currentTime - startTime) / 1000);
+            document.getElementById('currentSessionTime').textContent = this.formatTime(elapsed);
+            
+            // Start interval to update current session time
+            if (this.timeTrackingInterval) {
+                clearInterval(this.timeTrackingInterval);
+            }
+            this.timeTrackingInterval = setInterval(() => {
+                const now = new Date();
+                const newElapsed = Math.floor((now - startTime) / 1000);
+                document.getElementById('currentSessionTime').textContent = this.formatTime(newElapsed);
+            }, 1000);
+        } else {
+            document.getElementById('currentSessionTime').textContent = '00:00:00';
+            if (this.timeTrackingInterval) {
+                clearInterval(this.timeTrackingInterval);
+                this.timeTrackingInterval = null;
+            }
+        }
+        
+        // Update button states
+        document.getElementById('startTimeBtn').disabled = timeTracking.isRunning;
+        document.getElementById('stopTimeBtn').disabled = !timeTracking.isRunning;
+        
+        // Render sessions
+        this.renderSessions(timeTracking.sessions);
+    }
+
+    renderSessions(sessions) {
+        const container = document.getElementById('sessionsList');
+        
+        if (!sessions || sessions.length === 0) {
+            container.innerHTML = '<div class="no-sessions">No sessions recorded yet</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        sessions.slice().reverse().forEach(session => {
+            const item = document.createElement('div');
+            item.className = 'session-item';
+            const startDate = new Date(session.startTime);
+            const formattedDate = startDate.toLocaleDateString();
+            const formattedTime = this.formatTime(session.duration);
+            item.innerHTML = `
+                <span class="session-time">${formattedTime}</span>
+                <span class="session-date">${formattedDate}</span>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    formatTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    async startTimeTracking() {
+        if (!this.currentTimeTrackingTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentTimeTrackingTaskId}/time/start`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentTimeTrackingTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderTimeTracking(task);
+                this.showMessage('Time tracking started!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to start time tracking', 'error');
+            }
+        } catch (error) {
+            console.error('Start time tracking error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async stopTimeTracking() {
+        if (!this.currentTimeTrackingTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentTimeTrackingTaskId}/time/stop`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentTimeTrackingTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderTimeTracking(task);
+                this.showMessage('Time tracking stopped!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to stop time tracking', 'error');
+            }
+        } catch (error) {
+            console.error('Stop time tracking error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async resetTimeTracking() {
+        if (!this.currentTimeTrackingTaskId) return;
+
+        if (!confirm('Are you sure you want to reset all time tracking data?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentTimeTrackingTaskId}/time/reset`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentTimeTrackingTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderTimeTracking(task);
+                this.showMessage('Time tracking reset!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to reset time tracking', 'error');
+            }
+        } catch (error) {
+            console.error('Reset time tracking error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     async setReminder() {
         if (!this.currentReminderTaskId) return;
 
@@ -885,6 +1068,23 @@ class TaskManager {
                 const minutes = parseInt(e.target.closest('.btn').dataset.minutes);
                 this.setQuickReminder(minutes);
             });
+        });
+
+        // Time tracking modal
+        document.querySelector('[data-action="close-time-tracking"]').addEventListener('click', () => {
+            this.hideTimeTrackingModal();
+        });
+
+        document.getElementById('startTimeBtn').addEventListener('click', () => {
+            this.startTimeTracking();
+        });
+
+        document.getElementById('stopTimeBtn').addEventListener('click', () => {
+            this.stopTimeTracking();
+        });
+
+        document.getElementById('resetTimeBtn').addEventListener('click', () => {
+            this.resetTimeTracking();
         });
 
         // Notes modal
@@ -1874,6 +2074,9 @@ class TaskManager {
                 break;
             case 'reminder':
                 this.showReminderModal(this.contextMenuTaskId);
+                break;
+            case 'time-tracking':
+                this.showTimeTrackingModal(this.contextMenuTaskId);
                 break;
             case 'notes':
                 this.showNotesModal(this.contextMenuTaskId);

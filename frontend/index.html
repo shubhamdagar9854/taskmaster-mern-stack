@@ -1347,6 +1347,48 @@
                     </div>
                 </div>
 
+                <!-- Time Tracking Modal -->
+                <div id="timeTrackingModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>⏱️ Time Tracking</h3>
+                            <button class="modal-close" data-action="close-time-tracking">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="timeTrackingTaskTitle" class="time-tracking-task-title"></div>
+                            <div class="time-tracking-current">
+                                <div class="time-tracking-label">Current Session</div>
+                                <div id="currentSessionTime" class="time-tracking-time">00:00:00</div>
+                                <div class="time-tracking-actions">
+                                    <button id="startTimeBtn" class="btn btn-primary">
+                                        <i class="fas fa-play"></i> Start
+                                    </button>
+                                    <button id="stopTimeBtn" class="btn btn-danger">
+                                        <i class="fas fa-stop"></i> Stop
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="time-tracking-total">
+                                <div class="time-tracking-label">Total Time</div>
+                                <div id="totalTime" class="time-tracking-time">00:00:00</div>
+                            </div>
+                            <div class="time-tracking-sessions">
+                                <h4>Session History</h4>
+                                <div id="sessionsList" class="sessions-list">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+                            <div class="time-tracking-footer">
+                                <button id="resetTimeBtn" class="btn btn-outline">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Reminder Modal -->
                 <div id="reminderModal" class="modal hidden">
                     <div class="modal-content">
@@ -1692,6 +1734,9 @@
                     </div>
                     <div class="context-menu-item" data-action="reminder">
                         <i class="fas fa-bell"></i> Set Reminder
+                    </div>
+                    <div class="context-menu-item" data-action="time-tracking">
+                        <i class="fas fa-clock"></i> Time Tracking
                     </div>
                     <div class="context-menu-item" data-action="notes">
                         <i class="fas fa-sticky-note"></i> Edit Notes

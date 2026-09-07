@@ -1239,6 +1239,110 @@ router.delete('/templates/:templateId', authenticateToken, async (req, res) => {
   }
 });
 
+// Start time tracking
+router.post('/:id/time/start', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (task.timeTracking && task.timeTracking.isRunning) {
+      return res.status(400).json({ message: 'Time tracking is already running' });
+    }
+
+    if (!task.timeTracking) {
+      task.timeTracking = {
+        isRunning: true,
+        startTime: new Date(),
+        totalTime: 0,
+        sessions: []
+      };
+    } else {
+      task.timeTracking.isRunning = true;
+      task.timeTracking.startTime = new Date();
+    }
+
+    await task.save();
+
+    logActivity(task._id, req.userId, 'time_tracking_started', 'Time tracking started');
+    addHistoryEntry(task._id, 'time_tracking_started', 'Time tracking started');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Start time tracking error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Stop time tracking
+router.post('/:id/time/stop', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    if (!task.timeTracking || !task.timeTracking.isRunning) {
+      return res.status(400).json({ message: 'Time tracking is not running' });
+    }
+
+    const endTime = new Date();
+    const startTime = new Date(task.timeTracking.startTime);
+    const sessionDuration = Math.floor((endTime - startTime) / 1000); // in seconds
+
+    task.timeTracking.isRunning = false;
+    task.timeTracking.totalTime += sessionDuration;
+    task.timeTracking.sessions.push({
+      startTime,
+      endTime,
+      duration: sessionDuration
+    });
+
+    await task.save();
+
+    const minutes = Math.floor(sessionDuration / 60);
+    const seconds = sessionDuration % 60;
+    logActivity(task._id, req.userId, 'time_tracking_stopped', `Time tracking stopped. Session: ${minutes}m ${seconds}s`);
+    addHistoryEntry(task._id, 'time_tracking_stopped', `Time tracking stopped. Session: ${minutes}m ${seconds}s`);
+
+    res.json(task);
+  } catch (error) {
+    console.error('Stop time tracking error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Reset time tracking
+router.post('/:id/time/reset', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    task.timeTracking = {
+      isRunning: false,
+      startTime: null,
+      totalTime: 0,
+      sessions: []
+    };
+
+    await task.save();
+
+    logActivity(task._id, req.userId, 'time_tracking_reset', 'Time tracking reset');
+    addHistoryEntry(task._id, 'time_tracking_reset', 'Time tracking reset');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Reset time tracking error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {
