@@ -1343,6 +1343,210 @@ router.post('/:id/time/reset', authenticateToken, async (req, res) => {
   }
 });
 
+// Add comment to task
+router.post('/:id/comments', authenticateToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: 'Comment text is required' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = {
+      _id: new mongoose.Types.ObjectId(),
+      text: text.trim(),
+      author: req.userId,
+      createdAt: new Date(),
+      reactions: [],
+      replies: []
+    };
+
+    if (!task.comments) {
+      task.comments = [];
+    }
+
+    task.comments.push(comment);
+    await task.save();
+
+    logActivity(task._id, req.userId, 'comment_added', 'Comment added');
+    addHistoryEntry(task._id, 'comment_added', 'Comment added');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Add comment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Edit comment
+router.put('/:id/comments/:commentId', authenticateToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: 'Comment text is required' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = task.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    if (comment.author.toString() !== req.userId) {
+      return res.status(403).json({ message: 'You can only edit your own comments' });
+    }
+
+    comment.text = text.trim();
+    comment.editedAt = new Date();
+    await task.save();
+
+    logActivity(task._id, req.userId, 'comment_edited', 'Comment edited');
+    addHistoryEntry(task._id, 'comment_edited', 'Comment edited');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Edit comment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete comment
+router.delete('/:id/comments/:commentId', authenticateToken, async (req, res) => {
+  try {
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = task.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    if (comment.author.toString() !== req.userId) {
+      return res.status(403).json({ message: 'You can only delete your own comments' });
+    }
+
+    task.comments.pull(req.params.commentId);
+    await task.save();
+
+    logActivity(task._id, req.userId, 'comment_deleted', 'Comment deleted');
+    addHistoryEntry(task._id, 'comment_deleted', 'Comment deleted');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add reaction to comment
+router.post('/:id/comments/:commentId/reactions', authenticateToken, async (req, res) => {
+  try {
+    const { emoji } = req.body;
+
+    if (!emoji) {
+      return res.status(400).json({ message: 'Emoji is required' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = task.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    // Check if user already reacted with this emoji
+    const existingReaction = comment.reactions.find(
+      r => r.user.toString() === req.userId && r.emoji === emoji
+    );
+
+    if (existingReaction) {
+      // Remove reaction
+      comment.reactions.pull(existingReaction._id);
+    } else {
+      // Add reaction
+      comment.reactions.push({
+        user: req.userId,
+        emoji,
+        createdAt: new Date()
+      });
+    }
+
+    await task.save();
+
+    res.json(task);
+  } catch (error) {
+    console.error('Add reaction error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add reply to comment
+router.post('/:id/comments/:commentId/replies', authenticateToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: 'Reply text is required' });
+    }
+
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
+
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    const comment = task.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    const reply = {
+      _id: new mongoose.Types.ObjectId(),
+      text: text.trim(),
+      author: req.userId,
+      createdAt: new Date()
+    };
+
+    if (!comment.replies) {
+      comment.replies = [];
+    }
+
+    comment.replies.push(reply);
+    await task.save();
+
+    logActivity(task._id, req.userId, 'reply_added', 'Reply added');
+    addHistoryEntry(task._id, 'reply_added', 'Reply added');
+
+    res.json(task);
+  } catch (error) {
+    console.error('Add reply error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

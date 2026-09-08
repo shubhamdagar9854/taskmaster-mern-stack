@@ -1347,6 +1347,30 @@
                     </div>
                 </div>
 
+                <!-- Comments Modal -->
+                <div id="commentsModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>💬 Comments</h3>
+                            <button class="modal-close" data-action="close-comments">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="commentsTaskTitle" class="comments-task-title"></div>
+                            <div class="comments-input">
+                                <textarea id="commentText" class="form-textarea" rows="3" placeholder="Add a comment..."></textarea>
+                                <button id="addCommentBtn" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Add Comment
+                                </button>
+                            </div>
+                            <div id="commentsList" class="comments-list">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Time Tracking Modal -->
                 <div id="timeTrackingModal" class="modal hidden">
                     <div class="modal-content">
@@ -1737,6 +1761,9 @@
                     </div>
                     <div class="context-menu-item" data-action="time-tracking">
                         <i class="fas fa-clock"></i> Time Tracking
+                    </div>
+                    <div class="context-menu-item" data-action="comments">
+                        <i class="fas fa-comments"></i> Comments
                     </div>
                     <div class="context-menu-item" data-action="notes">
                         <i class="fas fa-sticky-note"></i> Edit Notes

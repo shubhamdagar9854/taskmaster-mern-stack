@@ -49,6 +49,7 @@ class TaskManager {
         this.templates = [];
         this.currentTimeTrackingTaskId = null;
         this.timeTrackingInterval = null;
+        this.currentCommentsTaskId = null;
         this.init();
     }
 
@@ -94,6 +95,7 @@ class TaskManager {
                 this.hideTemplatesModal();
                 this.hideCreateTemplateModal();
                 this.hideTimeTrackingModal();
+                this.hideCommentsModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -705,6 +707,310 @@ class TaskManager {
         }
     }
 
+    showCommentsModal(taskId) {
+        this.currentCommentsTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        
+        document.getElementById('commentsTaskTitle').textContent = task.title;
+        this.renderComments(task.comments || []);
+        document.getElementById('commentsModal').classList.remove('hidden');
+    }
+
+    hideCommentsModal() {
+        document.getElementById('commentsModal').classList.add('hidden');
+        this.currentCommentsTaskId = null;
+    }
+
+    renderComments(comments) {
+        const container = document.getElementById('commentsList');
+        
+        if (!comments || comments.length === 0) {
+            container.innerHTML = '<div class="no-comments">No comments yet. Be the first to comment!</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        comments.forEach(comment => {
+            const item = document.createElement('div');
+            item.className = 'comment-item';
+            const formattedDate = new Date(comment.createdAt).toLocaleString();
+            const userId = window.authManager.getUserId ? window.authManager.getUserId() : null;
+            const isOwnComment = userId && comment.author && comment.author.toString() === userId;
+            
+            item.innerHTML = `
+                <div class="comment-header">
+                    <div class="comment-author">User</div>
+                    <div class="comment-date">${formattedDate}</div>
+                </div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-actions">
+                    <div class="comment-reactions">
+                        ${this.renderReactions(comment.reactions, comment._id)}
+                    </div>
+                    ${isOwnComment ? `
+                        <button class="comment-action-btn edit" data-comment-id="${comment._id}">Edit</button>
+                        <button class="comment-action-btn delete" data-comment-id="${comment._id}">Delete</button>
+                    ` : ''}
+                    <button class="comment-action-btn reply" data-comment-id="${comment._id}">Reply</button>
+                </div>
+                ${comment.replies && comment.replies.length > 0 ? `
+                    <div class="comment-replies">
+                        ${comment.replies.map(reply => this.renderReply(reply)).join('')}
+                    </div>
+                ` : ''}
+            `;
+            container.appendChild(item);
+        });
+
+        // Add event listeners
+        container.querySelectorAll('.reaction-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const commentId = e.target.closest('.reaction-btn').dataset.commentId;
+                const emoji = e.target.closest('.reaction-btn').dataset.emoji;
+                this.toggleReaction(this.currentCommentsTaskId, commentId, emoji);
+            });
+        });
+
+        container.querySelectorAll('.comment-action-btn.edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const commentId = e.target.closest('.comment-action-btn').dataset.commentId;
+                this.editComment(commentId);
+            });
+        });
+
+        container.querySelectorAll('.comment-action-btn.delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const commentId = e.target.closest('.comment-action-btn').dataset.commentId;
+                if (confirm('Are you sure you want to delete this comment?')) {
+                    this.deleteComment(commentId);
+                }
+            });
+        });
+
+        container.querySelectorAll('.comment-action-btn.reply').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const commentId = e.target.closest('.comment-action-btn').dataset.commentId;
+                this.showReplyInput(commentId);
+            });
+        });
+    }
+
+    renderReactions(reactions, commentId) {
+        if (!reactions || reactions.length === 0) return '';
+        
+        const emojiCounts = {};
+        reactions.forEach(r => {
+            emojiCounts[r.emoji] = (emojiCounts[r.emoji] || 0) + 1;
+        });
+
+        return Object.entries(emojiCounts).map(([emoji, count]) => `
+            <button class="reaction-btn" data-comment-id="${commentId}" data-emoji="${emoji}">
+                ${emoji} ${count}
+            </button>
+        `).join('');
+    }
+
+    renderReply(reply) {
+        const formattedDate = new Date(reply.createdAt).toLocaleString();
+        return `
+            <div class="reply-item">
+                <div class="reply-header">
+                    <div class="reply-author">User</div>
+                    <div class="reply-date">${formattedDate}</div>
+                </div>
+                <div class="reply-text">${reply.text}</div>
+            </div>
+        `;
+    }
+
+    async addComment() {
+        if (!this.currentCommentsTaskId) return;
+
+        const text = document.getElementById('commentText').value.trim();
+
+        if (!text) {
+            this.showMessage('Please enter a comment', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentCommentsTaskId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ text })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentCommentsTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderComments(task.comments);
+                document.getElementById('commentText').value = '';
+                this.showMessage('Comment added successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to add comment', 'error');
+            }
+        } catch (error) {
+            console.error('Add comment error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async editComment(commentId) {
+        const task = this.tasks.find(t => t._id === this.currentCommentsTaskId);
+        const comment = task.comments.find(c => c._id.toString() === commentId);
+        
+        const newText = prompt('Edit your comment:', comment.text);
+        if (newText === null || !newText.trim()) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentCommentsTaskId}/comments/${commentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ text: newText.trim() })
+            });
+
+            if (response.ok) {
+                const updatedTask = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentCommentsTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = updatedTask;
+                    this.renderTasks();
+                }
+                this.renderComments(updatedTask.comments);
+                this.showMessage('Comment updated successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to update comment', 'error');
+            }
+        } catch (error) {
+            console.error('Edit comment error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async deleteComment(commentId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentCommentsTaskId}/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentCommentsTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderComments(task.comments);
+                this.showMessage('Comment deleted successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to delete comment', 'error');
+            }
+        } catch (error) {
+            console.error('Delete comment error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async toggleReaction(taskId, commentId, emoji) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/comments/${commentId}/reactions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ emoji })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === taskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderComments(task.comments);
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to toggle reaction', 'error');
+            }
+        } catch (error) {
+            console.error('Toggle reaction error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    showReplyInput(commentId) {
+        const commentItem = document.querySelector(`[data-comment-id="${commentId}"]`).closest('.comment-item');
+        let replyInput = commentItem.querySelector('.reply-input');
+        
+        if (replyInput) {
+            replyInput.remove();
+            return;
+        }
+
+        replyInput = document.createElement('div');
+        replyInput.className = 'reply-input';
+        replyInput.innerHTML = `
+            <textarea class="form-textarea" rows="2" placeholder="Write a reply..."></textarea>
+            <button class="btn btn-primary btn-sm" data-comment-id="${commentId}">Reply</button>
+        `;
+        commentItem.querySelector('.comment-replies').appendChild(replyInput);
+
+        replyInput.querySelector('button').addEventListener('click', () => {
+            const text = replyInput.querySelector('textarea').value.trim();
+            if (text) {
+                this.addReply(commentId, text);
+            }
+        });
+    }
+
+    async addReply(commentId, text) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentCommentsTaskId}/comments/${commentId}/replies`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ text })
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                const taskIndex = this.tasks.findIndex(t => t._id === this.currentCommentsTaskId);
+                if (taskIndex > -1) {
+                    this.tasks[taskIndex] = task;
+                    this.renderTasks();
+                }
+                this.renderComments(task.comments);
+                this.showMessage('Reply added successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to add reply', 'error');
+            }
+        } catch (error) {
+            console.error('Add reply error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     async setReminder() {
         if (!this.currentReminderTaskId) return;
 
@@ -1085,6 +1391,15 @@ class TaskManager {
 
         document.getElementById('resetTimeBtn').addEventListener('click', () => {
             this.resetTimeTracking();
+        });
+
+        // Comments modal
+        document.querySelector('[data-action="close-comments"]').addEventListener('click', () => {
+            this.hideCommentsModal();
+        });
+
+        document.getElementById('addCommentBtn').addEventListener('click', () => {
+            this.addComment();
         });
 
         // Notes modal
@@ -2077,6 +2392,9 @@ class TaskManager {
                 break;
             case 'time-tracking':
                 this.showTimeTrackingModal(this.contextMenuTaskId);
+                break;
+            case 'comments':
+                this.showCommentsModal(this.contextMenuTaskId);
                 break;
             case 'notes':
                 this.showNotesModal(this.contextMenuTaskId);
