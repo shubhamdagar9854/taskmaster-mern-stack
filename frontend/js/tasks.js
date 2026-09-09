@@ -1011,6 +1011,77 @@ class TaskManager {
         }
     }
 
+    async applyAdvancedSearch() {
+        const query = document.getElementById('searchQuery').value.trim();
+        const status = document.getElementById('filterStatus').value;
+        const priority = document.getElementById('filterPriority').value;
+        const category = document.getElementById('filterCategory').value;
+        const tags = document.getElementById('filterTags').value.trim();
+        const startDate = document.getElementById('filterDueDateFrom').value;
+        const endDate = document.getElementById('filterDueDateTo').value;
+        const sortBy = document.getElementById('filterSortBy').value;
+        const sortOrder = document.getElementById('filterSortOrder').value;
+        const isPinned = document.getElementById('filterIsPinned').checked;
+        const hasReminder = document.getElementById('filterHasReminder').checked;
+        const hasDependencies = document.getElementById('filterHasDependencies').checked;
+        const hasComments = document.getElementById('filterHasComments').checked;
+        const hasAttachments = document.getElementById('filterHasAttachments').checked;
+
+        const params = new URLSearchParams();
+        if (query) params.append('query', query);
+        if (status) params.append('status', status === 'active' ? 'pending' : status);
+        if (priority) params.append('priority', priority);
+        if (category) params.append('category', category);
+        if (tags) params.append('tags', tags);
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+        if (sortBy) params.append('sortBy', sortBy);
+        if (sortOrder) params.append('sortOrder', sortOrder);
+        if (isPinned) params.append('isPinned', 'true');
+        if (hasReminder) params.append('hasReminder', 'true');
+        if (hasDependencies) params.append('hasDependencies', 'true');
+        if (hasComments) params.append('hasComments', 'true');
+        if (hasAttachments) params.append('hasAttachments', 'true');
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/search?${params.toString()}`, {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.tasks = await response.json();
+                this.renderTasks();
+                this.hideAdvancedSearchModal();
+                this.showMessage(`Found ${this.tasks.length} tasks`, 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Search failed', 'error');
+            }
+        } catch (error) {
+            console.error('Advanced search error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    clearAdvancedSearch() {
+        document.getElementById('searchQuery').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterPriority').value = '';
+        document.getElementById('filterCategory').value = '';
+        document.getElementById('filterTags').value = '';
+        document.getElementById('filterDueDateFrom').value = '';
+        document.getElementById('filterDueDateTo').value = '';
+        document.getElementById('filterSortBy').value = 'createdAt';
+        document.getElementById('filterSortOrder').value = 'desc';
+        document.getElementById('filterIsPinned').checked = false;
+        document.getElementById('filterHasReminder').checked = false;
+        document.getElementById('filterHasDependencies').checked = false;
+        document.getElementById('filterHasComments').checked = false;
+        document.getElementById('filterHasAttachments').checked = false;
+    }
+
     async setReminder() {
         if (!this.currentReminderTaskId) return;
 
@@ -1400,6 +1471,19 @@ class TaskManager {
 
         document.getElementById('addCommentBtn').addEventListener('click', () => {
             this.addComment();
+        });
+
+        // Advanced search modal
+        document.getElementById('closeAdvancedSearchModal').addEventListener('click', () => {
+            this.hideAdvancedSearchModal();
+        });
+
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+            this.applyAdvancedSearch();
+        });
+
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            this.clearAdvancedSearch();
         });
 
         // Notes modal

@@ -2026,6 +2026,63 @@ input[type="range"]::-moz-range-thumb {
     color: #9ca3af;
 }
 
+/* Search Filters Grid */
+.search-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.search-filters-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #374151;
+}
+
+.checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.date-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.date-range-inputs span {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* Dark mode for search filters */
+.dark-mode .search-filters-checkboxes {
+    background: #374151;
+}
+
+.dark-mode .checkbox-label {
+    color: #d1d5db;
+}
+
+.dark-mode .date-range-inputs span {
+    color: #9ca3af;
+}
+
 /* Dark mode for time tracking */
 .dark-mode .time-tracking-task-title {
     color: #e5e7eb;

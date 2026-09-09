@@ -871,7 +871,7 @@
 
                 <!-- Advanced Search Modal -->
                 <div id="advancedSearchModal" class="modal hidden">
-                    <div class="modal-content">
+                    <div class="modal-content modal-large">
                         <div class="modal-header">
                             <h3>Advanced Search & Filters</h3>
                             <button id="closeAdvancedSearchModal" class="btn-icon">
@@ -879,80 +879,90 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div class="form-group">
-                                <label>Priority</label>
-                                <select id="filterPriority" class="form-input">
-                                    <option value="">All Priorities</option>
-                                    <option value="high">High</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="low">Low</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Category</label>
-                                <select id="filterCategory" class="form-input">
-                                    <option value="">All Categories</option>
-                                    <option value="work">Work</option>
-                                    <option value="personal">Personal</option>
-                                    <option value="shopping">Shopping</option>
-                                    <option value="health">Health</option>
-                                    <option value="finance">Finance</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select id="filterStatus" class="form-input">
-                                    <option value="">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Due Date Range</label>
-                                <div class="date-range-inputs">
-                                    <input type="date" id="filterDueDateFrom" class="form-input" placeholder="From">
-                                    <span>to</span>
-                                    <input type="date" id="filterDueDateTo" class="form-input" placeholder="To">
+                            <div class="search-filters-grid">
+                                <div class="form-group">
+                                    <label>Search Query</label>
+                                    <input type="text" id="searchQuery" class="form-input" placeholder="Search in title, description, notes...">
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="filterStatus" class="form-input">
+                                        <option value="">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Priority</label>
+                                    <select id="filterPriority" class="form-input">
+                                        <option value="">All Priorities</option>
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select id="filterCategory" class="form-input">
+                                        <option value="">All Categories</option>
+                                        <option value="work">Work</option>
+                                        <option value="personal">Personal</option>
+                                        <option value="shopping">Shopping</option>
+                                        <option value="health">Health</option>
+                                        <option value="finance">Finance</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tags (comma separated)</label>
+                                    <input type="text" id="filterTags" class="form-input" placeholder="e.g., urgent, important">
+                                </div>
+                                <div class="form-group">
+                                    <label>Due Date Range</label>
+                                    <div class="date-range-inputs">
+                                        <input type="date" id="filterDueDateFrom" class="form-input" placeholder="From">
+                                        <span>to</span>
+                                        <input type="date" id="filterDueDateTo" class="form-input" placeholder="To">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Sort By</label>
+                                    <select id="filterSortBy" class="form-input">
+                                        <option value="createdAt">Created Date</option>
+                                        <option value="dueDate">Due Date</option>
+                                        <option value="priority">Priority</option>
+                                        <option value="title">Title</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Sort Order</label>
+                                    <select id="filterSortOrder" class="form-input">
+                                        <option value="desc">Descending</option>
+                                        <option value="asc">Ascending</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label>Tags</label>
-                                <select id="filterTags" class="form-input">
-                                    <option value="">All Tags</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Has Subtasks</label>
-                                <select id="filterSubtasks" class="form-input">
-                                    <option value="">Any</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Has Attachments</label>
-                                <select id="filterAttachments" class="form-input">
-                                    <option value="">Any</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Has Dependencies</label>
-                                <select id="filterDependencies" class="form-input">
-                                    <option value="">Any</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Is Recurring</label>
-                                <select id="filterRecurring" class="form-input">
-                                    <option value="">Any</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                </select>
+                            <div class="search-filters-checkboxes">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filterIsPinned">
+                                    <span>Pinned Only</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filterHasReminder">
+                                    <span>Has Reminder</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filterHasDependencies">
+                                    <span>Has Dependencies</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filterHasComments">
+                                    <span>Has Comments</span>
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="filterHasAttachments">
+                                    <span>Has Attachments</span>
+                                </label>
                             </div>
                             <div class="form-actions">
                                 <button id="applyFiltersBtn" class="btn btn-primary">

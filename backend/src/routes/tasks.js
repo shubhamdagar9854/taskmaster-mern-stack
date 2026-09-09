@@ -1547,6 +1547,122 @@ router.post('/:id/comments/:commentId/replies', authenticateToken, async (req, r
   }
 });
 
+// Advanced search with filters
+router.get('/search', authenticateToken, async (req, res) => {
+  try {
+    const {
+      query,
+      status,
+      priority,
+      category,
+      tags,
+      startDate,
+      endDate,
+      isPinned,
+      hasReminder,
+      hasDependencies,
+      hasComments,
+      hasAttachments,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const filter = { user: req.userId, isTemplate: { $ne: true } };
+
+    // Text search in title and description
+    if (query) {
+      filter.$or = [
+        { title: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
+        { notes: { $regex: query, $options: 'i' } }
+      ];
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+      if (status === 'completed') {
+        filter.completed = true;
+      } else if (status === 'pending') {
+        filter.completed = false;
+      }
+    }
+
+    // Priority filter
+    if (priority && priority !== 'all') {
+      filter.priority = priority;
+    }
+
+    // Category filter
+    if (category && category !== 'all') {
+      filter.category = category;
+    }
+
+    // Tags filter
+    if (tags) {
+      const tagArray = tags.split(',').map(t => t.trim());
+      filter.tags = { $in: tagArray };
+    }
+
+    // Date range filter
+    if (startDate || endDate) {
+      filter.dueDate = {};
+      if (startDate) {
+        filter.dueDate.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        filter.dueDate.$lte = new Date(endDate);
+      }
+    }
+
+    // Boolean filters
+    if (isPinned === 'true') {
+      filter.isPinned = true;
+    }
+
+    if (hasReminder === 'true') {
+      filter['reminder.time'] = { $exists: true };
+    }
+
+    if (hasDependencies === 'true') {
+      filter.dependencies = { $exists: true, $ne: [] };
+    }
+
+    if (hasComments === 'true') {
+      filter.comments = { $exists: true, $ne: [] };
+    }
+
+    if (hasAttachments === 'true') {
+      filter.attachments = { $exists: true, $ne: [] };
+    }
+
+    // Sorting
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    const tasks = await Task.find(filter)
+      .populate('dependencies')
+      .sort(sortOptions);
+
+    res.json(tasks);
+  } catch (error) {
+    console.error('Advanced search error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all unique tags for user
+router.get('/tags/unique', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId, isTemplate: { $ne: true } });
+    const allTags = tasks.flatMap(task => task.tags || []);
+    const uniqueTags = [...new Set(allTags)].sort();
+    res.json(uniqueTags);
+  } catch (error) {
+    console.error('Get unique tags error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {
