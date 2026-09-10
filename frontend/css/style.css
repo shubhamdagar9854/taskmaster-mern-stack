@@ -2083,6 +2083,121 @@ input[type="range"]::-moz-range-thumb {
     color: #9ca3af;
 }
 
+/* Tags Management Modal */
+.tags-create-section {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.color-input {
+    width: 60px;
+    height: 40px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.tags-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.tag-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.tag-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tag-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tag-color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+}
+
+.tag-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.tag-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.tag-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #6b7280;
+    transition: color 0.2s;
+}
+
+.tag-action-btn:hover {
+    color: #1f2937;
+}
+
+.tag-action-btn.delete:hover {
+    color: #ef4444;
+}
+
+.no-tags {
+    text-align: center;
+    color: #6b7280;
+    padding: 40px;
+    font-style: italic;
+}
+
+/* Dark mode for tags */
+.dark-mode .tags-create-section {
+    background: #374151;
+}
+
+.dark-mode .tag-item {
+    background: #4b5563;
+    border-color: #6b7280;
+}
+
+.dark-mode .tag-name {
+    color: #e5e7eb;
+}
+
+.dark-mode .tag-color-dot {
+    border-color: #6b7280;
+}
+
+.dark-mode .tag-action-btn {
+    color: #9ca3af;
+}
+
+.dark-mode .tag-action-btn:hover {
+    color: #e5e7eb;
+}
+
+.dark-mode .no-tags {
+    color: #9ca3af;
+}
+
 /* Dark mode for time tracking */
 .dark-mode .time-tracking-task-title {
     color: #e5e7eb;

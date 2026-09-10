@@ -1663,6 +1663,108 @@ router.get('/tags/unique', authenticateToken, async (req, res) => {
   }
 });
 
+// Create tag with color
+router.post('/tags', authenticateToken, async (req, res) => {
+  try {
+    const { name, color } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Tag name is required' });
+    }
+
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.tagColors) {
+      user.tagColors = {};
+    }
+
+    user.tagColors[name.trim()] = color || '#6b7280';
+    await user.save();
+
+    res.json(user.tagColors);
+  } catch (error) {
+    console.error('Create tag error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all user tags with colors
+router.get('/tags', authenticateToken, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user.tagColors || {});
+  } catch (error) {
+    console.error('Get tags error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update tag color
+router.put('/tags/:tagName', authenticateToken, async (req, res) => {
+  try {
+    const { color } = req.body;
+    const { tagName } = req.params;
+
+    if (!color) {
+      return res.status(400).json({ message: 'Color is required' });
+    }
+
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.tagColors) {
+      user.tagColors = {};
+    }
+
+    user.tagColors[tagName] = color;
+    await user.save();
+
+    res.json(user.tagColors);
+  } catch (error) {
+    console.error('Update tag error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete tag
+router.delete('/tags/:tagName', authenticateToken, async (req, res) => {
+  try {
+    const { tagName } = req.params;
+
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.tagColors && user.tagColors[tagName]) {
+      delete user.tagColors[tagName];
+      await user.save();
+    }
+
+    res.json(user.tagColors || {});
+  } catch (error) {
+    console.error('Delete tag error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

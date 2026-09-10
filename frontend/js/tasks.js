@@ -50,6 +50,7 @@ class TaskManager {
         this.currentTimeTrackingTaskId = null;
         this.timeTrackingInterval = null;
         this.currentCommentsTaskId = null;
+        this.tagColors = {};
         this.init();
     }
 
@@ -96,6 +97,7 @@ class TaskManager {
                 this.hideCreateTemplateModal();
                 this.hideTimeTrackingModal();
                 this.hideCommentsModal();
+                this.hideTagsModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -1082,6 +1084,164 @@ class TaskManager {
         document.getElementById('filterHasAttachments').checked = false;
     }
 
+    showTagsModal() {
+        this.loadTags();
+        document.getElementById('tagsModal').classList.remove('hidden');
+    }
+
+    hideTagsModal() {
+        document.getElementById('tagsModal').classList.add('hidden');
+    }
+
+    renderTags() {
+        const container = document.getElementById('tagsList');
+        
+        const tagNames = Object.keys(this.tagColors);
+        
+        if (tagNames.length === 0) {
+            container.innerHTML = '<div class="no-tags">No tags created yet. Create your first tag!</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        tagNames.forEach(tagName => {
+            const color = this.tagColors[tagName];
+            const item = document.createElement('div');
+            item.className = 'tag-item';
+            item.innerHTML = `
+                <div class="tag-info">
+                    <div class="tag-color-dot" style="background-color: ${color}"></div>
+                    <span class="tag-name">${tagName}</span>
+                </div>
+                <div class="tag-actions">
+                    <button class="tag-action-btn edit" data-tag-name="${tagName}" title="Edit Color">
+                        <i class="fas fa-palette"></i>
+                    </button>
+                    <button class="tag-action-btn delete" data-tag-name="${tagName}" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+        // Add event listeners
+        container.querySelectorAll('.tag-action-btn.edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tagName = e.target.closest('.tag-action-btn').dataset.tagName;
+                this.editTagColor(tagName);
+            });
+        });
+
+        container.querySelectorAll('.tag-action-btn.delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tagName = e.target.closest('.tag-action-btn').dataset.tagName;
+                if (confirm(`Are you sure you want to delete the tag "${tagName}"?`)) {
+                    this.deleteTag(tagName);
+                }
+            });
+        });
+    }
+
+    async createTag() {
+        const name = document.getElementById('newTagName').value.trim();
+        const color = document.getElementById('newTagColor').value;
+
+        if (!name) {
+            this.showMessage('Please enter a tag name', 'error');
+            return;
+        }
+
+        if (this.tagColors[name]) {
+            this.showMessage('Tag already exists', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/tags', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ name, color })
+            });
+
+            if (response.ok) {
+                this.tagColors = await response.json();
+                this.renderTags();
+                document.getElementById('newTagName').value = '';
+                this.showMessage('Tag created successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to create tag', 'error');
+            }
+        } catch (error) {
+            console.error('Create tag error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async editTagColor(tagName) {
+        const color = prompt('Enter color (hex code or color name):', this.tagColors[tagName]);
+        if (!color) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/tags/${encodeURIComponent(tagName)}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ color })
+            });
+
+            if (response.ok) {
+                this.tagColors = await response.json();
+                this.renderTags();
+                this.showMessage('Tag color updated!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to update tag', 'error');
+            }
+        } catch (error) {
+            console.error('Edit tag error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async deleteTag(tagName) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/tags/${encodeURIComponent(tagName)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.tagColors = await response.json();
+                this.renderTags();
+                this.showMessage('Tag deleted successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to delete tag', 'error');
+            }
+        } catch (error) {
+            console.error('Delete tag error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    renderTaskTags(tags) {
+        if (!tags || tags.length === 0) return '';
+        
+        return tags.map(tag => {
+            const color = this.tagColors[tag] || '#6b7280';
+            return `<span class="task-tag" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40;">${tag}</span>`;
+        }).join('');
+    }
+
     async setReminder() {
         if (!this.currentReminderTaskId) return;
 
@@ -1380,6 +1540,11 @@ class TaskManager {
             this.showTemplatesModal();
         });
 
+        // Tags button
+        document.getElementById('tagsBtn').addEventListener('click', () => {
+            this.showTagsModal();
+        });
+
         // Close keyboard shortcuts modal
         document.querySelector('[data-action="close-keyboard-shortcuts"]').addEventListener('click', () => {
             this.hideKeyboardShortcutsModal();
@@ -1414,6 +1579,15 @@ class TaskManager {
 
         document.getElementById('cancelTemplateBtn').addEventListener('click', () => {
             this.hideCreateTemplateModal();
+        });
+
+        // Tags modal
+        document.querySelector('[data-action="close-tags"]').addEventListener('click', () => {
+            this.hideTagsModal();
+        });
+
+        document.getElementById('createTagBtn').addEventListener('click', () => {
+            this.createTag();
         });
 
         // Dependencies modal
@@ -3279,7 +3453,7 @@ class TaskManager {
                     <span class="category-badge ${task.category || 'other'}">${this.getCategoryIcon(task.category)} ${task.category || 'other'}</span>
                     <div class="task-title">${this.escapeHtml(task.title)}</div>
                     ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
-                    ${task.tags && task.tags.length > 0 ? `<div class="task-tags">${this.renderTags(task.tags)}</div>` : ''}
+                    ${task.tags && task.tags.length > 0 ? `<div class="task-tags">${this.renderTaskTags(task.tags)}</div>` : ''}
                     ${this.renderDependencies(task)}
                     ${task.formattedNotes ? `<div class="task-notes"><i class="fas fa-sticky-note"></i> ${task.formattedNotes}</div>` : ''}
                     ${this.renderSubtasksDisplay(task.subtasks)}
@@ -3914,7 +4088,7 @@ class TaskManager {
                 this.tasks = await response.json();
                 this.renderTasks();
                 this.loadStatistics(); // Load statistics after tasks
-                this.loadUserTags(); // Load user tags
+                this.loadTags(); // Load tag colors for rendering
             } else {
                 this.showMessage('Failed to load tasks', 'error');
             }

@@ -204,6 +204,9 @@
                     <button id="templatesBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-file-alt"></i> Templates
                     </button>
+                    <button id="tagsBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-tags"></i> Tags
+                    </button>
                     <button id="statisticsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-chart-bar"></i> Statistics
                     </button>
@@ -864,6 +867,36 @@
                             <div class="stats-insights">
                                 <h4>Productivity Insights</h4>
                                 <div class="insights-list" id="insightsList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tags Management Modal -->
+                <div id="tagsModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>🏷️ Manage Tags</h3>
+                            <button class="modal-close" data-action="close-tags">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="tags-create-section">
+                                <div class="form-group">
+                                    <label for="newTagName">Tag Name</label>
+                                    <input type="text" id="newTagName" class="form-input" placeholder="e.g., urgent">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newTagColor">Color</label>
+                                    <input type="color" id="newTagColor" class="form-input color-input" value="#6b7280">
+                                </div>
+                                <button id="createTagBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create Tag
+                                </button>
+                            </div>
+                            <div id="tagsList" class="tags-list">
+                                <!-- Dynamic content -->
                             </div>
                         </div>
                     </div>

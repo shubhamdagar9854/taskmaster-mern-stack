@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
+  tagColors: {
+    type: Map,
+    of: String,
+    default: {}
+  },
   createdAt: {
     type: Date,
     default: Date.now
