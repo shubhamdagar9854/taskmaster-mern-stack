@@ -1765,6 +1765,35 @@ router.delete('/tags/:tagName', authenticateToken, async (req, res) => {
   }
 });
 
+// Reorder tasks
+router.post('/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { taskIds } = req.body;
+
+    if (!taskIds || !Array.isArray(taskIds)) {
+      return res.status(400).json({ message: 'Task IDs array is required' });
+    }
+
+    // Update order for each task
+    const updatePromises = taskIds.map((taskId, index) => {
+      return Task.findOneAndUpdate(
+        { _id: taskId, user: req.userId },
+        { order: index },
+        { new: true }
+      );
+    });
+
+    await Promise.all(updatePromises);
+
+    logActivity(null, req.userId, 'tasks_reordered', 'Tasks reordered');
+
+    res.json({ message: 'Tasks reordered successfully' });
+  } catch (error) {
+    console.error('Reorder tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

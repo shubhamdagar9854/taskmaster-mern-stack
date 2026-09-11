@@ -51,12 +51,14 @@ class TaskManager {
         this.timeTrackingInterval = null;
         this.currentCommentsTaskId = null;
         this.tagColors = {};
+        this.draggedTask = null;
         this.init();
     }
 
     init() {
         this.setupEventListeners();
         this.initKeyboardShortcuts();
+        this.setupDragAndDrop();
         // Check reminders every minute
         setInterval(() => this.checkReminders(), 60000);
         // Initial check
@@ -1240,6 +1242,104 @@ class TaskManager {
             const color = this.tagColors[tag] || '#6b7280';
             return `<span class="task-tag" style="background-color: ${color}20; color: ${color}; border: 1px solid ${color}40;">${tag}</span>`;
         }).join('');
+    }
+
+    setupDragAndDrop() {
+        const taskList = document.getElementById('taskList');
+        
+        taskList.addEventListener('dragstart', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                this.draggedTask = taskItem;
+                taskItem.classList.add('dragging');
+                taskList.classList.add('dragging-active');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+
+        taskList.addEventListener('dragend', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                taskItem.classList.remove('dragging');
+                taskList.classList.remove('dragging-active');
+                document.querySelectorAll('.task-item').forEach(item => {
+                    item.classList.remove('drag-over');
+                });
+            }
+        });
+
+        taskList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem && taskItem !== this.draggedTask) {
+                taskItem.classList.add('drag-over');
+            }
+        });
+
+        taskList.addEventListener('dragleave', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                taskItem.classList.remove('drag-over');
+            }
+        });
+
+        taskList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem && taskItem !== this.draggedTask) {
+                this.handleTaskDrop(taskItem);
+            }
+        });
+    }
+
+    async handleTaskDrop(targetTask) {
+        if (!this.draggedTask) return;
+
+        const draggedTaskId = this.draggedTask.dataset.taskId;
+        const targetTaskId = targetTask.dataset.taskId;
+
+        // Get current task order
+        const taskElements = Array.from(document.querySelectorAll('.task-item'));
+        const taskIds = taskElements.map(el => el.dataset.taskId);
+
+        // Remove dragged task from its current position
+        const draggedIndex = taskIds.indexOf(draggedTaskId);
+        taskIds.splice(draggedIndex, 1);
+
+        // Add dragged task to new position
+        const targetIndex = taskIds.indexOf(targetTaskId);
+        taskIds.splice(targetIndex, 0, draggedTaskId);
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/reorder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ taskIds })
+            });
+
+            if (response.ok) {
+                // Reorder local tasks array
+                const reorderedTasks = [];
+                taskIds.forEach(id => {
+                    const task = this.tasks.find(t => t._id === id);
+                    if (task) reorderedTasks.push(task);
+                });
+                this.tasks = reorderedTasks;
+                this.renderTasks();
+                this.showMessage('Tasks reordered successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to reorder tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Reorder tasks error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+
+        this.draggedTask = null;
     }
 
     async setReminder() {
