@@ -575,6 +575,36 @@
                 </div>
 
                 <!-- Task List -->
+                <!-- Quick Actions Toolbar -->
+                <div id="quickActionsToolbar" class="quick-actions-toolbar">
+                    <div class="quick-actions-left">
+                        <button id="selectAllBtn" class="btn btn-outline btn-sm" title="Select All">
+                            <i class="fas fa-check-double"></i>
+                        </button>
+                        <button id="deselectAllBtn" class="btn btn-outline btn-sm" title="Deselect All">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div class="quick-actions-divider"></div>
+                        <button id="bulkCompleteBtn" class="btn btn-outline btn-sm" title="Complete Selected" disabled>
+                            <i class="fas fa-check"></i> Complete
+                        </button>
+                        <button id="bulkArchiveBtn" class="btn btn-outline btn-sm" title="Archive Selected" disabled>
+                            <i class="fas fa-archive"></i> Archive
+                        </button>
+                        <button id="bulkDeleteBtn" class="btn btn-outline btn-sm btn-danger" title="Delete Selected" disabled>
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                    <div class="quick-actions-right">
+                        <button id="toggleViewBtn" class="btn btn-outline btn-sm" title="Toggle View">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button id="refreshBtn" class="btn btn-outline btn-sm" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <div id="taskList" class="task-list">
                     <!-- Tasks will be dynamically added here -->
                 </div>

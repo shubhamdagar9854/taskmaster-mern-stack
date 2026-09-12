@@ -59,6 +59,7 @@ class TaskManager {
         this.setupEventListeners();
         this.initKeyboardShortcuts();
         this.setupDragAndDrop();
+        this.setupQuickActions();
         // Check reminders every minute
         setInterval(() => this.checkReminders(), 60000);
         // Initial check
@@ -164,11 +165,13 @@ class TaskManager {
     selectAllTasks() {
         this.tasks.forEach(task => this.selectedTasks.add(task._id));
         this.renderTasks();
+        this.updateBulkActionButtons();
     }
 
     deselectAllTasks() {
         this.selectedTasks.clear();
         this.renderTasks();
+        this.updateBulkActionButtons();
     }
 
     showKeyboardShortcutsModal() {
@@ -1340,6 +1343,223 @@ class TaskManager {
         }
 
         this.draggedTask = null;
+    }
+
+    setupQuickActions() {
+        // Select all
+        document.getElementById('selectAllBtn').addEventListener('click', () => {
+            this.selectAllTasks();
+        });
+
+        // Deselect all
+        document.getElementById('deselectAllBtn').addEventListener('click', () => {
+            this.deselectAllTasks();
+        });
+
+        // Bulk complete
+        document.getElementById('bulkCompleteBtn').addEventListener('click', () => {
+            this.bulkCompleteTasks();
+        });
+
+        // Bulk archive
+        document.getElementById('bulkArchiveBtn').addEventListener('click', () => {
+            this.bulkArchiveTasks();
+        });
+
+        // Bulk delete
+        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+            this.bulkDeleteTasks();
+        });
+
+        // Toggle view
+        document.getElementById('toggleViewBtn').addEventListener('click', () => {
+            this.toggleView();
+        });
+
+        // Refresh
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            this.loadTasks();
+        });
+    }
+
+    updateBulkActionButtons() {
+        const hasSelection = this.selectedTasks.size > 0;
+        document.getElementById('bulkCompleteBtn').disabled = !hasSelection;
+        document.getElementById('bulkArchiveBtn').disabled = !hasSelection;
+        document.getElementById('bulkDeleteBtn').disabled = !hasSelection;
+    }
+
+    async bulkCompleteTasks() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        if (!confirm(`Complete ${this.selectedTasks.size} selected tasks?`)) {
+            return;
+        }
+
+        const taskIds = Array.from(this.selectedTasks);
+        const promises = taskIds.map(taskId => this.updateTask(taskId, { completed: true }));
+
+        try {
+            await Promise.all(promises);
+            this.selectedTasks.clear();
+            this.updateBulkActionButtons();
+            this.showMessage('Tasks completed successfully!', 'success');
+        } catch (error) {
+            console.error('Bulk complete error:', error);
+            this.showMessage('Failed to complete tasks', 'error');
+        }
+    }
+
+    async bulkArchiveTasks() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        if (!confirm(`Archive ${this.selectedTasks.size} selected tasks?`)) {
+            return;
+        }
+
+        const taskIds = Array.from(this.selectedTasks);
+        const promises = taskIds.map(taskId => this.updateTask(taskId, { isArchived: true }));
+
+        try {
+            await Promise.all(promises);
+            this.selectedTasks.clear();
+            this.updateBulkActionButtons();
+            this.showMessage('Tasks archived successfully!', 'success');
+        } catch (error) {
+            console.error('Bulk archive error:', error);
+            this.showMessage('Failed to archive tasks', 'error');
+        }
+    }
+
+    async bulkDeleteTasks() {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        if (!confirm(`Delete ${this.selectedTasks.size} selected tasks permanently?`)) {
+            return;
+        }
+
+        const taskIds = Array.from(this.selectedTasks);
+        const promises = taskIds.map(taskId => this.deleteTask(taskId));
+
+        try {
+            await Promise.all(promises);
+            this.selectedTasks.clear();
+            this.updateBulkActionButtons();
+            this.showMessage('Tasks deleted successfully!', 'success');
+        } catch (error) {
+            console.error('Bulk delete error:', error);
+            this.showMessage('Failed to delete tasks', 'error');
+        }
+    }
+
+    toggleView() {
+        const taskList = document.getElementById('taskList');
+        const kanbanBoard = document.getElementById('kanbanBoard');
+        const toggleBtn = document.getElementById('toggleViewBtn');
+
+        if (this.currentView === 'list') {
+            this.currentView = 'kanban';
+            taskList.classList.add('hidden');
+            kanbanBoard.classList.remove('hidden');
+            toggleBtn.innerHTML = '<i class="fas fa-list"></i>';
+            this.renderKanban();
+        } else {
+            this.currentView = 'list';
+            kanbanBoard.classList.add('hidden');
+            taskList.classList.remove('hidden');
+            toggleBtn.innerHTML = '<i class="fas fa-th-large"></i>';
+            this.renderTasks();
+        }
+    }
+
+    renderKanban() {
+        const todoTasks = this.tasks.filter(t => !t.completed);
+        const inProgressTasks = this.tasks.filter(t => t.completed === false && t.priority === 'high');
+        const doneTasks = this.tasks.filter(t => t.completed);
+
+        document.getElementById('todoCount').textContent = todoTasks.length;
+        document.getElementById('inProgressCount').textContent = inProgressTasks.length;
+        document.getElementById('doneCount').textContent = doneTasks.length;
+
+        // Render tasks in columns
+        this.renderKanbanColumn('todo', todoTasks);
+        this.renderKanbanColumn('inProgress', inProgressTasks);
+        this.renderKanbanColumn('done', doneTasks);
+    }
+
+    renderKanbanColumn(columnId, tasks) {
+        const column = document.querySelector(`.kanban-column[data-status="${columnId}"] .kanban-tasks`);
+        column.innerHTML = '';
+
+        tasks.forEach(task => {
+            const taskElement = document.createElement('div');
+            taskElement.className = 'kanban-task';
+            taskElement.innerHTML = `
+                <div class="kanban-task-title">${this.escapeHtml(task.title)}</div>
+                <div class="kanban-task-meta">
+                    <span class="priority-badge priority-${task.priority}">${task.priority}</span>
+                    ${task.dueDate ? `<span class="due-date">${new Date(task.dueDate).toLocaleDateString()}</span>` : ''}
+                </div>
+            `;
+            column.appendChild(taskElement);
+        });
+    }
+
+    setupDragAndDrop() {
+        const taskList = document.getElementById('taskList');
+        
+        taskList.addEventListener('dragstart', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                this.draggedTask = taskItem;
+                taskItem.classList.add('dragging');
+                taskList.classList.add('dragging-active');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+
+        taskList.addEventListener('dragend', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                taskItem.classList.remove('dragging');
+                taskList.classList.remove('dragging-active');
+                document.querySelectorAll('.task-item').forEach(item => {
+                    item.classList.remove('drag-over');
+                });
+            }
+        });
+
+        taskList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem && taskItem !== this.draggedTask) {
+                taskItem.classList.add('drag-over');
+            }
+        });
+
+        taskList.addEventListener('dragleave', (e) => {
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem) {
+                taskItem.classList.remove('drag-over');
+            }
+        });
+
+        taskList.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const taskItem = e.target.closest('.task-item');
+            if (taskItem && taskItem !== this.draggedTask) {
+                this.handleTaskDrop(taskItem);
+            }
+        });
     }
 
     async setReminder() {
@@ -7332,6 +7552,7 @@ class TaskManager {
                 this.selectedTasks.delete(taskId);
                 taskItem.classList.remove('bulk-selected');
             }
+            this.updateBulkActionButtons();
         });
     }
 
@@ -7345,6 +7566,7 @@ class TaskManager {
         });
         document.getElementById('bulkSelectToggle').checked = false;
         this.hideBulkActionsModal();
+        this.updateBulkActionButtons();
     }
 
     async bulkComplete() {
