@@ -2275,6 +2275,33 @@ input[type="range"]::-moz-range-thumb {
     background: #4b5563;
 }
 
+/* Export/Import Modal */
+.export-section,
+.import-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.export-section h4,
+.import-section h4 {
+    margin-bottom: 12px;
+    color: #1f2937;
+    font-size: 16px;
+}
+
+/* Dark mode for export/import */
+.dark-mode .export-section,
+.dark-mode .import-section {
+    background: #374151;
+}
+
+.dark-mode .export-section h4,
+.dark-mode .import-section h4 {
+    color: #e5e7eb;
+}
+
 /* Dark mode for time tracking */
 .dark-mode .time-tracking-task-title {
     color: #e5e7eb;

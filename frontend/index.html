@@ -602,6 +602,13 @@
                         <button id="refreshBtn" class="btn btn-outline btn-sm" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <div class="quick-actions-divider"></div>
+                        <button id="exportBtn" class="btn btn-outline btn-sm" title="Export Tasks">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button id="importBtn" class="btn btn-outline btn-sm" title="Import Tasks">
+                            <i class="fas fa-upload"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -1033,6 +1040,43 @@
                                 </button>
                                 <button id="clearFiltersBtn" class="btn btn-outline">
                                     <i class="fas fa-times"></i> Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export/Import Modal -->
+                <div id="exportImportModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Export/Import Tasks</h3>
+                            <button id="closeExportImportModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="export-section">
+                                <h4>Export Tasks</h4>
+                                <div class="form-group">
+                                    <label>Format</label>
+                                    <select id="exportFormat" class="form-select">
+                                        <option value="json">JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                                <button id="performExportBtn" class="btn btn-primary">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
+                            <div class="import-section">
+                                <h4>Import Tasks</h4>
+                                <div class="form-group">
+                                    <label>Select File</label>
+                                    <input type="file" id="importFile" class="form-input" accept=".json,.csv">
+                                </div>
+                                <button id="performImportBtn" class="btn btn-primary">
+                                    <i class="fas fa-upload"></i> Import
                                 </button>
                             </div>
                         </div>

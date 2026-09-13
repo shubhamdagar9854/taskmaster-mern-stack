@@ -1794,6 +1794,94 @@ router.post('/reorder', authenticateToken, async (req, res) => {
   }
 });
 
+// Export tasks
+router.get('/export', authenticateToken, async (req, res) => {
+  try {
+    const { format = 'json' } = req.query;
+
+    const tasks = await Task.find({ user: req.userId, isTemplate: { $ne: true } });
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename=tasks-export.json');
+      res.json(tasks);
+    } else if (format === 'csv') {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=tasks-export.csv');
+
+      const csvHeader = 'Title,Description,Priority,Category,DueDate,Completed,IsFavorite,IsArchived,IsPinned,Tags,Progress,ColorLabel\n';
+      const csvRows = tasks.map(task => {
+        return [
+          `"${task.title.replace(/"/g, '""')}"`,
+          `"${(task.description || '').replace(/"/g, '""')}"`,
+          task.priority,
+          task.category,
+          task.dueDate ? new Date(task.dueDate).toISOString() : '',
+          task.completed,
+          task.isFavorite,
+          task.isArchived,
+          task.isPinned,
+          `"${(task.tags || []).join(', ')}"`,
+          task.progress,
+          task.colorLabel
+        ].join(',');
+      });
+
+      res.send(csvHeader + csvRows.join('\n'));
+    } else {
+      res.status(400).json({ message: 'Invalid format. Use json or csv' });
+    }
+  } catch (error) {
+    console.error('Export tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Import tasks
+router.post('/import', authenticateToken, async (req, res) => {
+  try {
+    const { tasks, format = 'json' } = req.body;
+
+    if (!tasks || !Array.isArray(tasks)) {
+      return res.status(400).json({ message: 'Tasks array is required' });
+    }
+
+    const importedTasks = [];
+    const errors = [];
+
+    for (const taskData of tasks) {
+      try {
+        const task = new Task({
+          ...taskData,
+          user: req.userId,
+          _id: undefined, // Generate new ID
+          createdAt: taskData.createdAt || new Date(),
+          updatedAt: new Date()
+        });
+
+        await task.save();
+        importedTasks.push(task);
+
+        logActivity(task._id, req.userId, 'task_imported', 'Task imported');
+        addHistoryEntry(task._id, 'task_imported', 'Task imported from file');
+      } catch (error) {
+        console.error('Import task error:', error);
+        errors.push({ task: taskData.title, error: error.message });
+      }
+    }
+
+    res.json({
+      message: 'Tasks imported successfully',
+      imported: importedTasks.length,
+      total: tasks.length,
+      errors
+    });
+  } catch (error) {
+    console.error('Import tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

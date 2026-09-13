@@ -101,6 +101,7 @@ class TaskManager {
                 this.hideTimeTrackingModal();
                 this.hideCommentsModal();
                 this.hideTagsModal();
+                this.hideExportImportModal();
             }
 
             // Delete: Delete selected task (if one is selected)
@@ -1380,6 +1381,27 @@ class TaskManager {
         document.getElementById('refreshBtn').addEventListener('click', () => {
             this.loadTasks();
         });
+
+        // Export/Import
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            this.showExportImportModal();
+        });
+
+        document.getElementById('importBtn').addEventListener('click', () => {
+            this.showExportImportModal();
+        });
+
+        document.getElementById('closeExportImportModal').addEventListener('click', () => {
+            this.hideExportImportModal();
+        });
+
+        document.getElementById('performExportBtn').addEventListener('click', () => {
+            this.exportTasks();
+        });
+
+        document.getElementById('performImportBtn').addEventListener('click', () => {
+            this.importTasks();
+        });
     }
 
     updateBulkActionButtons() {
@@ -1512,6 +1534,154 @@ class TaskManager {
             `;
             column.appendChild(taskElement);
         });
+    }
+
+    showExportImportModal() {
+        document.getElementById('exportImportModal').classList.remove('hidden');
+    }
+
+    hideExportImportModal() {
+        document.getElementById('exportImportModal').classList.add('hidden');
+    }
+
+    async exportTasks() {
+        const format = document.getElementById('exportFormat').value;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/export?format=${format}`, {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tasks-export.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                this.showMessage('Tasks exported successfully!', 'success');
+                this.hideExportImportModal();
+            } else {
+                this.showMessage('Failed to export tasks', 'error');
+            }
+        } catch (error) {
+            console.error('Export tasks error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async importTasks() {
+        const fileInput = document.getElementById('importFile');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            this.showMessage('Please select a file to import', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                let tasks;
+                const content = e.target.result;
+
+                if (file.name.endsWith('.json')) {
+                    tasks = JSON.parse(content);
+                } else if (file.name.endsWith('.csv')) {
+                    tasks = this.parseCSV(content);
+                } else {
+                    this.showMessage('Invalid file format. Use JSON or CSV', 'error');
+                    return;
+                }
+
+                if (!Array.isArray(tasks)) {
+                    this.showMessage('Invalid file format. Tasks must be an array', 'error');
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5002/api/tasks/import', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.authManager.getToken()}`
+                    },
+                    body: JSON.stringify({ tasks, format: file.name.endsWith('.json') ? 'json' : 'csv' })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    this.showMessage(`Imported ${result.imported} of ${result.total} tasks successfully!`, 'success');
+                    if (result.errors.length > 0) {
+                        console.warn('Import errors:', result.errors);
+                    }
+                    this.loadTasks();
+                    this.hideExportImportModal();
+                } else {
+                    const data = await response.json();
+                    this.showMessage(data.message || 'Failed to import tasks', 'error');
+                }
+            } catch (error) {
+                console.error('Import tasks error:', error);
+                this.showMessage('Failed to parse file. Please check the format.', 'error');
+            }
+        };
+
+        reader.readAsText(file);
+    }
+
+    parseCSV(csvContent) {
+        const lines = csvContent.split('\n');
+        const headers = lines[0].split(',');
+        const tasks = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+
+            const values = this.parseCSVLine(lines[i]);
+            const task = {
+                title: values[0]?.replace(/"/g, '') || '',
+                description: values[1]?.replace(/"/g, '') || '',
+                priority: values[2] || 'medium',
+                category: values[3] || 'other',
+                dueDate: values[4] ? new Date(values[4]) : null,
+                completed: values[5] === 'true',
+                isFavorite: values[6] === 'true',
+                isArchived: values[7] === 'true',
+                isPinned: values[8] === 'true',
+                tags: values[9] ? values[9].split(',').map(t => t.trim()) : [],
+                progress: parseInt(values[10]) || 0,
+                colorLabel: values[11] || 'default'
+            };
+
+            tasks.push(task);
+        }
+
+        return tasks;
+    }
+
+    parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current);
+        return result;
     }
 
     setupDragAndDrop() {
