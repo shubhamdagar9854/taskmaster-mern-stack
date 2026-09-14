@@ -25,6 +25,20 @@ const userSchema = new mongoose.Schema({
     of: String,
     default: {}
   },
+  undoStack: [{
+    action: { type: String },
+    taskId: { type: String },
+    previousState: { type: Object },
+    newState: { type: Object },
+    timestamp: { type: Date, default: Date.now }
+  }],
+  redoStack: [{
+    action: { type: String },
+    taskId: { type: String },
+    previousState: { type: Object },
+    newState: { type: Object },
+    timestamp: { type: Date, default: Date.now }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

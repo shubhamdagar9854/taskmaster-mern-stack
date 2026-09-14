@@ -660,6 +660,9 @@ router.put('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    // Save previous state for undo
+    const previousState = task.toObject();
+
     // Log changes
     const changes = [];
     if (title && title !== task.title) changes.push(`title changed to "${title}"`);
@@ -683,6 +686,26 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     Object.assign(task, { title, description, priority, dueDate, category, notes, formattedNotes, subtasks, reminder, tags, timeTracking, dependencies, recurring, progress, colorLabel });
     await task.save();
+
+    // Add to undo stack
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+    if (user) {
+      if (!user.undoStack) user.undoStack = [];
+      user.undoStack.push({
+        action: 'update',
+        taskId: task._id.toString(),
+        previousState: previousState,
+        newState: task.toObject(),
+        timestamp: new Date()
+      });
+      // Limit stack size to 50
+      if (user.undoStack.length > 50) user.undoStack.shift();
+      // Clear redo stack on new action
+      user.redoStack = [];
+      await user.save();
+    }
+
     await task.populate('dependencies');
     res.json(task);
   } catch (error) {
@@ -694,7 +717,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // Delete a task
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    const task = await Task.findOneAndDelete({
+    const task = await Task.findOne({
       _id: req.params.id,
       user: req.userId
     });
@@ -703,6 +726,30 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    // Save task state for undo
+    const previousState = task.toObject();
+
+    await Task.deleteOne({ _id: req.params.id, user: req.userId });
+
+    // Add to undo stack
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+    if (user) {
+      if (!user.undoStack) user.undoStack = [];
+      user.undoStack.push({
+        action: 'delete',
+        taskId: task._id.toString(),
+        previousState: previousState,
+        timestamp: new Date()
+      });
+      // Limit stack size to 50
+      if (user.undoStack.length > 50) user.undoStack.shift();
+      // Clear redo stack on new action
+      user.redoStack = [];
+      await user.save();
+    }
+
+    logActivity(task._id, req.userId, 'task_deleted', 'Task deleted');
     res.json({ message: 'Task deleted successfully' });
   } catch (error) {
     console.error('Delete task error:', error);
@@ -1547,6 +1594,44 @@ router.post('/:id/comments/:commentId/replies', authenticateToken, async (req, r
   }
 });
 
+// Create task
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const task = new Task({
+      ...req.body,
+      user: req.userId
+    });
+
+    await task.save();
+
+    // Add to undo stack
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+    if (user) {
+      if (!user.undoStack) user.undoStack = [];
+      user.undoStack.push({
+        action: 'create',
+        taskId: task._id.toString(),
+        newState: task.toObject(),
+        timestamp: new Date()
+      });
+      // Limit stack size to 50
+      if (user.undoStack.length > 50) user.undoStack.shift();
+      // Clear redo stack on new action
+      user.redoStack = [];
+      await user.save();
+    }
+
+    logActivity(task._id, req.userId, 'task_created', 'Task created');
+    addHistoryEntry(task._id, 'task_created', 'Task created');
+
+    res.status(201).json(task);
+  } catch (error) {
+    console.error('Create task error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Advanced search with filters
 router.get('/search', authenticateToken, async (req, res) => {
   try {
@@ -1878,6 +1963,110 @@ router.post('/import', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Import tasks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Undo last action
+router.post('/undo', authenticateToken, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.undoStack || user.undoStack.length === 0) {
+      return res.status(400).json({ message: 'Nothing to undo' });
+    }
+
+    const lastAction = user.undoStack.pop();
+    const { action, taskId, previousState } = lastAction;
+
+    let result;
+    switch (action) {
+      case 'create':
+        // Delete the task
+        await Task.findByIdAndDelete(taskId);
+        result = { message: 'Task creation undone', action: 'create' };
+        break;
+      case 'update':
+        // Restore previous state
+        await Task.findByIdAndUpdate(taskId, previousState);
+        result = { message: 'Task update undone', action: 'update' };
+        break;
+      case 'delete':
+        // Restore the task
+        const restoredTask = new Task(previousState);
+        await restoredTask.save();
+        result = { message: 'Task deletion undone', action: 'delete', taskId: restoredTask._id };
+        break;
+      default:
+        return res.status(400).json({ message: 'Unknown action' });
+    }
+
+    // Add to redo stack
+    if (!user.redoStack) user.redoStack = [];
+    user.redoStack.push(lastAction);
+    await user.save();
+
+    logActivity(taskId, req.userId, 'action_undone', `${action} action undone`);
+    res.json(result);
+  } catch (error) {
+    console.error('Undo error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Redo last undone action
+router.post('/redo', authenticateToken, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.redoStack || user.redoStack.length === 0) {
+      return res.status(400).json({ message: 'Nothing to redo' });
+    }
+
+    const lastAction = user.redoStack.pop();
+    const { action, taskId, newState } = lastAction;
+
+    let result;
+    switch (action) {
+      case 'create':
+        // Recreate the task
+        const recreatedTask = new Task(newState);
+        await recreatedTask.save();
+        result = { message: 'Task creation redone', action: 'create', taskId: recreatedTask._id };
+        break;
+      case 'update':
+        // Apply the new state
+        await Task.findByIdAndUpdate(taskId, newState);
+        result = { message: 'Task update redone', action: 'update' };
+        break;
+      case 'delete':
+        // Delete the task again
+        await Task.findByIdAndDelete(taskId);
+        result = { message: 'Task deletion redone', action: 'delete' };
+        break;
+      default:
+        return res.status(400).json({ message: 'Unknown action' });
+    }
+
+    // Add back to undo stack
+    if (!user.undoStack) user.undoStack = [];
+    user.undoStack.push(lastAction);
+    await user.save();
+
+    logActivity(taskId, req.userId, 'action_redone', `${action} action redone`);
+    res.json(result);
+  } catch (error) {
+    console.error('Redo error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

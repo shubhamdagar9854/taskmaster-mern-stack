@@ -104,6 +104,18 @@ class TaskManager {
                 this.hideExportImportModal();
             }
 
+            // Ctrl+Z: Undo
+            if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                this.undo();
+            }
+
+            // Ctrl+Y or Ctrl+Shift+Z: Redo
+            if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) {
+                e.preventDefault();
+                this.redo();
+            }
+
             // Delete: Delete selected task (if one is selected)
             if (e.key === 'Delete' && this.selectedTasks.size === 1) {
                 const taskId = Array.from(this.selectedTasks)[0];
@@ -1402,6 +1414,15 @@ class TaskManager {
         document.getElementById('performImportBtn').addEventListener('click', () => {
             this.importTasks();
         });
+
+        // Undo/Redo
+        document.getElementById('undoBtn').addEventListener('click', () => {
+            this.undo();
+        });
+
+        document.getElementById('redoBtn').addEventListener('click', () => {
+            this.redo();
+        });
     }
 
     updateBulkActionButtons() {
@@ -1682,6 +1703,52 @@ class TaskManager {
         }
         result.push(current);
         return result;
+    }
+
+    async undo() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/undo', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                this.showMessage(result.message, 'success');
+                this.loadTasks();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to undo', 'error');
+            }
+        } catch (error) {
+            console.error('Undo error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async redo() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/redo', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                this.showMessage(result.message, 'success');
+                this.loadTasks();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to redo', 'error');
+            }
+        } catch (error) {
+            console.error('Redo error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     setupDragAndDrop() {
