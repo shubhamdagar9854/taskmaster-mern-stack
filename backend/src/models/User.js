@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema({
     newState: { type: Object },
     timestamp: { type: Date, default: Date.now }
   }],
+  customPriorities: [{
+    name: { type: String, required: true },
+    color: { type: String, default: '#6b7280' },
+    order: { type: Number, default: 0 }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

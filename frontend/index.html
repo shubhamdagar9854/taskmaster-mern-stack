@@ -207,6 +207,9 @@
                     <button id="tagsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-tags"></i> Tags
                     </button>
+                    <button id="prioritiesBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-flag"></i> Priorities
+                    </button>
                     <button id="statisticsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-chart-bar"></i> Statistics
                     </button>
@@ -1085,6 +1088,40 @@
                                 <button id="performImportBtn" class="btn btn-primary">
                                     <i class="fas fa-upload"></i> Import
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Priorities Modal -->
+                <div id="prioritiesModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Custom Priorities</h3>
+                            <button id="closePrioritiesModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="create-priority-section">
+                                <h4>Create New Priority</h4>
+                                <div class="form-group">
+                                    <label>Priority Name</label>
+                                    <input type="text" id="newPriorityName" class="form-input" placeholder="e.g., Urgent, Critical">
+                                </div>
+                                <div class="form-group">
+                                    <label>Color</label>
+                                    <input type="color" id="newPriorityColor" class="form-input" value="#6b7280">
+                                </div>
+                                <button id="createPriorityBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create Priority
+                                </button>
+                            </div>
+                            <div class="priorities-list-section">
+                                <h4>Your Custom Priorities</h4>
+                                <div id="prioritiesList" class="priorities-list">
+                                    <!-- Priorities will be dynamically added here -->
+                                </div>
                             </div>
                         </div>
                     </div>

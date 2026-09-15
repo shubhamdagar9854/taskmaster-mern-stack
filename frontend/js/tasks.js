@@ -51,6 +51,7 @@ class TaskManager {
         this.timeTrackingInterval = null;
         this.currentCommentsTaskId = null;
         this.tagColors = {};
+        this.customPriorities = [];
         this.draggedTask = null;
         this.init();
     }
@@ -102,6 +103,7 @@ class TaskManager {
                 this.hideCommentsModal();
                 this.hideTagsModal();
                 this.hideExportImportModal();
+                this.hidePrioritiesModal();
             }
 
             // Ctrl+Z: Undo
@@ -1415,6 +1417,15 @@ class TaskManager {
             this.importTasks();
         });
 
+        // Priorities modal
+        document.getElementById('closePrioritiesModal').addEventListener('click', () => {
+            this.hidePrioritiesModal();
+        });
+
+        document.getElementById('createPriorityBtn').addEventListener('click', () => {
+            this.createPriority();
+        });
+
         // Undo/Redo
         document.getElementById('undoBtn').addEventListener('click', () => {
             this.undo();
@@ -1747,6 +1758,175 @@ class TaskManager {
             }
         } catch (error) {
             console.error('Redo error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    showPrioritiesModal() {
+        this.loadPriorities();
+        document.getElementById('prioritiesModal').classList.remove('hidden');
+    }
+
+    hidePrioritiesModal() {
+        document.getElementById('prioritiesModal').classList.add('hidden');
+    }
+
+    async loadPriorities() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/priorities', {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.customPriorities = await response.json();
+                this.renderPriorities();
+            } else {
+                this.showMessage('Failed to load priorities', 'error');
+            }
+        } catch (error) {
+            console.error('Load priorities error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    renderPriorities() {
+        const prioritiesList = document.getElementById('prioritiesList');
+        prioritiesList.innerHTML = '';
+
+        if (this.customPriorities.length === 0) {
+            prioritiesList.innerHTML = '<div class="no-priorities">No custom priorities yet. Create one above!</div>';
+            return;
+        }
+
+        this.customPriorities.forEach(priority => {
+            const priorityItem = document.createElement('div');
+            priorityItem.className = 'priority-item';
+            priorityItem.innerHTML = `
+                <div class="priority-info">
+                    <div class="priority-color-dot" style="background-color: ${priority.color}"></div>
+                    <span class="priority-name">${this.escapeHtml(priority.name)}</span>
+                </div>
+                <div class="priority-actions">
+                    <button class="priority-action-btn edit" data-priority="${priority.name}" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="priority-action-btn delete" data-priority="${priority.name}" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            prioritiesList.appendChild(priorityItem);
+        });
+
+        // Add event listeners for edit/delete buttons
+        prioritiesList.querySelectorAll('.priority-action-btn.edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const priorityName = e.currentTarget.dataset.priority;
+                this.editPriority(priorityName);
+            });
+        });
+
+        prioritiesList.querySelectorAll('.priority-action-btn.delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const priorityName = e.currentTarget.dataset.priority;
+                this.deletePriority(priorityName);
+            });
+        });
+    }
+
+    async createPriority() {
+        const name = document.getElementById('newPriorityName').value.trim();
+        const color = document.getElementById('newPriorityColor').value;
+
+        if (!name) {
+            this.showMessage('Please enter a priority name', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/priorities', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ name, color })
+            });
+
+            if (response.ok) {
+                this.customPriorities = await response.json();
+                this.renderPriorities();
+                this.showMessage('Priority created successfully!', 'success');
+                document.getElementById('newPriorityName').value = '';
+                document.getElementById('newPriorityColor').value = '#6b7280';
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to create priority', 'error');
+            }
+        } catch (error) {
+            console.error('Create priority error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async editPriority(name) {
+        const newColor = prompt('Enter new color (hex code):', '#6b7280');
+        if (!newColor) return;
+
+        const newName = prompt('Enter new name (leave blank to keep current):', name);
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/priorities/${encodeURIComponent(name)}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ 
+                    color: newColor,
+                    newName: newName || undefined
+                })
+            });
+
+            if (response.ok) {
+                this.customPriorities = await response.json();
+                this.renderPriorities();
+                this.showMessage('Priority updated successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to update priority', 'error');
+            }
+        } catch (error) {
+            console.error('Update priority error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async deletePriority(name) {
+        if (!confirm(`Are you sure you want to delete the "${name}" priority?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/priorities/${encodeURIComponent(name)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.customPriorities = await response.json();
+                this.renderPriorities();
+                this.showMessage('Priority deleted successfully!', 'success');
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to delete priority', 'error');
+            }
+        } catch (error) {
+            console.error('Delete priority error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
     }
@@ -2100,6 +2280,11 @@ class TaskManager {
         // Tags button
         document.getElementById('tagsBtn').addEventListener('click', () => {
             this.showTagsModal();
+        });
+
+        // Priorities button
+        document.getElementById('prioritiesBtn').addEventListener('click', () => {
+            this.showPrioritiesModal();
         });
 
         // Close keyboard shortcuts modal

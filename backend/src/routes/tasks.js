@@ -2071,6 +2071,110 @@ router.post('/redo', authenticateToken, async (req, res) => {
   }
 });
 
+// Custom Priority Management
+router.post('/priorities', authenticateToken, async (req, res) => {
+  try {
+    const { name, color } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ message: 'Priority name is required' });
+    }
+
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.customPriorities) user.customPriorities = [];
+
+    // Check if priority already exists
+    if (user.customPriorities.some(p => p.name === name)) {
+      return res.status(400).json({ message: 'Priority already exists' });
+    }
+
+    const newPriority = {
+      name,
+      color: color || '#6b7280',
+      order: user.customPriorities.length
+    };
+
+    user.customPriorities.push(newPriority);
+    await user.save();
+
+    res.json(user.customPriorities);
+  } catch (error) {
+    console.error('Create priority error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/priorities', authenticateToken, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user.customPriorities || []);
+  } catch (error) {
+    console.error('Get priorities error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.put('/priorities/:name', authenticateToken, async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { color, newName } = req.body;
+
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const priority = user.customPriorities?.find(p => p.name === name);
+    if (!priority) {
+      return res.status(404).json({ message: 'Priority not found' });
+    }
+
+    if (color) priority.color = color;
+    if (newName) priority.name = newName;
+
+    await user.save();
+    res.json(user.customPriorities);
+  } catch (error) {
+    console.error('Update priority error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.delete('/priorities/:name', authenticateToken, async (req, res) => {
+  try {
+    const { name } = req.params;
+
+    const User = require('../models/User');
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.customPriorities = user.customPriorities?.filter(p => p.name !== name) || [];
+    await user.save();
+
+    res.json(user.customPriorities);
+  } catch (error) {
+    console.error('Delete priority error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {

@@ -2302,6 +2302,120 @@ input[type="range"]::-moz-range-thumb {
     color: #e5e7eb;
 }
 
+/* Custom Priorities Modal */
+.create-priority-section,
+.priorities-list-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.create-priority-section h4,
+.priorities-list-section h4 {
+    margin-bottom: 12px;
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.priorities-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.priority-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    gap: 12px;
+}
+
+.priority-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.priority-color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.priority-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.priority-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.priority-action-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #6b7280;
+    transition: color 0.2s;
+}
+
+.priority-action-btn:hover {
+    color: #3b82f6;
+}
+
+.priority-action-btn.delete:hover {
+    color: #ef4444;
+}
+
+.no-priorities {
+    text-align: center;
+    color: #6b7280;
+    padding: 24px;
+}
+
+/* Dark mode for priorities */
+.dark-mode .create-priority-section,
+.dark-mode .priorities-list-section {
+    background: #374151;
+}
+
+.dark-mode .create-priority-section h4,
+.dark-mode .priorities-list-section h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .priority-item {
+    background: #4b5563;
+    border-color: #6b7280;
+}
+
+.dark-mode .priority-name {
+    color: #e5e7eb;
+}
+
+.dark-mode .priority-action-btn {
+    color: #9ca3af;
+}
+
+.dark-mode .priority-action-btn:hover {
+    color: #60a5fa;
+}
+
+.dark-mode .priority-action-btn.delete:hover {
+    color: #f87171;
+}
+
+.dark-mode .no-priorities {
+    color: #9ca3af;
+}
+
 /* Dark mode for time tracking */
 .dark-mode .time-tracking-task-title {
     color: #e5e7eb;
