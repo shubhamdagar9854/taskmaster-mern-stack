@@ -578,6 +578,20 @@
                 </div>
 
                 <!-- Task List -->
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchInput" class="search-input" placeholder="Search tasks...">
+                        <button id="clearSearchBtn" class="clear-search-btn hidden">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <button id="advancedSearchBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-filter"></i> Filters
+                    </button>
+                </div>
+
                 <!-- Quick Actions Toolbar -->
                 <div id="quickActionsToolbar" class="quick-actions-toolbar">
                     <div class="quick-actions-left">
@@ -1122,6 +1136,100 @@
                                 <div id="prioritiesList" class="priorities-list">
                                     <!-- Priorities will be dynamically added here -->
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Filters Modal -->
+                <div id="advancedFiltersModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Advanced Filters</h3>
+                            <button id="closeAdvancedFiltersModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <select id="filterPriority" class="form-select">
+                                    <option value="">All Priorities</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select id="filterCategory" class="form-select">
+                                    <option value="">All Categories</option>
+                                    <option value="work">Work</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="health">Health</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select id="filterStatus" class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Due Date From</label>
+                                <input type="date" id="filterDueDateFrom" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Due Date To</label>
+                                <input type="date" id="filterDueDateTo" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Tags</label>
+                                <input type="text" id="filterTags" class="form-input" placeholder="Enter tag name">
+                            </div>
+                            <div class="form-group">
+                                <label>Has Subtasks</label>
+                                <select id="filterSubtasks" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Has Attachments</label>
+                                <select id="filterAttachments" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Has Dependencies</label>
+                                <select id="filterDependencies" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Recurring</label>
+                                <select id="filterRecurring" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button id="applyFiltersBtn" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Apply Filters
+                                </button>
+                                <button id="clearFiltersBtn" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Clear All
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -52,6 +52,8 @@ class TaskManager {
         this.currentCommentsTaskId = null;
         this.tagColors = {};
         this.customPriorities = [];
+        this.searchQuery = '';
+        this.advancedFilters = {};
         this.draggedTask = null;
         this.init();
     }
@@ -104,6 +106,7 @@ class TaskManager {
                 this.hideTagsModal();
                 this.hideExportImportModal();
                 this.hidePrioritiesModal();
+                this.hideAdvancedFiltersModal();
             }
 
             // Ctrl+Z: Undo
@@ -1434,6 +1437,32 @@ class TaskManager {
         document.getElementById('redoBtn').addEventListener('click', () => {
             this.redo();
         });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+        });
+
+        document.getElementById('clearSearchBtn').addEventListener('click', () => {
+            this.clearSearch();
+        });
+
+        document.getElementById('advancedSearchBtn').addEventListener('click', () => {
+            this.showAdvancedFiltersModal();
+        });
+
+        // Advanced filters modal
+        document.getElementById('closeAdvancedFiltersModal').addEventListener('click', () => {
+            this.hideAdvancedFiltersModal();
+        });
+
+        document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+            this.applyAdvancedFilters();
+        });
+
+        document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+            this.clearAdvancedFilters();
+        });
     }
 
     updateBulkActionButtons() {
@@ -1929,6 +1958,69 @@ class TaskManager {
             console.error('Delete priority error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    handleSearch(query) {
+        this.searchQuery = query.toLowerCase().trim();
+        const clearBtn = document.getElementById('clearSearchBtn');
+        
+        if (this.searchQuery) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+
+        this.renderTasks();
+    }
+
+    clearSearch() {
+        this.searchQuery = '';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('clearSearchBtn').classList.add('hidden');
+        this.renderTasks();
+    }
+
+    showAdvancedFiltersModal() {
+        document.getElementById('advancedFiltersModal').classList.remove('hidden');
+    }
+
+    hideAdvancedFiltersModal() {
+        document.getElementById('advancedFiltersModal').classList.add('hidden');
+    }
+
+    applyAdvancedFilters() {
+        this.advancedFilters = {
+            priority: document.getElementById('filterPriority').value || null,
+            category: document.getElementById('filterCategory').value || null,
+            status: document.getElementById('filterStatus').value || null,
+            dueDateFrom: document.getElementById('filterDueDateFrom').value || null,
+            dueDateTo: document.getElementById('filterDueDateTo').value || null,
+            tags: document.getElementById('filterTags').value || null,
+            subtasks: document.getElementById('filterSubtasks').value || null,
+            attachments: document.getElementById('filterAttachments').value || null,
+            dependencies: document.getElementById('filterDependencies').value || null,
+            recurring: document.getElementById('filterRecurring').value || null
+        };
+        this.renderTasks();
+        this.hideAdvancedFiltersModal();
+        this.showMessage('Filters applied!', 'success');
+    }
+
+    clearAdvancedFilters() {
+        this.advancedFilters = {};
+        document.getElementById('filterPriority').value = '';
+        document.getElementById('filterCategory').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterDueDateFrom').value = '';
+        document.getElementById('filterDueDateTo').value = '';
+        document.getElementById('filterTags').value = '';
+        document.getElementById('filterSubtasks').value = '';
+        document.getElementById('filterAttachments').value = '';
+        document.getElementById('filterDependencies').value = '';
+        document.getElementById('filterRecurring').value = '';
+        this.renderTasks();
+        this.hideAdvancedFiltersModal();
+        this.showMessage('Filters cleared!', 'success');
     }
 
     setupDragAndDrop() {
