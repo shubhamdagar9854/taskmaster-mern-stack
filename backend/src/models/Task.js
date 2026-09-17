@@ -50,10 +50,10 @@ const taskSchema = new mongoose.Schema({
   }],
   reminder: {
     enabled: { type: Boolean, default: false },
-    time: { type: Date },
+    date: { type: Date },
     type: { type: String, enum: ['email', 'push', 'in-app', 'all'], default: 'in-app' },
-    sent: { type: Boolean, default: false },
-    sentAt: { type: Date }
+    repeat: { type: String, enum: ['none', 'daily', 'weekly', 'monthly'], default: 'none' },
+    notified: { type: Boolean, default: false }
   },
   subtasks: [{
     title: {

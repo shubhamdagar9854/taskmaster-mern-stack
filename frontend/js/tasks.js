@@ -2075,6 +2075,8 @@ class TaskManager {
         if (!this.currentReminderTaskId) return;
 
         const reminderTime = document.getElementById('reminderTime').value;
+        const reminderType = document.getElementById('reminderType').value;
+        const reminderRepeat = document.getElementById('reminderRepeat').value;
         const reminderMessage = document.getElementById('reminderMessage').value;
 
         if (!reminderTime) {
@@ -2089,7 +2091,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ reminderTime, reminderMessage })
+                body: JSON.stringify({ reminderTime, reminderType, reminderRepeat, reminderMessage })
             });
 
             if (response.ok) {
@@ -2152,19 +2154,29 @@ class TaskManager {
 
     async checkReminders() {
         try {
-            const response = await fetch('http://localhost:5002/api/tasks/reminders/upcoming', {
-                headers: {
-                    'Authorization': `Bearer ${window.authManager.getToken()}`
-                }
+            const response = await fetch('http://localhost:5002/api/tasks/reminders/check', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
             });
 
             if (response.ok) {
-                const reminders = await response.json();
-                this.updateNotificationBadge(reminders.length);
+                const data = await response.json();
+                if (data.notifications && data.notifications.length > 0) {
+                    data.notifications.forEach(notification => {
+                        this.showNotification(notification.title, notification.type);
+                    });
+                }
             }
         } catch (error) {
             console.error('Check reminders error:', error);
         }
+    }
+
+    showNotification(title, type) {
+        if (type === 'in-app' || type === 'all') {
+            this.showMessage(`🔔 Reminder: ${title}`, 'info');
+        }
+        // Email and push notifications would be handled by the backend
+        // For now, we just show in-app notifications
     }
 
     updateNotificationBadge(count) {

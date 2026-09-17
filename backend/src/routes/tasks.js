@@ -1100,7 +1100,7 @@ router.delete('/:id/dependencies/:dependencyId', authenticateToken, async (req, 
 // Set task reminder
 router.post('/:id/reminder', authenticateToken, async (req, res) => {
   try {
-    const { reminderTime, reminderMessage } = req.body;
+    const { reminderTime, reminderType, reminderRepeat, reminderMessage } = req.body;
 
     if (!reminderTime) {
       return res.status(400).json({ message: 'Reminder time is required' });
@@ -1113,14 +1113,17 @@ router.post('/:id/reminder', authenticateToken, async (req, res) => {
     }
 
     task.reminder = {
-      time: new Date(reminderTime),
+      enabled: true,
+      date: new Date(reminderTime),
+      type: reminderType || 'in-app',
+      repeat: reminderRepeat || 'none',
       message: reminderMessage || `Reminder for task: ${task.title}`,
-      sent: false
+      notified: false
     };
     await task.save();
 
-    logActivity(task._id, req.userId, 'reminder_set', `Reminder set for ${new Date(reminderTime).toLocaleString()}`);
-    addHistoryEntry(task._id, 'reminder_set', `Reminder set for ${new Date(reminderTime).toLocaleString()}`);
+    logActivity(task._id, req.userId, 'reminder_set', `Reminder set for ${new Date(reminderTime).toLocaleString()} (${reminderType})`);
+    addHistoryEntry(task._id, 'reminder_set', `Reminder set for ${new Date(reminderTime).toLocaleString()} (${reminderType})`);
 
     res.json(task);
   } catch (error) {
@@ -2171,6 +2174,61 @@ router.delete('/priorities/:name', authenticateToken, async (req, res) => {
     res.json(user.customPriorities);
   } catch (error) {
     console.error('Delete priority error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Check reminders
+router.get('/reminders/check', authenticateToken, async (req, res) => {
+  try {
+    const now = new Date();
+    const tasks = await Task.find({
+      user: req.userId,
+      'reminder.enabled': true,
+      'reminder.date': { $lte: now },
+      'reminder.notified': false
+    });
+
+    const notifications = [];
+    for (const task of tasks) {
+      const reminderType = task.reminder.type || 'in-app';
+      
+      // Mark as notified
+      task.reminder.notified = true;
+      await task.save();
+
+      // Handle repeat reminders
+      if (task.reminder.repeat !== 'none') {
+        const nextDate = new Date(task.reminder.date);
+        switch (task.reminder.repeat) {
+          case 'daily':
+            nextDate.setDate(nextDate.getDate() + 1);
+            break;
+          case 'weekly':
+            nextDate.setDate(nextDate.getDate() + 7);
+            break;
+          case 'monthly':
+            nextDate.setMonth(nextDate.getMonth() + 1);
+            break;
+        }
+        task.reminder.date = nextDate;
+        task.reminder.notified = false;
+        await task.save();
+      }
+
+      notifications.push({
+        taskId: task._id,
+        title: task.title,
+        dueDate: task.reminder.date,
+        type: reminderType
+      });
+
+      logActivity(task._id, req.userId, 'reminder_triggered', `Reminder triggered (${reminderType})`);
+    }
+
+    res.json({ notifications, count: notifications.length });
+  } catch (error) {
+    console.error('Check reminders error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
