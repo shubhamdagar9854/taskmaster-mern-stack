@@ -1827,16 +1827,16 @@
                                         <span id="statArchivedTasks">0</span>
                                     </div>
                                     <div class="stat-row">
+                                        <span>Tasks Due Today</span>
+                                        <span id="statTasksDueToday">0</span>
+                                    </div>
+                                    <div class="stat-row">
                                         <span>Overdue Tasks</span>
                                         <span id="statOverdueTasks" class="stat-warning">0</span>
                                     </div>
                                     <div class="stat-row">
-                                        <span>Due This Week</span>
-                                        <span id="statTasksDueThisWeek">0</span>
-                                    </div>
-                                    <div class="stat-row">
-                                        <span>Blocked Tasks</span>
-                                        <span id="statBlockedTasks" class="stat-warning">0</span>
+                                        <span>Tasks with Reminders</span>
+                                        <span id="statTasksWithReminders">0</span>
                                     </div>
                                 </div>
 
@@ -1864,19 +1864,40 @@
                                 </div>
 
                                 <div class="stat-section">
-                                    <h4>🎨 Color Labels</h4>
-                                    <div id="colorLabelDistribution" class="color-distribution">
-                                        <!-- Dynamic content -->
+                                    <h4>🔧 Task Features</h4>
+                                    <div class="stat-row">
+                                        <span>Tasks with Subtasks</span>
+                                        <span id="statTasksWithSubtasks">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Tasks with Attachments</span>
+                                        <span id="statTasksWithAttachments">0</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Tasks with Dependencies</span>
+                                        <span id="statTasksWithDependencies">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="stat-section">
+                                    <h4>⏱️ Productivity Metrics</h4>
+                                    <div class="stat-row">
+                                        <span>Avg Completion Time</span>
+                                        <span id="statAvgCompletionTime">0 days</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Weekly Completed</span>
+                                        <span id="statWeeklyCompleted">0</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="stat-progress-section">
-                                <h4>📈 Average Progress</h4>
+                                <h4>📈 Completion Rate</h4>
                                 <div class="progress-bar-large">
-                                    <div class="progress-fill-large" id="statAverageProgress" style="width: 0%"></div>
+                                    <div class="progress-fill-large" id="statCompletionRateBar" style="width: 0%"></div>
                                 </div>
-                                <div class="progress-label" id="statAverageProgressLabel">0%</div>
+                                <div class="progress-label" id="statCompletionRateLabel">0%</div>
                             </div>
                         </div>
                     </div>

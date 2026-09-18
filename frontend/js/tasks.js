@@ -233,26 +233,26 @@ class TaskManager {
         // Overview cards
         document.getElementById('statTotalTasks').textContent = stats.totalTasks;
         document.getElementById('statCompletedTasks').textContent = stats.completedTasks;
-        document.getElementById('statActiveTasks').textContent = stats.activeTasks;
+        document.getElementById('statActiveTasks').textContent = stats.pendingTasks;
         document.getElementById('statCompletionRate').textContent = stats.completionRate + '%';
 
         // Task status
         document.getElementById('statPinnedTasks').textContent = stats.pinnedTasks;
         document.getElementById('statFavoriteTasks').textContent = stats.favoriteTasks;
         document.getElementById('statArchivedTasks').textContent = stats.archivedTasks;
+        document.getElementById('statTasksDueToday').textContent = stats.tasksDueToday;
         document.getElementById('statOverdueTasks').textContent = stats.overdueTasks;
-        document.getElementById('statTasksDueThisWeek').textContent = stats.tasksDueThisWeek;
-        document.getElementById('statBlockedTasks').textContent = stats.blockedTasks;
+        document.getElementById('statTasksWithReminders').textContent = stats.tasksWithReminders;
 
         // Priority distribution
-        document.getElementById('statHighPriority').textContent = stats.priorityDistribution.high;
-        document.getElementById('statMediumPriority').textContent = stats.priorityDistribution.medium;
-        document.getElementById('statLowPriority').textContent = stats.priorityDistribution.low;
+        document.getElementById('statHighPriority').textContent = stats.priorityBreakdown.high;
+        document.getElementById('statMediumPriority').textContent = stats.priorityBreakdown.medium;
+        document.getElementById('statLowPriority').textContent = stats.priorityBreakdown.low;
 
         // Category distribution
         const categoryContainer = document.getElementById('categoryDistribution');
         categoryContainer.innerHTML = '';
-        Object.entries(stats.categoryDistribution).forEach(([category, count]) => {
+        Object.entries(stats.categoryBreakdown).forEach(([category, count]) => {
             const item = document.createElement('div');
             item.className = 'category-item';
             item.innerHTML = `
@@ -262,32 +262,36 @@ class TaskManager {
             categoryContainer.appendChild(item);
         });
 
-        // Color label distribution
-        const colorContainer = document.getElementById('colorLabelDistribution');
-        colorContainer.innerHTML = '';
-        const colorEmojis = {
-            default: '⚪',
-            red: '🔴',
-            orange: '🟠',
-            yellow: '🟡',
-            green: '🟢',
-            blue: '🔵',
-            purple: '🟣',
-            pink: '🩷'
-        };
-        Object.entries(stats.colorLabelDistribution).forEach(([color, count]) => {
-            const item = document.createElement('div');
-            item.className = 'color-item';
-            item.innerHTML = `
-                <span>${colorEmojis[color] || '⚪'} ${color}</span>
-                <span>${count}</span>
-            `;
-            colorContainer.appendChild(item);
-        });
+        // Task features
+        document.getElementById('statTasksWithSubtasks').textContent = stats.tasksWithSubtasks;
+        document.getElementById('statTasksWithAttachments').textContent = stats.tasksWithAttachments;
+        document.getElementById('statTasksWithDependencies').textContent = stats.tasksWithDependencies;
 
-        // Average progress
-        document.getElementById('statAverageProgress').style.width = stats.averageProgress + '%';
-        document.getElementById('statAverageProgressLabel').textContent = stats.averageProgress + '%';
+        // Productivity metrics
+        document.getElementById('statAvgCompletionTime').textContent = stats.avgCompletionTime + ' days';
+        document.getElementById('statWeeklyCompleted').textContent = stats.weeklyCompleted;
+
+        // Completion rate bar
+        document.getElementById('statCompletionRateBar').style.width = stats.completionRate + '%';
+        document.getElementById('statCompletionRateLabel').textContent = stats.completionRate + '%';
+    }
+
+    getCategoryIcon(category) {
+        const categoryIcons = {
+            'Work': '🏢',
+            'Personal': '👥',
+            'Shopping': '🛍️',
+            'Travel': '🗺️',
+            'Food': '🍔',
+            'Sports': '🏈',
+            'Music': '🎵',
+            'Movies': '🍿',
+            'Books': '📚',
+            'Games': '🎮',
+            'Other': '🤔'
+        };
+
+        return categoryIcons[category] || '📝';
     }
 
     showNotesModal(taskId) {

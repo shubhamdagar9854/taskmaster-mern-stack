@@ -2233,6 +2233,110 @@ router.get('/reminders/check', authenticateToken, async (req, res) => {
   }
 });
 
+// Get task statistics
+router.get('/statistics', authenticateToken, async (req, res) => {
+  try {
+    const tasks = await Task.find({ user: req.userId });
+
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.completed).length;
+    const pendingTasks = totalTasks - completedTasks;
+    const favoriteTasks = tasks.filter(t => t.isFavorite).length;
+    const archivedTasks = tasks.filter(t => t.isArchived).length;
+    const pinnedTasks = tasks.filter(t => t.isPinned).length;
+
+    // Priority breakdown
+    const priorityBreakdown = {
+      high: tasks.filter(t => t.priority === 'high').length,
+      medium: tasks.filter(t => t.priority === 'medium').length,
+      low: tasks.filter(t => t.priority === 'low').length
+    };
+
+    // Category breakdown
+    const categoryBreakdown = {};
+    tasks.forEach(task => {
+      const category = task.category || 'uncategorized';
+      categoryBreakdown[category] = (categoryBreakdown[category] || 0) + 1;
+    });
+
+    // Completion rate
+    const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0;
+
+    // Tasks due today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tasksDueToday = tasks.filter(t => {
+      if (!t.dueDate) return false;
+      const dueDate = new Date(t.dueDate);
+      return dueDate >= today && dueDate < tomorrow;
+    }).length;
+
+    // Overdue tasks
+    const overdueTasks = tasks.filter(t => {
+      if (!t.dueDate || t.completed) return false;
+      const dueDate = new Date(t.dueDate);
+      return dueDate < today;
+    }).length;
+
+    // Tasks with reminders
+    const tasksWithReminders = tasks.filter(t => t.reminder && t.reminder.enabled).length;
+
+    // Tasks with subtasks
+    const tasksWithSubtasks = tasks.filter(t => t.subtasks && t.subtasks.length > 0).length;
+
+    // Tasks with attachments
+    const tasksWithAttachments = tasks.filter(t => t.attachments && t.attachments.length > 0).length;
+
+    // Tasks with dependencies
+    const tasksWithDependencies = tasks.filter(t => t.dependencies && t.dependencies.length > 0).length;
+
+    // Average completion time (for completed tasks)
+    const completedTasksWithDates = tasks.filter(t => t.completed && t.createdAt && t.updatedAt);
+    let avgCompletionTime = 0;
+    if (completedTasksWithDates.length > 0) {
+      const totalCompletionTime = completedTasksWithDates.reduce((sum, task) => {
+        const created = new Date(task.createdAt);
+        const updated = new Date(task.updatedAt);
+        return sum + (updated - created);
+      }, 0);
+      avgCompletionTime = Math.round(totalCompletionTime / completedTasksWithDates.length / (1000 * 60 * 60 * 24)); // in days
+    }
+
+    // Weekly activity (tasks completed in last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const weeklyCompleted = tasks.filter(t => {
+      if (!t.completed || !t.updatedAt) return false;
+      return new Date(t.updatedAt) >= sevenDaysAgo;
+    }).length;
+
+    res.json({
+      totalTasks,
+      completedTasks,
+      pendingTasks,
+      favoriteTasks,
+      archivedTasks,
+      pinnedTasks,
+      priorityBreakdown,
+      categoryBreakdown,
+      completionRate,
+      tasksDueToday,
+      overdueTasks,
+      tasksWithReminders,
+      tasksWithSubtasks,
+      tasksWithAttachments,
+      tasksWithDependencies,
+      avgCompletionTime,
+      weeklyCompleted
+    });
+  } catch (error) {
+    console.error('Get statistics error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Pin task
 router.patch('/:id/pin', authenticateToken, async (req, res) => {
   try {
