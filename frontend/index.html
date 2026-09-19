@@ -201,14 +201,14 @@
                     <button id="keyboardShortcutsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-keyboard"></i> Shortcuts
                     </button>
-                    <button id="templatesBtn" class="btn btn-outline btn-sm">
-                        <i class="fas fa-file-alt"></i> Templates
-                    </button>
                     <button id="tagsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-tags"></i> Tags
                     </button>
                     <button id="prioritiesBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-flag"></i> Priorities
+                    </button>
+                    <button id="templatesBtn" class="btn btn-outline btn-sm">
+                        <i class="fas fa-copy"></i> Templates
                     </button>
                     <button id="statisticsBtn" class="btn btn-outline btn-sm">
                         <i class="fas fa-chart-bar"></i> Statistics
@@ -1135,6 +1135,93 @@
                                 <h4>Your Custom Priorities</h4>
                                 <div id="prioritiesList" class="priorities-list">
                                     <!-- Priorities will be dynamically added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates Modal -->
+                <div id="templatesModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>📋 Task Templates</h3>
+                            <button id="closeTemplatesModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="template-create-section">
+                                <h4>Create New Template</h4>
+                                <div class="form-group">
+                                    <label>Template Name</label>
+                                    <input type="text" id="templateName" class="form-input" placeholder="e.g., Weekly Meeting">
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <input type="text" id="templateDescription" class="form-input" placeholder="Brief description of the template">
+                                </div>
+                                <div class="form-group">
+                                    <label>Task Title</label>
+                                    <input type="text" id="templateTitle" class="form-input" placeholder="Task title">
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea id="templateTaskDescription" class="form-textarea" rows="3" placeholder="Task description"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Priority</label>
+                                    <select id="templatePriority" class="form-select">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select id="templateCategory" class="form-select">
+                                        <option value="Work">Work</option>
+                                        <option value="Personal">Personal</option>
+                                        <option value="Shopping">Shopping</option>
+                                        <option value="Travel">Travel</option>
+                                        <option value="Food">Food</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Music">Music</option>
+                                        <option value="Movies">Movies</option>
+                                        <option value="Books">Books</option>
+                                        <option value="Games">Games</option>
+                                        <option value="Other" selected>Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tags (comma separated)</label>
+                                    <input type="text" id="templateTags" class="form-input" placeholder="e.g., urgent, review">
+                                </div>
+                                <div class="form-group">
+                                    <label>Color Label</label>
+                                    <select id="templateColorLabel" class="form-select">
+                                        <option value="default">Default</option>
+                                        <option value="red">Red</option>
+                                        <option value="orange">Orange</option>
+                                        <option value="yellow">Yellow</option>
+                                        <option value="green">Green</option>
+                                        <option value="blue">Blue</option>
+                                        <option value="purple">Purple</option>
+                                        <option value="pink">Pink</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Subtasks (one per line)</label>
+                                    <textarea id="templateSubtasks" class="form-textarea" rows="4" placeholder="Subtask 1&#10;Subtask 2&#10;Subtask 3"></textarea>
+                                </div>
+                                <button id="createTemplateBtn" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create Template
+                                </button>
+                            </div>
+                            <div class="templates-list-section">
+                                <h4>Your Templates</h4>
+                                <div id="templatesList" class="templates-list">
+                                    <!-- Templates will be dynamically added here -->
                                 </div>
                             </div>
                         </div>

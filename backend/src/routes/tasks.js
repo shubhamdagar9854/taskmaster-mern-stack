@@ -3917,9 +3917,142 @@ router.post('/:id/complete-recurring', authenticateToken, async (req, res) => {
     await nextTask.save();
     await nextTask.populate('dependencies');
 
-    res.json({ completedTask: task, nextTask });
+    logActivity(nextTask._id, req.userId, 'task_created', `Recurring task created: ${nextTask.title}`);
+    addHistoryEntry(nextTask._id, 'task_created', `Recurring task created from template`);
+
+    res.json(nextTask);
   } catch (error) {
-    console.error('Complete recurring task error:', error);
+    console.error('Skip recurring occurrence error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==================== TEMPLATES ROUTES ====================
+
+// Get all templates
+router.get('/templates', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    res.json(user.taskTemplates || []);
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create template
+router.post('/templates', authenticateToken, async (req, res) => {
+  try {
+    const { name, description, template } = req.body;
+
+    if (!name || !template || !template.title) {
+      return res.status(400).json({ message: 'Template name and title are required' });
+    }
+
+    const user = await User.findById(req.userId);
+    user.taskTemplates.push({
+      name,
+      description: description || '',
+      template,
+      createdAt: new Date()
+    });
+    await user.save();
+
+    res.status(201).json(user.taskTemplates[user.taskTemplates.length - 1]);
+  } catch (error) {
+    console.error('Create template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update template
+router.put('/templates/:templateId', authenticateToken, async (req, res) => {
+  try {
+    const { name, description, template } = req.body;
+    const { templateId } = req.params;
+
+    const user = await User.findById(req.userId);
+    const templateIndex = user.taskTemplates.findIndex(
+      t => t._id.toString() === templateId
+    );
+
+    if (templateIndex === -1) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    if (name) user.taskTemplates[templateIndex].name = name;
+    if (description !== undefined) user.taskTemplates[templateIndex].description = description;
+    if (template) user.taskTemplates[templateIndex].template = template;
+
+    await user.save();
+
+    res.json(user.taskTemplates[templateIndex]);
+  } catch (error) {
+    console.error('Update template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete template
+router.delete('/templates/:templateId', authenticateToken, async (req, res) => {
+  try {
+    const { templateId } = req.params;
+
+    const user = await User.findById(req.userId);
+    const templateIndex = user.taskTemplates.findIndex(
+      t => t._id.toString() === templateId
+    );
+
+    if (templateIndex === -1) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    user.taskTemplates.splice(templateIndex, 1);
+    await user.save();
+
+    res.json({ message: 'Template deleted successfully' });
+  } catch (error) {
+    console.error('Delete template error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create task from template
+router.post('/templates/:templateId/create', authenticateToken, async (req, res) => {
+  try {
+    const { templateId } = req.params;
+
+    const user = await User.findById(req.userId);
+    const template = user.taskTemplates.find(
+      t => t._id.toString() === templateId
+    );
+
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+
+    const newTask = new Task({
+      ...template.template,
+      user: req.userId,
+      completed: false,
+      isFavorite: false,
+      isArchived: false,
+      isPinned: false,
+      progress: 0,
+      order: 0,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await newTask.save();
+    await newTask.populate('dependencies');
+
+    logActivity(newTask._id, req.userId, 'task_created', `Task created from template: ${template.name}`);
+    addHistoryEntry(newTask._id, 'task_created', `Task created from template: ${template.name}`);
+
+    res.status(201).json(newTask);
+  } catch (error) {
+    console.error('Create task from template error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

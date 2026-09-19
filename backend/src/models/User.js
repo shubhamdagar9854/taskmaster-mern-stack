@@ -44,6 +44,29 @@ const userSchema = new mongoose.Schema({
     color: { type: String, default: '#6b7280' },
     order: { type: Number, default: 0 }
   }],
+  taskTemplates: [{
+    name: { type: String, required: true },
+    description: { type: String, default: '' },
+    template: {
+      title: { type: String, required: true },
+      description: { type: String, default: '' },
+      priority: { type: String, default: 'medium' },
+      category: { type: String, default: 'Other' },
+      tags: [{ type: String }],
+      subtasks: [{
+        title: { type: String, required: true },
+        completed: { type: Boolean, default: false }
+      }],
+      colorLabel: { type: String, default: 'default' },
+      reminder: {
+        time: { type: Date },
+        message: { type: String },
+        type: { type: String, default: 'in-app' },
+        repeat: { type: String, default: 'none' }
+      }
+    },
+    createdAt: { type: Date, default: Date.now }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

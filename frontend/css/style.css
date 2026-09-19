@@ -6600,5 +6600,137 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .link-button:hover {
+    color: #5568d3;
     text-decoration: underline;
+}
+
+/* Templates Modal Styles */
+.template-create-section {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.template-create-section h4 {
+    margin: 0 0 1rem 0;
+    color: #1f2937;
+    font-size: 1.1rem;
+}
+
+.templates-list-section {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+}
+
+.templates-list-section h4 {
+    margin: 0 0 1rem 0;
+    color: #1f2937;
+    font-size: 1.1rem;
+}
+
+.templates-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.template-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.template-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.template-info {
+    flex: 1;
+}
+
+.template-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.template-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.template-details {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.template-detail {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.template-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.template-actions .btn {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.no-templates {
+    text-align: center;
+    color: #9ca3af;
+    padding: 2rem;
+    font-style: italic;
+}
+
+/* Dark mode for templates modal */
+.dark-mode .template-create-section,
+.dark-mode .templates-list-section {
+    background: #374151;
+}
+
+.dark-mode .template-create-section h4,
+.dark-mode .templates-list-section h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .template-item {
+    background: #4b5563;
+    border-color: #6b7280;
+}
+
+.dark-mode .template-item:hover {
+    border-color: #667eea;
+}
+
+.dark-mode .template-name {
+    color: #e5e7eb;
+}
+
+.dark-mode .template-description {
+    color: #9ca3af;
+}
+
+.dark-mode .template-detail {
+    color: #9ca3af;
+}
+
+.dark-mode .no-templates {
+    color: #9ca3af;
 }

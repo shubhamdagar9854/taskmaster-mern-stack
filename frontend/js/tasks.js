@@ -100,7 +100,6 @@ class TaskManager {
                 this.hideDependenciesModal();
                 this.hideReminderModal();
                 this.hideTemplatesModal();
-                this.hideCreateTemplateModal();
                 this.hideTimeTrackingModal();
                 this.hideCommentsModal();
                 this.hideTagsModal();
@@ -292,6 +291,180 @@ class TaskManager {
         };
 
         return categoryIcons[category] || '📝';
+    }
+
+    showTemplatesModal() {
+        document.getElementById('templatesModal').classList.remove('hidden');
+        this.loadTemplates();
+    }
+
+    hideTemplatesModal() {
+        document.getElementById('templatesModal').classList.add('hidden');
+    }
+
+    async loadTemplates() {
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/templates', {
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.templates = await response.json();
+                this.renderTemplates();
+            } else {
+                this.showMessage('Failed to load templates', 'error');
+            }
+        } catch (error) {
+            console.error('Load templates error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    renderTemplates() {
+        const templatesList = document.getElementById('templatesList');
+        templatesList.innerHTML = '';
+
+        if (this.templates.length === 0) {
+            templatesList.innerHTML = '<p class="no-templates">No templates yet. Create one above!</p>';
+            return;
+        }
+
+        this.templates.forEach(template => {
+            const templateItem = document.createElement('div');
+            templateItem.className = 'template-item';
+            templateItem.innerHTML = `
+                <div class="template-info">
+                    <div class="template-name">${template.name}</div>
+                    <div class="template-description">${template.description || 'No description'}</div>
+                    <div class="template-details">
+                        <span class="template-detail"><i class="fas fa-flag"></i> ${template.template.priority}</span>
+                        <span class="template-detail"><i class="fas fa-folder"></i> ${template.template.category}</span>
+                        <span class="template-detail"><i class="fas fa-tasks"></i> ${template.template.subtasks?.length || 0} subtasks</span>
+                    </div>
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-sm btn-success" onclick="taskManager.createTaskFromTemplate('${template._id}')" title="Create Task">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="taskManager.editTemplate('${template._id}')" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="taskManager.deleteTemplate('${template._id}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            templatesList.appendChild(templateItem);
+        });
+    }
+
+    async createTemplate() {
+        const name = document.getElementById('templateName').value.trim();
+        const description = document.getElementById('templateDescription').value.trim();
+        const title = document.getElementById('templateTitle').value.trim();
+        const taskDescription = document.getElementById('templateTaskDescription').value.trim();
+        const priority = document.getElementById('templatePriority').value;
+        const category = document.getElementById('templateCategory').value;
+        const tags = document.getElementById('templateTags').value.split(',').map(t => t.trim()).filter(t => t);
+        const colorLabel = document.getElementById('templateColorLabel').value;
+        const subtasksText = document.getElementById('templateSubtasks').value.trim();
+        const subtasks = subtasksText.split('\n').map(st => ({ title: st.trim(), completed: false })).filter(st => st.title);
+
+        if (!name || !title) {
+            this.showMessage('Template name and task title are required', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks/templates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({
+                    name,
+                    description,
+                    template: {
+                        title,
+                        description: taskDescription,
+                        priority,
+                        category,
+                        tags,
+                        colorLabel,
+                        subtasks
+                    }
+                })
+            });
+
+            if (response.ok) {
+                this.showMessage('Template created successfully!', 'success');
+                this.loadTemplates();
+                this.clearTemplateForm();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to create template', 'error');
+            }
+        } catch (error) {
+            console.error('Create template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    clearTemplateForm() {
+        document.getElementById('templateName').value = '';
+        document.getElementById('templateDescription').value = '';
+        document.getElementById('templateTitle').value = '';
+        document.getElementById('templateTaskDescription').value = '';
+        document.getElementById('templatePriority').value = 'medium';
+        document.getElementById('templateCategory').value = 'Other';
+        document.getElementById('templateTags').value = '';
+        document.getElementById('templateColorLabel').value = 'default';
+        document.getElementById('templateSubtasks').value = '';
+    }
+
+    async deleteTemplate(templateId) {
+        if (!confirm('Are you sure you want to delete this template?')) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/templates/${templateId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.showMessage('Template deleted successfully!', 'success');
+                this.loadTemplates();
+            } else {
+                this.showMessage('Failed to delete template', 'error');
+            }
+        } catch (error) {
+            console.error('Delete template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async createTaskFromTemplate(templateId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/templates/${templateId}/create`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const task = await response.json();
+                this.tasks.push(task);
+                this.renderTasks();
+                this.showMessage('Task created from template!', 'success');
+                this.hideTemplatesModal();
+            } else {
+                const data = await response.json();
+                this.showMessage(data.message || 'Failed to create task from template', 'error');
+            }
+        } catch (error) {
+            console.error('Create task from template error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
     }
 
     showNotesModal(taskId) {
@@ -2405,30 +2578,14 @@ class TaskManager {
             this.hideStatisticsModal();
         });
 
-        // Templates modal
-        document.querySelector('[data-action="close-templates"]').addEventListener('click', () => {
+        // Close templates modal
+        document.getElementById('closeTemplatesModal').addEventListener('click', () => {
             this.hideTemplatesModal();
         });
 
+        // Create template button
         document.getElementById('createTemplateBtn').addEventListener('click', () => {
-            this.showCreateTemplateModal();
-        });
-
-        document.getElementById('refreshTemplatesBtn').addEventListener('click', () => {
-            this.loadTemplates();
-        });
-
-        // Create template modal
-        document.querySelector('[data-action="close-create-template"]').addEventListener('click', () => {
-            this.hideCreateTemplateModal();
-        });
-
-        document.getElementById('saveTemplateBtn').addEventListener('click', () => {
             this.createTemplate();
-        });
-
-        document.getElementById('cancelTemplateBtn').addEventListener('click', () => {
-            this.hideCreateTemplateModal();
         });
 
         // Tags modal
