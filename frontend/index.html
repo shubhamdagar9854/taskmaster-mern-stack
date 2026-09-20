@@ -616,6 +616,9 @@
                         <button id="toggleViewBtn" class="btn btn-outline btn-sm" title="Toggle View">
                             <i class="fas fa-th-large"></i>
                         </button>
+                        <button id="calendarViewBtn" class="btn btn-outline btn-sm" title="Calendar View">
+                            <i class="fas fa-calendar-alt"></i>
+                        </button>
                         <button id="refreshBtn" class="btn btn-outline btn-sm" title="Refresh">
                             <i class="fas fa-sync-alt"></i>
                         </button>
@@ -638,6 +641,31 @@
 
                 <div id="taskList" class="task-list">
                     <!-- Tasks will be dynamically added here -->
+                </div>
+
+                <!-- Calendar View -->
+                <div id="calendarView" class="calendar-view hidden">
+                    <div class="calendar-header">
+                        <button id="prevMonthBtn" class="btn btn-outline btn-sm">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h3 id="calendarMonthYear">September 2026</h3>
+                        <button id="nextMonthBtn" class="btn btn-outline btn-sm">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button id="todayBtn" class="btn btn-outline btn-sm">Today</button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="calendar-day-header">Sun</div>
+                        <div class="calendar-day-header">Mon</div>
+                        <div class="calendar-day-header">Tue</div>
+                        <div class="calendar-day-header">Wed</div>
+                        <div class="calendar-day-header">Thu</div>
+                        <div class="calendar-day-header">Fri</div>
+                        <div class="calendar-day-header">Sat</div>
+                        <!-- Calendar days will be dynamically added here -->
+                        <div id="calendarDays" class="calendar-days"></div>
+                    </div>
                 </div>
 
                 <!-- Kanban Board -->

@@ -467,6 +467,106 @@ class TaskManager {
         }
     }
 
+    showCalendarView() {
+        const taskList = document.getElementById('taskList');
+        const kanbanBoard = document.getElementById('kanbanBoard');
+        const calendarView = document.getElementById('calendarView');
+        const toggleBtn = document.getElementById('toggleViewBtn');
+        
+        taskList.classList.add('hidden');
+        kanbanBoard.classList.add('hidden');
+        calendarView.classList.remove('hidden');
+        this.currentView = 'calendar';
+        toggleBtn.innerHTML = '<i class="fas fa-list"></i>';
+        this.renderCalendar();
+    }
+
+    hideCalendarView() {
+        document.getElementById('calendarView').classList.add('hidden');
+        document.getElementById('taskList').classList.remove('hidden');
+    }
+
+    renderCalendar() {
+        const calendarDays = document.getElementById('calendarDays');
+        const monthYear = document.getElementById('calendarMonthYear');
+        
+        const year = this.currentCalendarDate.getFullYear();
+        const month = this.currentCalendarDate.getMonth();
+        
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        monthYear.textContent = `${monthNames[month]} ${year}`;
+        
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startingDay = firstDay.getDay();
+        const totalDays = lastDay.getDate();
+        
+        calendarDays.innerHTML = '';
+        
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < startingDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-day empty';
+            calendarDays.appendChild(emptyCell);
+        }
+        
+        // Add days of the month
+        const today = new Date();
+        for (let day = 1; day <= totalDays; day++) {
+            const date = new Date(year, month, day);
+            const dayCell = document.createElement('div');
+            dayCell.className = 'calendar-day';
+            
+            // Check if this is today
+            if (date.toDateString() === today.toDateString()) {
+                dayCell.classList.add('today');
+            }
+            
+            // Get tasks for this date
+            const tasksForDate = this.getTasksForDate(date);
+            
+            dayCell.innerHTML = `
+                <div class="calendar-day-number">${day}</div>
+                <div class="calendar-day-tasks">
+                    ${tasksForDate.slice(0, 3).map(task => `
+                        <div class="calendar-task ${task.completed ? 'completed' : ''} ${task.priority === 'high' ? 'high-priority' : ''}" 
+                             onclick="taskManager.editTask('${task._id}')" 
+                             title="${task.title}">
+                            ${task.title.substring(0, 15)}${task.title.length > 15 ? '...' : ''}
+                        </div>
+                    `).join('')}
+                    ${tasksForDate.length > 3 ? `<div class="calendar-more">+${tasksForDate.length - 3} more</div>` : ''}
+                </div>
+            `;
+            
+            calendarDays.appendChild(dayCell);
+        }
+    }
+
+    getTasksForDate(date) {
+        const dateStr = date.toISOString().split('T')[0];
+        return this.tasks.filter(task => {
+            if (!task.dueDate) return false;
+            const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
+            return taskDate === dateStr;
+        });
+    }
+
+    navigateMonth(direction) {
+        if (direction === 'prev') {
+            this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() - 1);
+        } else {
+            this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + 1);
+        }
+        this.renderCalendar();
+    }
+
+    goToToday() {
+        this.currentCalendarDate = new Date();
+        this.renderCalendar();
+    }
+
     showNotesModal(taskId) {
         this.currentNotesTaskId = taskId;
         const task = this.tasks.find(t => t._id === taskId);
@@ -1724,17 +1824,28 @@ class TaskManager {
     toggleView() {
         const taskList = document.getElementById('taskList');
         const kanbanBoard = document.getElementById('kanbanBoard');
+        const calendarView = document.getElementById('calendarView');
         const toggleBtn = document.getElementById('toggleViewBtn');
 
         if (this.currentView === 'list') {
             this.currentView = 'kanban';
             taskList.classList.add('hidden');
             kanbanBoard.classList.remove('hidden');
+            calendarView.classList.add('hidden');
             toggleBtn.innerHTML = '<i class="fas fa-list"></i>';
             this.renderKanban();
-        } else {
+        } else if (this.currentView === 'kanban') {
             this.currentView = 'list';
             kanbanBoard.classList.add('hidden');
+            calendarView.classList.add('hidden');
+            taskList.classList.remove('hidden');
+            toggleBtn.innerHTML = '<i class="fas fa-th-large"></i>';
+            this.renderTasks();
+        } else {
+            // From calendar view, go to list view
+            this.currentView = 'list';
+            kanbanBoard.classList.add('hidden');
+            calendarView.classList.add('hidden');
             taskList.classList.remove('hidden');
             toggleBtn.innerHTML = '<i class="fas fa-th-large"></i>';
             this.renderTasks();
@@ -2556,6 +2667,24 @@ class TaskManager {
         // Templates button
         document.getElementById('templatesBtn').addEventListener('click', () => {
             this.showTemplatesModal();
+        });
+
+        // Calendar view button
+        document.getElementById('calendarViewBtn').addEventListener('click', () => {
+            this.showCalendarView();
+        });
+
+        // Calendar navigation
+        document.getElementById('prevMonthBtn').addEventListener('click', () => {
+            this.navigateMonth('prev');
+        });
+
+        document.getElementById('nextMonthBtn').addEventListener('click', () => {
+            this.navigateMonth('next');
+        });
+
+        document.getElementById('todayBtn').addEventListener('click', () => {
+            this.goToToday();
         });
 
         // Tags button
