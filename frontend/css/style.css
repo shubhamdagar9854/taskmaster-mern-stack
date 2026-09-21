@@ -6912,3 +6912,94 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .calendar-more {
     color: #9ca3af;
 }
+
+/* Dependency Graph Styles */
+.dependency-graph-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.dependency-graph-section h4 {
+    margin: 0 0 0.75rem 0;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.dependency-graph-canvas {
+    position: relative;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    min-height: 400px;
+    overflow: auto;
+}
+
+.dependency-node {
+    position: absolute;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.dependency-node:hover {
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
+}
+
+.dependency-node.completed {
+    border-color: #10b981;
+    opacity: 0.7;
+}
+
+.node-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+    word-wrap: break-word;
+}
+
+.dependency-node.completed .node-title {
+    color: #6b7280;
+    text-decoration: line-through;
+}
+
+/* Dark mode for dependency graph */
+.dark-mode .dependency-graph-section {
+    border-top-color: #4b5563;
+}
+
+.dark-mode .dependency-graph-section h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .dependency-graph-canvas {
+    background: #1f2937;
+    border-color: #4b5563;
+}
+
+.dark-mode .dependency-node {
+    background: #374151;
+    border-color: #667eea;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .dependency-node:hover {
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.dark-mode .dependency-node.completed {
+    border-color: #10b981;
+}
+
+.dark-mode .node-title {
+    color: #e5e7eb;
+}
+
+.dark-mode .dependency-node.completed .node-title {
+    color: #9ca3af;
+}

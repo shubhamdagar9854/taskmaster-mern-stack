@@ -98,6 +98,7 @@ class TaskManager {
                 this.hideNotesModal();
                 this.hideStatisticsModal();
                 this.hideDependenciesModal();
+                this.hideDependencyGraph();
                 this.hideReminderModal();
                 this.hideTemplatesModal();
                 this.hideTimeTrackingModal();
@@ -612,6 +613,168 @@ class TaskManager {
     hideDependenciesModal() {
         document.getElementById('dependenciesModal').classList.add('hidden');
         this.currentDependenciesTaskId = null;
+    }
+
+    showDependencyGraph() {
+        document.getElementById('dependencyGraphModal').classList.remove('hidden');
+        this.renderDependencyGraph();
+    }
+
+    hideDependencyGraph() {
+        document.getElementById('dependencyGraphModal').classList.add('hidden');
+    }
+
+    renderDependencyGraph() {
+        const canvas = document.getElementById('dependencyGraphCanvas');
+        canvas.innerHTML = '';
+
+        // Build dependency graph
+        const nodes = [];
+        const edges = [];
+        const taskMap = new Map();
+
+        // Create nodes for all tasks
+        this.tasks.forEach(task => {
+            taskMap.set(task._id, {
+                id: task._id,
+                title: task.title,
+                completed: task.completed,
+                dependencies: task.dependencies || [],
+                dependents: []
+            });
+        });
+
+        // Build edges and track dependents
+        taskMap.forEach(node => {
+            node.dependencies.forEach(depId => {
+                const depNode = taskMap.get(depId);
+                if (depNode) {
+                    depNode.dependents.push(node.id);
+                    edges.push({ from: depId, to: node.id });
+                }
+            });
+        });
+
+        // Simple hierarchical layout
+        const levels = new Map();
+        const visited = new Set();
+        
+        // Calculate levels using BFS
+        const calculateLevels = (nodeId, level) => {
+            if (visited.has(nodeId)) return;
+            visited.add(nodeId);
+            
+            const currentLevel = Math.max(levels.get(nodeId) || 0, level);
+            levels.set(nodeId, currentLevel);
+            
+            const node = taskMap.get(nodeId);
+            node.dependents.forEach(depId => {
+                calculateLevels(depId, currentLevel + 1);
+            });
+        };
+
+        // Start from tasks with no dependencies
+        taskMap.forEach(node => {
+            if (node.dependencies.length === 0) {
+                calculateLevels(node.id, 0);
+            }
+        });
+
+        // Handle remaining tasks (cycles)
+        taskMap.forEach(node => {
+            if (!visited.has(node.id)) {
+                calculateLevels(node.id, 0);
+            }
+        });
+
+        // Group by levels
+        const levelGroups = new Map();
+        levels.forEach((level, nodeId) => {
+            if (!levelGroups.has(level)) {
+                levelGroups.set(level, []);
+            }
+            levelGroups.get(level).push(taskMap.get(nodeId));
+        });
+
+        // Render graph
+        const maxLevel = Math.max(...levels.values());
+        const canvasWidth = canvas.offsetWidth || 800;
+        const canvasHeight = Math.max(400, (maxLevel + 1) * 150);
+
+        canvas.style.height = `${canvasHeight}px`;
+
+        levelGroups.forEach((nodesAtLevel, level) => {
+            const y = level * 150 + 50;
+            const nodeWidth = Math.min(200, (canvasWidth - 40) / nodesAtLevel.length - 10);
+            const startX = (canvasWidth - (nodesAtLevel.length * (nodeWidth + 10))) / 2;
+
+            nodesAtLevel.forEach((node, index) => {
+                const x = startX + index * (nodeWidth + 10);
+                
+                const nodeEl = document.createElement('div');
+                nodeEl.className = `dependency-node ${node.completed ? 'completed' : ''}`;
+                nodeEl.style.left = `${x}px`;
+                nodeEl.style.top = `${y}px`;
+                nodeEl.style.width = `${nodeWidth}px`;
+                nodeEl.innerHTML = `
+                    <div class="node-title">${node.title.substring(0, 25)}${node.title.length > 25 ? '...' : ''}</div>
+                `;
+                nodeEl.dataset.nodeId = node.id;
+                canvas.appendChild(nodeEl);
+            });
+        });
+
+        // Draw edges using SVG
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.style.pointerEvents = 'none';
+        canvas.appendChild(svg);
+
+        edges.forEach(edge => {
+            const fromNode = Array.from(canvas.querySelectorAll('.dependency-node')).find(n => n.dataset.nodeId === edge.from);
+            const toNode = Array.from(canvas.querySelectorAll('.dependency-node')).find(n => n.dataset.nodeId === edge.to);
+
+            if (fromNode && toNode) {
+                const fromRect = fromNode.getBoundingClientRect();
+                const toRect = toNode.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+
+                const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left;
+                const y1 = fromRect.bottom - canvasRect.top;
+                const x2 = toRect.left + toRect.width / 2 - canvasRect.left;
+                const y2 = toRect.top - canvasRect.top;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('stroke', '#667eea');
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('marker-end', 'url(#arrowhead)');
+                svg.appendChild(line);
+            }
+        });
+
+        // Add arrowhead marker
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'arrowhead');
+        marker.setAttribute('markerWidth', '10');
+        marker.setAttribute('markerHeight', '7');
+        marker.setAttribute('refX', '9');
+        marker.setAttribute('refY', '3.5');
+        marker.setAttribute('orient', 'auto');
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+        polygon.setAttribute('fill', '#667eea');
+        marker.appendChild(polygon);
+        defs.appendChild(marker);
+        svg.appendChild(defs);
     }
 
     showReminderModal(taskId) {
@@ -2734,6 +2897,15 @@ class TaskManager {
         document.getElementById('addDependencyBtn').addEventListener('click', () => {
             const dependencyId = document.getElementById('dependencySelect').value;
             this.addDependency(this.currentDependenciesTaskId, dependencyId);
+        });
+
+        // Dependency graph
+        document.getElementById('viewDependencyGraphBtn').addEventListener('click', () => {
+            this.showDependencyGraph();
+        });
+
+        document.getElementById('closeDependencyGraphModal').addEventListener('click', () => {
+            this.hideDependencyGraph();
         });
 
         // Reminder modal
