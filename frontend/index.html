@@ -608,6 +608,15 @@
                         <button id="bulkArchiveBtn" class="btn btn-outline btn-sm" title="Archive Selected" disabled>
                             <i class="fas fa-archive"></i> Archive
                         </button>
+                        <button id="bulkPriorityBtn" class="btn btn-outline btn-sm" title="Set Priority" disabled>
+                            <i class="fas fa-flag"></i> Priority
+                        </button>
+                        <button id="bulkCategoryBtn" class="btn btn-outline btn-sm" title="Set Category" disabled>
+                            <i class="fas fa-folder"></i> Category
+                        </button>
+                        <button id="bulkDueDateBtn" class="btn btn-outline btn-sm" title="Set Due Date" disabled>
+                            <i class="fas fa-calendar"></i> Due Date
+                        </button>
                         <button id="bulkDeleteBtn" class="btn btn-outline btn-sm btn-danger" title="Delete Selected" disabled>
                             <i class="fas fa-trash"></i> Delete
                         </button>
@@ -1344,6 +1353,100 @@
                                 </button>
                                 <button id="clearFiltersBtn" class="btn btn-outline">
                                     <i class="fas fa-times"></i> Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Priority Modal -->
+                <div id="bulkPriorityModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>🚩 Set Priority for Selected Tasks</h3>
+                            <button id="closeBulkPriorityModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <select id="bulkPrioritySelect" class="form-select">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button id="applyBulkPriorityBtn" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Apply
+                                </button>
+                                <button id="cancelBulkPriorityBtn" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Category Modal -->
+                <div id="bulkCategoryModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>📁 Set Category for Selected Tasks</h3>
+                            <button id="closeBulkCategoryModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select id="bulkCategorySelect" class="form-select">
+                                    <option value="Work">Work</option>
+                                    <option value="Personal">Personal</option>
+                                    <option value="Shopping">Shopping</option>
+                                    <option value="Travel">Travel</option>
+                                    <option value="Food">Food</option>
+                                    <option value="Sports">Sports</option>
+                                    <option value="Music">Music</option>
+                                    <option value="Movies">Movies</option>
+                                    <option value="Books">Books</option>
+                                    <option value="Games">Games</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button id="applyBulkCategoryBtn" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Apply
+                                </button>
+                                <button id="cancelBulkCategoryBtn" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bulk Due Date Modal -->
+                <div id="bulkDueDateModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>📅 Set Due Date for Selected Tasks</h3>
+                            <button id="closeBulkDueDateModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Due Date</label>
+                                <input type="datetime-local" id="bulkDueDateInput" class="form-input">
+                            </div>
+                            <div class="form-actions">
+                                <button id="applyBulkDueDateBtn" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Apply
+                                </button>
+                                <button id="cancelBulkDueDateBtn" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Cancel
                                 </button>
                             </div>
                         </div>

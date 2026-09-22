@@ -107,6 +107,9 @@ class TaskManager {
                 this.hideExportImportModal();
                 this.hidePrioritiesModal();
                 this.hideAdvancedFiltersModal();
+                this.hideBulkPriorityModal();
+                this.hideBulkCategoryModal();
+                this.hideBulkDueDateModal();
             }
 
             // Ctrl+Z: Undo
@@ -1824,6 +1827,21 @@ class TaskManager {
             this.bulkArchiveTasks();
         });
 
+        // Bulk priority
+        document.getElementById('bulkPriorityBtn').addEventListener('click', () => {
+            this.showBulkPriorityModal();
+        });
+
+        // Bulk category
+        document.getElementById('bulkCategoryBtn').addEventListener('click', () => {
+            this.showBulkCategoryModal();
+        });
+
+        // Bulk due date
+        document.getElementById('bulkDueDateBtn').addEventListener('click', () => {
+            this.showBulkDueDateModal();
+        });
+
         // Bulk delete
         document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
             this.bulkDeleteTasks();
@@ -1909,6 +1927,9 @@ class TaskManager {
         const hasSelection = this.selectedTasks.size > 0;
         document.getElementById('bulkCompleteBtn').disabled = !hasSelection;
         document.getElementById('bulkArchiveBtn').disabled = !hasSelection;
+        document.getElementById('bulkPriorityBtn').disabled = !hasSelection;
+        document.getElementById('bulkCategoryBtn').disabled = !hasSelection;
+        document.getElementById('bulkDueDateBtn').disabled = !hasSelection;
         document.getElementById('bulkDeleteBtn').disabled = !hasSelection;
     }
 
@@ -1957,6 +1978,96 @@ class TaskManager {
         } catch (error) {
             console.error('Bulk archive error:', error);
             this.showMessage('Failed to archive tasks', 'error');
+        }
+    }
+
+    showBulkPriorityModal() {
+        document.getElementById('bulkPriorityModal').classList.remove('hidden');
+    }
+
+    hideBulkPriorityModal() {
+        document.getElementById('bulkPriorityModal').classList.add('hidden');
+    }
+
+    async bulkSetPriority() {
+        const priority = document.getElementById('bulkPrioritySelect').value;
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        const taskIds = Array.from(this.selectedTasks);
+        const promises = taskIds.map(taskId => this.updateTask(taskId, { priority }));
+
+        try {
+            await Promise.all(promises);
+            this.selectedTasks.clear();
+            this.updateBulkActionButtons();
+            this.hideBulkPriorityModal();
+            this.showMessage('Priority updated successfully!', 'success');
+        } catch (error) {
+            console.error('Bulk set priority error:', error);
+            this.showMessage('Failed to update priority', 'error');
+        }
+    }
+
+    showBulkCategoryModal() {
+        document.getElementById('bulkCategoryModal').classList.remove('hidden');
+    }
+
+    hideBulkCategoryModal() {
+        document.getElementById('bulkCategoryModal').classList.add('hidden');
+    }
+
+    async bulkSetCategory() {
+        const category = document.getElementById('bulkCategorySelect').value;
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        const taskIds = Array.from(this.selectedTasks);
+        const promises = taskIds.map(taskId => this.updateTask(taskId, { category }));
+
+        try {
+            await Promise.all(promises);
+            this.selectedTasks.clear();
+            this.updateBulkActionButtons();
+            this.hideBulkCategoryModal();
+            this.showMessage('Category updated successfully!', 'success');
+        } catch (error) {
+            console.error('Bulk set category error:', error);
+            this.showMessage('Failed to update category', 'error');
+        }
+    }
+
+    showBulkDueDateModal() {
+        document.getElementById('bulkDueDateModal').classList.remove('hidden');
+    }
+
+    hideBulkDueDateModal() {
+        document.getElementById('bulkDueDateModal').classList.add('hidden');
+    }
+
+    async bulkSetDueDate() {
+        const dueDate = document.getElementById('bulkDueDateInput').value;
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        const taskIds = Array.from(this.selectedTasks);
+        const promises = taskIds.map(taskId => this.updateTask(taskId, { dueDate: dueDate || null }));
+
+        try {
+            await Promise.all(promises);
+            this.selectedTasks.clear();
+            this.updateBulkActionButtons();
+            this.hideBulkDueDateModal();
+            this.showMessage('Due date updated successfully!', 'success');
+        } catch (error) {
+            console.error('Bulk set due date error:', error);
+            this.showMessage('Failed to update due date', 'error');
         }
     }
 
@@ -2906,6 +3017,45 @@ class TaskManager {
 
         document.getElementById('closeDependencyGraphModal').addEventListener('click', () => {
             this.hideDependencyGraph();
+        });
+
+        // Bulk priority modal
+        document.getElementById('closeBulkPriorityModal').addEventListener('click', () => {
+            this.hideBulkPriorityModal();
+        });
+
+        document.getElementById('applyBulkPriorityBtn').addEventListener('click', () => {
+            this.bulkSetPriority();
+        });
+
+        document.getElementById('cancelBulkPriorityBtn').addEventListener('click', () => {
+            this.hideBulkPriorityModal();
+        });
+
+        // Bulk category modal
+        document.getElementById('closeBulkCategoryModal').addEventListener('click', () => {
+            this.hideBulkCategoryModal();
+        });
+
+        document.getElementById('applyBulkCategoryBtn').addEventListener('click', () => {
+            this.bulkSetCategory();
+        });
+
+        document.getElementById('cancelBulkCategoryBtn').addEventListener('click', () => {
+            this.hideBulkCategoryModal();
+        });
+
+        // Bulk due date modal
+        document.getElementById('closeBulkDueDateModal').addEventListener('click', () => {
+            this.hideBulkDueDateModal();
+        });
+
+        document.getElementById('applyBulkDueDateBtn').addEventListener('click', () => {
+            this.bulkSetDueDate();
+        });
+
+        document.getElementById('cancelBulkDueDateBtn').addEventListener('click', () => {
+            this.hideBulkDueDateModal();
         });
 
         // Reminder modal
