@@ -110,6 +110,7 @@ class TaskManager {
                 this.hideBulkPriorityModal();
                 this.hideBulkCategoryModal();
                 this.hideBulkDueDateModal();
+                this.hideActivityHistory();
             }
 
             // Ctrl+Z: Undo
@@ -625,6 +626,97 @@ class TaskManager {
 
     hideDependencyGraph() {
         document.getElementById('dependencyGraphModal').classList.add('hidden');
+    }
+
+    showActivityHistory(taskId) {
+        this.currentActivityHistoryTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        if (!task) return;
+
+        this.renderActivityHistory(task);
+        document.getElementById('activityHistoryModal').classList.remove('hidden');
+    }
+
+    hideActivityHistory() {
+        document.getElementById('activityHistoryModal').classList.add('hidden');
+        this.currentActivityHistoryTaskId = null;
+    }
+
+    renderActivityHistory(task) {
+        const container = document.getElementById('activityHistoryContent');
+        const history = task.history || [];
+
+        if (history.length === 0) {
+            container.innerHTML = '<p class="no-activity">No activity history available</p>';
+            return;
+        }
+
+        // Sort by timestamp descending
+        const sortedHistory = [...history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        container.innerHTML = sortedHistory.map(entry => {
+            const date = new Date(entry.timestamp);
+            const formattedDate = date.toLocaleDateString();
+            const formattedTime = date.toLocaleTimeString();
+
+            return `
+                <div class="activity-entry">
+                    <div class="activity-icon">
+                        <i class="fas ${this.getActivityIcon(entry.action)}"></i>
+                    </div>
+                    <div class="activity-details">
+                        <div class="activity-action">${entry.action}</div>
+                        <div class="activity-description">${entry.description}</div>
+                        <div class="activity-timestamp">${formattedDate} at ${formattedTime}</div>
+                        ${entry.changes && entry.changes.size > 0 ? `
+                            <div class="activity-changes">
+                                ${Array.from(entry.changes.entries()).map(([key, value]) => `
+                                    <div class="activity-change">
+                                        <span class="change-key">${key}:</span>
+                                        <span class="change-value">${value}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    getActivityIcon(action) {
+        const iconMap = {
+            'created': 'fa-plus-circle',
+            'updated': 'fa-edit',
+            'completed': 'fa-check-circle',
+            'uncompleted': 'fa-times-circle',
+            'deleted': 'fa-trash',
+            'archived': 'fa-archive',
+            'unarchived': 'fa-box-open',
+            'pinned': 'fa-thumbtack',
+            'unpinned': 'fa-thumbtack',
+            'favorited': 'fa-star',
+            'unfavorited': 'fa-star',
+            'priority_changed': 'fa-flag',
+            'category_changed': 'fa-folder',
+            'due_date_changed': 'fa-calendar',
+            'subtask_added': 'fa-plus',
+            'subtask_completed': 'fa-check',
+            'subtask_removed': 'fa-minus',
+            'attachment_added': 'fa-paperclip',
+            'attachment_removed': 'fa-times',
+            'comment_added': 'fa-comment',
+            'dependency_added': 'fa-link',
+            'dependency_removed': 'fa-unlink',
+            'reminder_set': 'fa-bell',
+            'reminder_cleared': 'fa-bell-slash',
+            'tag_added': 'fa-tag',
+            'tag_removed': 'fa-tag',
+            'time_tracking_started': 'fa-play',
+            'time_tracking_stopped': 'fa-stop',
+            'time_tracking_reset': 'fa-redo'
+        };
+        return iconMap[action] || 'fa-circle';
     }
 
     renderDependencyGraph() {
@@ -3058,6 +3150,11 @@ class TaskManager {
             this.hideBulkDueDateModal();
         });
 
+        // Activity history modal
+        document.getElementById('closeActivityHistoryModal').addEventListener('click', () => {
+            this.hideActivityHistory();
+        });
+
         // Reminder modal
         document.querySelector('[data-action="close-reminder"]').addEventListener('click', () => {
             this.hideReminderModal();
@@ -5030,7 +5127,7 @@ class TaskManager {
                     this.showManualTimeModal(taskId);
                     break;
                 case 'activity':
-                    this.showActivityModal(taskId);
+                    this.showActivityHistory(taskId);
                     break;
                 case 'notes':
                     this.showNotesModal(taskId);
