@@ -9167,6 +9167,39 @@ class TaskManager {
             case 'title':
                 sorted.sort((a, b) => a.title.localeCompare(b.title));
                 break;
+            case 'completed':
+                sorted.sort((a, b) => {
+                    if (a.completed === b.completed) return 0;
+                    return a.completed ? 1 : -1;
+                });
+                break;
+            case 'timeSpent':
+                sorted.sort((a, b) => {
+                    const aTime = a.timeTracking?.timeSpent || 0;
+                    const bTime = b.timeTracking?.timeSpent || 0;
+                    return bTime - aTime;
+                });
+                break;
+            case 'subtasks':
+                sorted.sort((a, b) => {
+                    const aSubtasks = a.subtasks?.length || 0;
+                    const bSubtasks = b.subtasks?.length || 0;
+                    return bSubtasks - aSubtasks;
+                });
+                break;
+            case 'comments':
+                sorted.sort((a, b) => {
+                    const aComments = a.comments?.length || 0;
+                    const bComments = b.comments?.length || 0;
+                    return bComments - aComments;
+                });
+                break;
+            case 'favorite':
+                sorted.sort((a, b) => {
+                    if (a.isFavorite === b.isFavorite) return 0;
+                    return a.isFavorite ? -1 : 1;
+                });
+                break;
             default:
                 break;
         }
