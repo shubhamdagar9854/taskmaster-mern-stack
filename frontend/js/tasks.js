@@ -2653,7 +2653,18 @@ class TaskManager {
             subtasks: document.getElementById('filterSubtasks').value || null,
             attachments: document.getElementById('filterAttachments').value || null,
             dependencies: document.getElementById('filterDependencies').value || null,
-            recurring: document.getElementById('filterRecurring').value || null
+            recurring: document.getElementById('filterRecurring').value || null,
+            isPinned: document.getElementById('filterIsPinned').checked || null,
+            hasReminder: document.getElementById('filterHasReminder').checked || null,
+            hasDependencies: document.getElementById('filterHasDependencies').checked || null,
+            hasComments: document.getElementById('filterHasComments').checked || null,
+            hasAttachments: document.getElementById('filterHasAttachments').checked || null,
+            isFavorite: document.getElementById('filterIsFavorite').checked || null,
+            isArchived: document.getElementById('filterIsArchived').checked || null,
+            hasSubtasks: document.getElementById('filterHasSubtasks').checked || null,
+            timeTracking: document.getElementById('filterTimeTracking').checked || null,
+            recurring: document.getElementById('filterRecurring').checked || null,
+            colorLabel: document.getElementById('filterColorLabel').value || null
         };
         this.renderTasks();
         this.hideAdvancedFiltersModal();
@@ -2672,6 +2683,17 @@ class TaskManager {
         document.getElementById('filterAttachments').value = '';
         document.getElementById('filterDependencies').value = '';
         document.getElementById('filterRecurring').value = '';
+        document.getElementById('filterIsPinned').checked = false;
+        document.getElementById('filterHasReminder').checked = false;
+        document.getElementById('filterHasDependencies').checked = false;
+        document.getElementById('filterHasComments').checked = false;
+        document.getElementById('filterHasAttachments').checked = false;
+        document.getElementById('filterIsFavorite').checked = false;
+        document.getElementById('filterIsArchived').checked = false;
+        document.getElementById('filterHasSubtasks').checked = false;
+        document.getElementById('filterTimeTracking').checked = false;
+        document.getElementById('filterRecurring').checked = false;
+        document.getElementById('filterColorLabel').value = '';
         this.renderTasks();
         this.hideAdvancedFiltersModal();
         this.showMessage('Filters cleared!', 'success');
@@ -4962,6 +4984,19 @@ class TaskManager {
                 if (this.advancedFilters.dependencies === 'no' && task.dependencies && task.dependencies.length > 0) return false;
                 if (this.advancedFilters.recurring === 'yes' && (!task.recurring || !task.recurring.enabled)) return false;
                 if (this.advancedFilters.recurring === 'no' && task.recurring && task.recurring.enabled) return false;
+                
+                // New checkbox filters
+                if (this.advancedFilters.isPinned && !task.isPinned) return false;
+                if (this.advancedFilters.hasReminder && (!task.reminder || !task.reminder.enabled)) return false;
+                if (this.advancedFilters.hasDependencies && (!task.dependencies || task.dependencies.length === 0)) return false;
+                if (this.advancedFilters.hasComments && (!task.comments || task.comments.length === 0)) return false;
+                if (this.advancedFilters.hasAttachments && (!task.attachments || task.attachments.length === 0)) return false;
+                if (this.advancedFilters.isFavorite && !task.isFavorite) return false;
+                if (this.advancedFilters.isArchived && !task.isArchived) return false;
+                if (this.advancedFilters.hasSubtasks && (!task.subtasks || task.subtasks.length === 0)) return false;
+                if (this.advancedFilters.timeTracking && (!task.timeTracking || !task.timeTracking.enabled)) return false;
+                if (this.advancedFilters.recurring && (!task.recurring || !task.recurring.enabled)) return false;
+                if (this.advancedFilters.colorLabel && task.colorLabel !== this.advancedFilters.colorLabel) return false;
             }
 
             return true;
