@@ -7124,3 +7124,66 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .change-value {
     color: #9ca3af;
 }
+
+/* Quick Actions Dropdown Styles */
+.quick-actions-dropdown {
+    position: fixed;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 180px;
+    max-width: 220px;
+    padding: 0.5rem 0;
+}
+
+.quick-actions-item {
+    padding: 0.625rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #374151;
+    font-size: 0.875rem;
+    transition: background-color 0.15s ease;
+}
+
+.quick-actions-item:hover {
+    background-color: #f3f4f6;
+}
+
+.quick-actions-item i {
+    width: 16px;
+    text-align: center;
+}
+
+.quick-actions-divider {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 0.5rem 0;
+}
+
+.quick-actions-btn {
+    padding: 0.375rem 0.5rem !important;
+    min-width: 32px;
+}
+
+/* Dark mode for quick actions dropdown */
+.dark-mode .quick-actions-dropdown {
+    background: #1f2937;
+    border-color: #4b5563;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .quick-actions-item {
+    color: #e5e7eb;
+}
+
+.dark-mode .quick-actions-item:hover {
+    background-color: #374151;
+}
+
+.dark-mode .quick-actions-divider {
+    background-color: #4b5563;
+}

@@ -4164,6 +4164,17 @@ class TaskManager {
             if (!e.target.closest('#contextMenu')) {
                 this.hideContextMenu();
             }
+            if (!e.target.closest('#quickActionsDropdown') && !e.target.closest('.quick-actions-btn')) {
+                this.hideQuickActionsDropdown();
+            }
+        });
+
+        // Quick actions dropdown clicks
+        document.getElementById('quickActionsDropdown').addEventListener('click', (e) => {
+            const action = e.target.closest('.quick-actions-item')?.dataset.action;
+            if (action) {
+                this.handleQuickActionsDropdown(action);
+            }
         });
     }
 
@@ -4195,6 +4206,63 @@ class TaskManager {
     hideContextMenu() {
         document.getElementById('contextMenu').classList.add('hidden');
         this.contextMenuTaskId = null;
+    }
+
+    showQuickActionsDropdown(taskId, x, y) {
+        this.contextMenuTaskId = taskId;
+        const dropdown = document.getElementById('quickActionsDropdown');
+        dropdown.classList.remove('hidden');
+        
+        // Position dropdown
+        const dropdownWidth = 180;
+        const dropdownHeight = 200;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        let finalX = x;
+        let finalY = y;
+        
+        if (x + dropdownWidth > windowWidth) {
+            finalX = windowWidth - dropdownWidth - 10;
+        }
+        
+        if (y + dropdownHeight > windowHeight) {
+            finalY = windowHeight - dropdownHeight - 10;
+        }
+        
+        dropdown.style.left = `${finalX}px`;
+        dropdown.style.top = `${finalY}px`;
+    }
+
+    hideQuickActionsDropdown() {
+        document.getElementById('quickActionsDropdown').classList.add('hidden');
+        this.contextMenuTaskId = null;
+    }
+
+    async handleQuickActionsDropdown(action) {
+        if (!this.contextMenuTaskId) return;
+
+        switch (action) {
+            case 'complete':
+                await this.toggleTask(this.contextMenuTaskId);
+                break;
+            case 'favorite':
+                await this.toggleFavorite(this.contextMenuTaskId);
+                break;
+            case 'archive':
+                await this.toggleArchive(this.contextMenuTaskId);
+                break;
+            case 'edit':
+                this.editTask(this.contextMenuTaskId);
+                break;
+            case 'duplicate':
+                await this.duplicateTask(this.contextMenuTaskId);
+                break;
+            case 'delete':
+                await this.deleteTask(this.contextMenuTaskId);
+                break;
+        }
+        this.hideQuickActionsDropdown();
     }
 
     async handleContextMenuAction(action) {
@@ -5057,6 +5125,9 @@ class TaskManager {
                 <div class="task-meta">
                     <div class="task-date">Created: ${new Date(task.createdAt).toLocaleDateString()}</div>
                     <div class="task-actions">
+                        <button class="btn btn-outline btn-sm quick-actions-btn" data-action="quick-actions" data-task-id="${task._id}">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
                         <button class="btn btn-outline btn-sm" data-action="favorite">
                             <i class="fas fa-star ${task.isFavorite ? 'favorite-active' : ''}"></i>
                         </button>
@@ -5129,6 +5200,13 @@ class TaskManager {
                         this.resetTimer(timerTaskId);
                         break;
                 }
+                return;
+            }
+
+            // Handle quick actions button
+            if (action === 'quick-actions' && timerTaskId) {
+                const rect = e.target.getBoundingClientRect();
+                this.showQuickActionsDropdown(timerTaskId, rect.left, rect.bottom);
                 return;
             }
             
