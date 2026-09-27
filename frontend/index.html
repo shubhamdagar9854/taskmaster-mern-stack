@@ -1821,8 +1821,45 @@
                                     <i class="fas fa-sync"></i> Refresh
                                 </button>
                             </div>
+                            <div class="templates-filters">
+                                <label for="templateCategoryFilter">Category:</label>
+                                <select id="templateCategoryFilter" class="form-select">
+                                    <option value="">All Categories</option>
+                                    <option value="work">Work</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="health">Health</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
                             <div id="templatesList" class="templates-list">
                                 <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template Preview Modal -->
+                <div id="templatePreviewModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>📋 Template Preview</h3>
+                            <button class="modal-close" data-action="close-template-preview">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="templatePreviewContent" class="template-preview-content">
+                                <!-- Dynamic content -->
+                            </div>
+                            <div class="form-actions">
+                                <button id="applyTemplateBtn" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> Apply Template
+                                </button>
+                                <button id="cancelTemplatePreviewBtn" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
                             </div>
                         </div>
                     </div>

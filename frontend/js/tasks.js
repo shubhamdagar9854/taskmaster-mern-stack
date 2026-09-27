@@ -101,6 +101,7 @@ class TaskManager {
                 this.hideDependencyGraph();
                 this.hideReminderModal();
                 this.hideTemplatesModal();
+                this.hideTemplatePreview();
                 this.hideTimeTrackingModal();
                 this.hideCommentsModal();
                 this.hideTagsModal();
@@ -3103,6 +3104,24 @@ class TaskManager {
         // Create template button
         document.getElementById('createTemplateBtn').addEventListener('click', () => {
             this.createTemplate();
+        });
+
+        // Template category filter
+        document.getElementById('templateCategoryFilter').addEventListener('change', () => {
+            this.renderTemplatesList();
+        });
+
+        // Template preview modal
+        document.querySelector('[data-action="close-template-preview"]').addEventListener('click', () => {
+            this.hideTemplatePreview();
+        });
+
+        document.getElementById('applyTemplateBtn').addEventListener('click', () => {
+            this.applyTemplate();
+        });
+
+        document.getElementById('cancelTemplatePreviewBtn').addEventListener('click', () => {
+            this.hideTemplatePreview();
         });
 
         // Tags modal
@@ -8779,6 +8798,7 @@ class TaskManager {
 
     renderTemplatesList() {
         const container = document.getElementById('templatesList');
+        const categoryFilter = document.getElementById('templateCategoryFilter').value;
         container.innerHTML = '';
 
         if (!this.templates || this.templates.length === 0) {
@@ -8786,7 +8806,17 @@ class TaskManager {
             return;
         }
 
-        this.templates.forEach(template => {
+        // Filter templates by category
+        const filteredTemplates = categoryFilter 
+            ? this.templates.filter(t => t.category === categoryFilter)
+            : this.templates;
+
+        if (filteredTemplates.length === 0) {
+            container.innerHTML = '<p style="color: #999; text-align: center; padding: 1rem;">No templates in this category.</p>';
+            return;
+        }
+
+        filteredTemplates.forEach(template => {
             const item = document.createElement('div');
             item.className = 'template-item';
             item.innerHTML = `
@@ -8808,6 +8838,9 @@ class TaskManager {
                     </div>
                 </div>
                 <div class="template-actions">
+                    <button class="template-btn template-btn-preview" data-template-id="${template._id}">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
                     <button class="template-btn template-btn-use" data-template-id="${template._id}">
                         <i class="fas fa-plus"></i> Use
                     </button>
@@ -8816,6 +8849,10 @@ class TaskManager {
                     </button>
                 </div>
             `;
+
+            item.querySelector('.template-btn-preview').addEventListener('click', () => {
+                this.showTemplatePreview(template._id);
+            });
 
             item.querySelector('.template-btn-use').addEventListener('click', () => {
                 this.useTemplate(template._id);
@@ -8827,6 +8864,72 @@ class TaskManager {
 
             container.appendChild(item);
         });
+    }
+
+    showTemplatePreview(templateId) {
+        this.currentPreviewTemplateId = templateId;
+        const template = this.templates.find(t => t._id === templateId);
+        if (!template) return;
+
+        this.renderTemplatePreview(template);
+        document.getElementById('templatePreviewModal').classList.remove('hidden');
+    }
+
+    hideTemplatePreview() {
+        document.getElementById('templatePreviewModal').classList.add('hidden');
+        this.currentPreviewTemplateId = null;
+    }
+
+    renderTemplatePreview(template) {
+        const container = document.getElementById('templatePreviewContent');
+        container.innerHTML = `
+            <div class="template-preview-details">
+                <h4>${this.escapeHtml(template.templateName)}</h4>
+                <div class="preview-section">
+                    <strong>Title:</strong> ${this.escapeHtml(template.title)}
+                </div>
+                ${template.description ? `
+                    <div class="preview-section">
+                        <strong>Description:</strong> ${this.escapeHtml(template.description)}
+                    </div>
+                ` : ''}
+                <div class="preview-section">
+                    <strong>Priority:</strong> ${template.priority}
+                </div>
+                <div class="preview-section">
+                    <strong>Category:</strong> ${template.category || 'None'}
+                </div>
+                ${template.dueDate ? `
+                    <div class="preview-section">
+                        <strong>Due Date:</strong> ${new Date(template.dueDate).toLocaleDateString()}
+                    </div>
+                ` : ''}
+                ${template.tags && template.tags.length > 0 ? `
+                    <div class="preview-section">
+                        <strong>Tags:</strong> ${template.tags.join(', ')}
+                    </div>
+                ` : ''}
+                ${template.subtasks && template.subtasks.length > 0 ? `
+                    <div class="preview-section">
+                        <strong>Subtasks:</strong>
+                        <ul>
+                            ${template.subtasks.map(st => `<li>${this.escapeHtml(st.title)}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                ${template.notes ? `
+                    <div class="preview-section">
+                        <strong>Notes:</strong> ${this.escapeHtml(template.notes)}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    async applyTemplate() {
+        if (!this.currentPreviewTemplateId) return;
+        await this.useTemplate(this.currentPreviewTemplateId);
+        this.hideTemplatePreview();
     }
 
     async useTemplate(templateId) {
