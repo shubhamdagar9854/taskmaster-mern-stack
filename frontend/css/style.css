@@ -7300,3 +7300,106 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .preview-section li {
     color: #d1d5db;
 }
+
+/* Statistics Chart Styles */
+.stats-chart-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+}
+
+.stats-bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bar-label {
+    width: 80px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    text-align: right;
+}
+
+.bar-track {
+    flex: 1;
+    height: 24px;
+    background: #e5e7eb;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 0.25rem;
+    transition: width 0.3s ease;
+}
+
+.bar-low {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.bar-medium {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.bar-high {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.bar-work {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.bar-personal {
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+
+.bar-shopping {
+    background: linear-gradient(90deg, #ec4899, #f472b6);
+}
+
+.bar-health {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.bar-finance {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.bar-other {
+    background: linear-gradient(90deg, #6b7280, #9ca3af);
+}
+
+.bar-value {
+    width: 40px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+}
+
+/* Dark mode for statistics charts */
+.dark-mode .stats-chart-container {
+    background: #374151;
+}
+
+.dark-mode .bar-label {
+    color: #e5e7eb;
+}
+
+.dark-mode .bar-track {
+    background: #4b5563;
+}
+
+.dark-mode .bar-value {
+    color: #e5e7eb;
+}

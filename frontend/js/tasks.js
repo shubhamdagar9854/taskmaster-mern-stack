@@ -7282,52 +7282,87 @@ class TaskManager {
             </div>
         `;
 
-        // Priority Section
+        // Priority Section with Chart
         html += `
             <div class="stats-section">
                 <h4 class="stats-section-title">🎨 By Priority</h4>
-                <div class="stats-row">
-                    <span class="stats-row-label">Low Priority</span>
-                    <span class="stats-row-value">${stats.byPriority.low}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stats-row-label">Medium Priority</span>
-                    <span class="stats-row-value">${stats.byPriority.medium}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stats-row-label">High Priority</span>
-                    <span class="stats-row-value">${stats.byPriority.high}</span>
+                <div class="stats-chart-container">
+                    <div class="stats-bar-chart">
+                        <div class="bar-item">
+                            <div class="bar-label">Low</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-low" style="width: ${stats.total > 0 ? (stats.byPriority.low / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byPriority.low}</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Medium</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-medium" style="width: ${stats.total > 0 ? (stats.byPriority.medium / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byPriority.medium}</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">High</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-high" style="width: ${stats.total > 0 ? (stats.byPriority.high / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byPriority.high}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
 
-        // Category Section
+        // Category Section with Chart
         html += `
             <div class="stats-section">
                 <h4 class="stats-section-title">📂 By Category</h4>
-                <div class="stats-row">
-                    <span class="stats-row-label">💼 Work</span>
-                    <span class="stats-row-value">${stats.byCategory.work}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stats-row-label">👤 Personal</span>
-                    <span class="stats-row-value">${stats.byCategory.personal}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stats-row-label">🛒 Shopping</span>
-                    <span class="stats-row-value">${stats.byCategory.shopping}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stats-row-label">🏥 Health</span>
-                    <span class="stats-row-value">${stats.byCategory.health}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stats-row-label">💰 Finance</span>
-                    <span class="stats-row-value">${stats.byCategory.finance}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stats-row-label">📌 Other</span>
-                    <span class="stats-row-value">${stats.byCategory.other}</span>
+                <div class="stats-chart-container">
+                    <div class="stats-bar-chart">
+                        <div class="bar-item">
+                            <div class="bar-label">Work</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-work" style="width: ${stats.total > 0 ? (stats.byCategory.work / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byCategory.work}</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Personal</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-personal" style="width: ${stats.total > 0 ? (stats.byCategory.personal / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byCategory.personal}</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Shopping</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-shopping" style="width: ${stats.total > 0 ? (stats.byCategory.shopping / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byCategory.shopping}</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Health</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-health" style="width: ${stats.total > 0 ? (stats.byCategory.health / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byCategory.health}</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Finance</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-finance" style="width: ${stats.total > 0 ? (stats.byCategory.finance / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byCategory.finance}</div>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar-label">Other</div>
+                            <div class="bar-track">
+                                <div class="bar-fill bar-other" style="width: ${stats.total > 0 ? (stats.byCategory.other / stats.total * 100) : 0}%"></div>
+                            </div>
+                            <div class="bar-value">${stats.byCategory.other}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -7389,6 +7424,31 @@ class TaskManager {
                 <div class="stats-row">
                     <span class="stats-row-label">Subtask Completion Rate</span>
                     <span class="stats-row-value">${stats.subtasks.totalSubtasks > 0 ? Math.round((stats.subtasks.completedSubtasks / stats.subtasks.totalSubtasks) * 100) : 0}%</span>
+                </div>
+            </div>
+        `;
+
+        // Productivity Metrics Section
+        html += `
+            <div class="stats-section">
+                <h4 class="stats-section-title">📈 Productivity Metrics</h4>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.productivity.tasksCompletedThisWeek}</div>
+                        <div class="stat-card-label">Completed This Week</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.productivity.tasksCompletedThisMonth}</div>
+                        <div class="stat-card-label">Completed This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.productivity.averageCompletionTime}h</div>
+                        <div class="stat-card-label">Avg Completion Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value">${stats.productivity.streakDays}</div>
+                        <div class="stat-card-label">Day Streak</div>
+                    </div>
                 </div>
             </div>
         `;

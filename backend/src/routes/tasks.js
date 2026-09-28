@@ -3096,6 +3096,20 @@ router.get('/stats/comprehensive', authenticateToken, async (req, res) => {
       attachments: {
         totalAttachments: tasks.reduce((sum, t) => sum + (t.attachments?.length || 0), 0)
       },
+      productivity: {
+        tasksCompletedThisWeek: tasks.filter(t => {
+          if (!t.completed || !t.updatedAt) return false;
+          const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          return new Date(t.updatedAt) >= weekAgo;
+        }).length,
+        tasksCompletedThisMonth: tasks.filter(t => {
+          if (!t.completed || !t.updatedAt) return false;
+          const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          return new Date(t.updatedAt) >= monthAgo;
+        }).length,
+        averageCompletionTime: 0, // Would need completion history for accurate calculation
+        streakDays: 0 // Would need daily completion history for accurate calculation
+      },
       completionRate: tasks.length > 0 ? Math.round((tasks.filter(t => t.completed).length / tasks.length) * 100) : 0
     };
 
