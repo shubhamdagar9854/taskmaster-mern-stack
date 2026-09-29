@@ -7496,3 +7496,79 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .bulk-action-btn:hover {
     background: rgba(255, 255, 255, 0.25) !important;
 }
+
+/* Dependency Graph Styles */
+.graph-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+}
+
+.graph-legend {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-pending {
+    background: #3b82f6;
+}
+
+.legend-completed {
+    background: #10b981;
+}
+
+.legend-blocked {
+    background: #ef4444;
+}
+
+.dependency-graph-wrapper {
+    width: 100%;
+    height: 500px;
+    background: white;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+#dependencyGraphCanvas {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+#dependencyGraphCanvas:active {
+    cursor: grabbing;
+}
+
+/* Dark mode for dependency graph */
+.dark-mode .graph-controls {
+    background: #374151;
+}
+
+.dark-mode .legend-item {
+    color: #e5e7eb;
+}
+
+.dark-mode .dependency-graph-wrapper {
+    background: #1f2937;
+    border-color: #4b5563;
+}

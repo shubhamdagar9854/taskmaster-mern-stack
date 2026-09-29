@@ -2128,8 +2128,21 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div id="dependencyGraphCanvas" class="dependency-graph-canvas">
-                                <!-- Graph will be rendered here -->
+                            <div class="graph-controls">
+                                <button id="resetGraphViewBtn" class="btn btn-outline btn-sm">
+                                    <i class="fas fa-sync"></i> Reset View
+                                </button>
+                                <button id="fitGraphBtn" class="btn btn-outline btn-sm">
+                                    <i class="fas fa-expand"></i> Fit to Screen
+                                </button>
+                                <div class="graph-legend">
+                                    <span class="legend-item"><span class="legend-color legend-pending"></span> Pending</span>
+                                    <span class="legend-item"><span class="legend-color legend-completed"></span> Completed</span>
+                                    <span class="legend-item"><span class="legend-color legend-blocked"></span> Blocked</span>
+                                </div>
+                            </div>
+                            <div class="dependency-graph-wrapper">
+                                <canvas id="dependencyGraphCanvas"></canvas>
                             </div>
                         </div>
                     </div>

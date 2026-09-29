@@ -629,6 +629,265 @@ class TaskManager {
         document.getElementById('dependencyGraphModal').classList.add('hidden');
     }
 
+    async renderDependencyGraph() {
+        const canvas = document.getElementById('dependencyGraphCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.querySelector('.dependency-graph-wrapper');
+        
+        // Set canvas size
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+        
+        // Build graph data
+        const nodes = [];
+        const edges = [];
+        
+        this.tasks.forEach(task => {
+            nodes.push({
+                id: task._id,
+                title: task.title,
+                completed: task.completed,
+                priority: task.priority,
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height - 100) + 50,
+                vx: 0,
+                vy: 0
+            });
+            
+            if (task.dependencies && task.dependencies.length > 0) {
+                task.dependencies.forEach(dep => {
+                    if (dep._id) {
+                        edges.push({
+                            from: dep._id,
+                            to: task._id
+                        });
+                    }
+                });
+            }
+        });
+        
+        // Force-directed layout
+        this.applyForceLayout(nodes, edges, canvas.width, canvas.height);
+        
+        // Draw graph
+        this.drawGraph(ctx, nodes, edges);
+        
+        // Store for interactions
+        this.graphNodes = nodes;
+        this.graphEdges = edges;
+        this.graphCanvas = canvas;
+        this.graphCtx = ctx;
+        
+        // Setup interactions
+        this.setupGraphInteractions();
+    }
+
+    applyForceLayout(nodes, edges, width, height) {
+        const iterations = 100;
+        const k = Math.sqrt((width * height) / nodes.length);
+        
+        for (let i = 0; i < iterations; i++) {
+            // Repulsion
+            for (let j = 0; j < nodes.length; j++) {
+                for (let l = j + 1; l < nodes.length; l++) {
+                    const dx = nodes[l].x - nodes[j].x;
+                    const dy = nodes[l].y - nodes[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const force = (k * k) / dist;
+                    
+                    nodes[j].vx -= (dx / dist) * force * 0.1;
+                    nodes[j].vy -= (dy / dist) * force * 0.1;
+                    nodes[l].vx += (dx / dist) * force * 0.1;
+                    nodes[l].vy += (dy / dist) * force * 0.1;
+                }
+            }
+            
+            // Attraction (edges)
+            edges.forEach(edge => {
+                const source = nodes.find(n => n.id === edge.from);
+                const target = nodes.find(n => n.id === edge.to);
+                if (source && target) {
+                    const dx = target.x - source.x;
+                    const dy = target.y - source.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const force = (dist * dist) / k;
+                    
+                    source.vx += (dx / dist) * force * 0.1;
+                    source.vy += (dy / dist) * force * 0.1;
+                    target.vx -= (dx / dist) * force * 0.1;
+                    target.vy -= (dy / dist) * force * 0.1;
+                }
+            });
+            
+            // Center gravity
+            nodes.forEach(node => {
+                node.vx -= (node.x - width / 2) * 0.01;
+                node.vy -= (node.y - height / 2) * 0.01;
+                
+                // Apply velocity
+                node.x += node.vx;
+                node.y += node.vy;
+                
+                // Damping
+                node.vx *= 0.9;
+                node.vy *= 0.9;
+                
+                // Bounds
+                node.x = Math.max(50, Math.min(width - 50, node.x));
+                node.y = Math.max(50, Math.min(height - 50, node.y));
+            });
+        }
+    }
+
+    drawGraph(ctx, nodes, edges) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        
+        // Draw edges
+        edges.forEach(edge => {
+            const source = nodes.find(n => n.id === edge.from);
+            const target = nodes.find(n => n.id === edge.to);
+            if (source && target) {
+                ctx.beginPath();
+                ctx.moveTo(source.x, source.y);
+                ctx.lineTo(target.x, target.y);
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Arrow
+                const angle = Math.atan2(target.y - source.y, target.x - source.x);
+                const arrowSize = 8;
+                ctx.beginPath();
+                ctx.moveTo(target.x, target.y);
+                ctx.lineTo(
+                    target.x - arrowSize * Math.cos(angle - Math.PI / 6),
+                    target.y - arrowSize * Math.sin(angle - Math.PI / 6)
+                );
+                ctx.lineTo(
+                    target.x - arrowSize * Math.cos(angle + Math.PI / 6),
+                    target.y - arrowSize * Math.sin(angle + Math.PI / 6)
+                );
+                ctx.closePath();
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fill();
+            }
+        });
+        
+        // Draw nodes
+        nodes.forEach(node => {
+            // Determine color based on status
+            let color = '#3b82f6'; // Default blue
+            if (node.completed) {
+                color = '#10b981'; // Green for completed
+            } else {
+                // Check if blocked
+                const isBlocked = edges.some(e => e.to === node.id && !nodes.find(n => n.id === e.from)?.completed);
+                if (isBlocked) {
+                    color = '#ef4444'; // Red for blocked
+                }
+            }
+            
+            // Draw node circle
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 25, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw task title
+            ctx.fillStyle = '#1f2937';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const title = node.title.length > 15 ? node.title.substring(0, 15) + '...' : node.title;
+            ctx.fillText(title, node.x, node.y + 40);
+        });
+    }
+
+    setupGraphInteractions() {
+        const canvas = this.graphCanvas;
+        if (!canvas) return;
+        
+        let isDragging = false;
+        let draggedNode = null;
+        
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Find clicked node
+            draggedNode = this.graphNodes.find(node => {
+                const dx = node.x - x;
+                const dy = node.y - y;
+                return Math.sqrt(dx * dx + dy * dy) < 25;
+            });
+            
+            if (draggedNode) {
+                isDragging = true;
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging && draggedNode) {
+                const rect = canvas.getBoundingClientRect();
+                draggedNode.x = e.clientX - rect.left;
+                draggedNode.y = e.clientY - rect.top;
+                this.drawGraph(this.graphCtx, this.graphNodes, this.graphEdges);
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            draggedNode = null;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            draggedNode = null;
+        });
+    }
+
+    resetGraphView() {
+        this.renderDependencyGraph();
+    }
+
+    fitGraphToScreen() {
+        if (!this.graphNodes || !this.graphCanvas) return;
+        
+        const canvas = this.graphCanvas;
+        const nodes = this.graphNodes;
+        
+        // Calculate bounds
+        const minX = Math.min(...nodes.map(n => n.x));
+        const maxX = Math.max(...nodes.map(n => n.x));
+        const minY = Math.min(...nodes.map(n => n.y));
+        const maxY = Math.max(...nodes.map(n => n.y));
+        
+        const padding = 50;
+        const scaleX = (canvas.width - padding * 2) / (maxX - minX || 1);
+        const scaleY = (canvas.height - padding * 2) / (maxY - minY || 1);
+        const scale = Math.min(scaleX, scaleY);
+        
+        // Scale and center
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        
+        nodes.forEach(node => {
+            node.x = (node.x - centerX) * scale + canvas.width / 2;
+            node.y = (node.y - centerY) * scale + canvas.height / 2;
+        });
+        
+        this.drawGraph(this.graphCtx, nodes, this.graphEdges);
+    }
+
+    hideDependencyGraph() {
+        document.getElementById('dependencyGraphModal').classList.add('hidden');
+    }
+
     showActivityHistory(taskId) {
         this.currentActivityHistoryTaskId = taskId;
         const task = this.tasks.find(t => t._id === taskId);
@@ -3262,6 +3521,14 @@ class TaskManager {
 
         document.getElementById('closeDependencyGraphModal').addEventListener('click', () => {
             this.hideDependencyGraph();
+        });
+
+        document.getElementById('resetGraphViewBtn').addEventListener('click', () => {
+            this.resetGraphView();
+        });
+
+        document.getElementById('fitGraphBtn').addEventListener('click', () => {
+            this.fitGraphToScreen();
         });
 
         // Bulk priority modal
