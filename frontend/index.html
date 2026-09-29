@@ -653,6 +653,37 @@
                     </div>
                 </div>
 
+                <!-- Bulk Actions Toolbar -->
+                <div id="bulkActionsToolbar" class="bulk-actions-toolbar hidden">
+                    <div class="bulk-actions-info">
+                        <input type="checkbox" id="selectAllTasks" class="bulk-checkbox">
+                        <span id="selectedCount">0 selected</span>
+                    </div>
+                    <div class="bulk-actions-buttons">
+                        <button class="btn btn-outline btn-sm bulk-action-btn" data-action="complete" title="Mark Complete">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm bulk-action-btn" data-action="favorite" title="Add to Favorites">
+                            <i class="fas fa-star"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm bulk-action-btn" data-action="archive" title="Archive">
+                            <i class="fas fa-archive"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm bulk-action-btn" data-action="delete" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm bulk-action-btn" data-action="priority" title="Set Priority">
+                            <i class="fas fa-flag"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm bulk-action-btn" data-action="category" title="Set Category">
+                            <i class="fas fa-folder"></i>
+                        </button>
+                        <button class="btn btn-outline btn-sm bulk-action-btn" data-action="clear" title="Clear Selection">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <div id="taskList" class="task-list">
                     <!-- Tasks will be dynamically added here -->
                 </div>

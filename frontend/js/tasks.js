@@ -2026,6 +2026,102 @@ class TaskManager {
         document.getElementById('bulkDeleteBtn').disabled = !hasSelection;
     }
 
+    updateBulkActionsToolbar() {
+        const toolbar = document.getElementById('bulkActionsToolbar');
+        const selectedCount = document.getElementById('selectedCount');
+        const selectAllCheckbox = document.getElementById('selectAllTasks');
+        
+        if (this.selectedTasks.size > 0) {
+            toolbar.classList.remove('hidden');
+            selectedCount.textContent = `${this.selectedTasks.size} selected`;
+            selectAllCheckbox.checked = this.selectedTasks.size === this.tasks.length;
+        } else {
+            toolbar.classList.add('hidden');
+            selectAllCheckbox.checked = false;
+        }
+    }
+
+    async handleBulkAction(action) {
+        if (this.selectedTasks.size === 0) {
+            this.showMessage('No tasks selected', 'error');
+            return;
+        }
+
+        const taskIds = Array.from(this.selectedTasks);
+        
+        switch(action) {
+            case 'complete':
+                await this.bulkCompleteSelected(taskIds);
+                break;
+            case 'favorite':
+                await this.bulkFavoriteSelected(taskIds);
+                break;
+            case 'archive':
+                await this.bulkArchiveSelected(taskIds);
+                break;
+            case 'delete':
+                await this.bulkDeleteSelected(taskIds);
+                break;
+            case 'priority':
+                this.showBulkPriorityModal();
+                break;
+            case 'category':
+                this.showBulkCategoryModal();
+                break;
+            case 'clear':
+                this.clearBulkSelection();
+                break;
+        }
+    }
+
+    async bulkCompleteSelected(taskIds) {
+        if (!confirm(`Complete ${taskIds.length} selected tasks?`)) return;
+        
+        const promises = taskIds.map(taskId => this.toggleTask(taskId));
+        await Promise.all(promises);
+        this.clearBulkSelection();
+        this.showMessage('Tasks completed successfully!', 'success');
+    }
+
+    async bulkFavoriteSelected(taskIds) {
+        const promises = taskIds.map(taskId => this.toggleFavorite(taskId));
+        await Promise.all(promises);
+        this.clearBulkSelection();
+        this.showMessage('Tasks added to favorites!', 'success');
+    }
+
+    async bulkArchiveSelected(taskIds) {
+        if (!confirm(`Archive ${taskIds.length} selected tasks?`)) return;
+        
+        const promises = taskIds.map(taskId => this.toggleArchive(taskId));
+        await Promise.all(promises);
+        this.clearBulkSelection();
+        this.showMessage('Tasks archived successfully!', 'success');
+    }
+
+    async bulkDeleteSelected(taskIds) {
+        if (!confirm(`Delete ${taskIds.length} selected tasks permanently?`)) return;
+        
+        const promises = taskIds.map(taskId => this.deleteTask(taskId));
+        await Promise.all(promises);
+        this.clearBulkSelection();
+        this.showMessage('Tasks deleted successfully!', 'success');
+    }
+
+    clearBulkSelection() {
+        this.selectedTasks.clear();
+        document.getElementById('selectAllTasks').checked = false;
+        this.updateBulkActionsToolbar();
+        this.renderTasks();
+    }
+
+    selectAllVisibleTasks() {
+        const visibleTasks = this.getFilteredTasks();
+        visibleTasks.forEach(task => this.selectedTasks.add(task._id));
+        this.updateBulkActionsToolbar();
+        this.renderTasks();
+    }
+
     async bulkCompleteTasks() {
         if (this.selectedTasks.size === 0) {
             this.showMessage('No tasks selected', 'error');
@@ -3122,6 +3218,22 @@ class TaskManager {
 
         document.getElementById('cancelTemplatePreviewBtn').addEventListener('click', () => {
             this.hideTemplatePreview();
+        });
+
+        // Bulk actions toolbar
+        document.getElementById('selectAllTasks').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                this.selectAllVisibleTasks();
+            } else {
+                this.clearBulkSelection();
+            }
+        });
+
+        document.querySelectorAll('.bulk-action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.target.closest('.bulk-action-btn').dataset.action;
+                this.handleBulkAction(action);
+            });
         });
 
         // Tags modal
@@ -5198,16 +5310,16 @@ class TaskManager {
             
             // Handle bulk selection
             if (bulkSelect) {
-                const taskId = bulkSelect;
-                this.toggleTaskSelection(taskId);
+                e.stopPropagation();
+                this.toggleTaskSelection(bulkSelect);
+                this.updateBulkActionsToolbar();
                 return;
             }
             
-            if (!action) return;
-            
-            // Handle timer actions (they have data-task-id directly on button)
-            const timerTaskId = e.target.dataset.taskId || e.target.closest('[data-task-id]')?.dataset.taskId;
-            if (timerTaskId && ['startTimer', 'stopTimer', 'resetTimer'].includes(action)) {
+            const timerTaskId = taskItem?.dataset.taskId;
+
+            // Handle timer actions
+            if (action && action.startsWith('timer')) {
                 switch(action) {
                     case 'startTimer':
                         this.startTimer(timerTaskId);
