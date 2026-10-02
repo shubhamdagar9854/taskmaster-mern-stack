@@ -1136,19 +1136,37 @@ class TaskManager {
         this.currentReminderTaskId = taskId;
         const task = this.tasks.find(t => t._id === taskId);
         
+        // Initialize multiple reminders array
+        this.multipleReminders = [];
+        
         // Pre-fill with existing reminder if any
         if (task && task.reminder && task.reminder.time) {
             const reminderTime = new Date(task.reminder.time);
             const offset = reminderTime.getTimezoneOffset() * 60000;
             const localISOTime = new Date(reminderTime.getTime() - offset).toISOString().slice(0, 16);
             document.getElementById('reminderTime').value = localISOTime;
+            document.getElementById('reminderType').value = task.reminder.type || 'in-app';
+            document.getElementById('reminderRepeat').value = task.reminder.repeat || 'none';
             document.getElementById('reminderMessage').value = task.reminder.message || '';
             document.getElementById('removeReminderBtn').classList.remove('hidden');
+            
+            // Add to multiple reminders
+            this.multipleReminders.push({
+                time: localISOTime,
+                type: task.reminder.type || 'in-app',
+                repeat: task.reminder.repeat || 'none',
+                message: task.reminder.message || ''
+            });
         } else {
             document.getElementById('reminderTime').value = '';
+            document.getElementById('reminderType').value = 'in-app';
+            document.getElementById('reminderRepeat').value = 'none';
             document.getElementById('reminderMessage').value = '';
             document.getElementById('removeReminderBtn').classList.add('hidden');
         }
+        
+        // Render multiple reminders list
+        this.renderMultipleReminders();
         
         document.getElementById('reminderModal').classList.remove('hidden');
     }
@@ -1156,6 +1174,180 @@ class TaskManager {
     hideReminderModal() {
         document.getElementById('reminderModal').classList.add('hidden');
         this.currentReminderTaskId = null;
+        this.multipleReminders = [];
+    }
+
+    addMultipleReminder() {
+        const time = document.getElementById('reminderTime').value;
+        const type = document.getElementById('reminderType').value;
+        const repeat = document.getElementById('reminderRepeat').value;
+        const message = document.getElementById('reminderMessage').value;
+        
+        if (!time) {
+            this.showMessage('Please select a reminder time', 'error');
+            return;
+        }
+        
+        this.multipleReminders.push({ time, type, repeat, message });
+        this.renderMultipleReminders();
+        
+        // Clear form for next reminder
+        document.getElementById('reminderTime').value = '';
+        document.getElementById('reminderMessage').value = '';
+    }
+
+    removeMultipleReminder(index) {
+        this.multipleReminders.splice(index, 1);
+        this.renderMultipleReminders();
+    }
+
+    renderMultipleReminders() {
+        const container = document.getElementById('multipleRemindersList');
+        container.innerHTML = '';
+        
+        this.multipleReminders.forEach((reminder, index) => {
+            const reminderEl = document.createElement('div');
+            reminderEl.className = 'multiple-reminder-item';
+            reminderEl.innerHTML = `
+                <div class="reminder-info">
+                    <i class="fas fa-clock"></i>
+                    <span>${new Date(reminder.time).toLocaleString()}</span>
+                    <span class="reminder-type-badge">${reminder.type}</span>
+                    ${reminder.repeat !== 'none' ? `<span class="reminder-repeat-badge">${reminder.repeat}</span>` : ''}
+                </div>
+                <button class="btn btn-icon btn-sm remove-reminder-btn" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(reminderEl);
+        });
+        
+        // Add event listeners for remove buttons
+        container.querySelectorAll('.remove-reminder-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.closest('.remove-reminder-btn').dataset.index);
+                this.removeMultipleReminder(index);
+            });
+        });
+    }
+
+    showNotificationCenter() {
+        document.getElementById('notificationCenter').classList.remove('hidden');
+        this.renderNotifications();
+    }
+
+    hideNotificationCenter() {
+        document.getElementById('notificationCenter').classList.add('hidden');
+    }
+
+    renderNotifications() {
+        const container = document.getElementById('notificationList');
+        container.innerHTML = '';
+        
+        if (!this.notifications || this.notifications.length === 0) {
+            container.innerHTML = '<div class="no-notifications"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>';
+            return;
+        }
+        
+        this.notifications.forEach(notification => {
+            const notificationEl = document.createElement('div');
+            notificationEl.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
+            notificationEl.innerHTML = `
+                <div class="notification-icon">
+                    <i class="fas ${this.getNotificationIcon(notification.type)}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${new Date(notification.timestamp).toLocaleString()}</div>
+                </div>
+                <button class="btn btn-icon btn-sm mark-read-btn" data-id="${notification._id}">
+                    <i class="fas fa-check"></i>
+                </button>
+            `;
+            container.appendChild(notificationEl);
+        });
+        
+        // Add event listeners for mark read buttons
+        container.querySelectorAll('.mark-read-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.closest('.mark-read-btn').dataset.id;
+                this.markNotificationRead(id);
+            });
+        });
+        
+        this.updateNotificationBadge();
+    }
+
+    getNotificationIcon(type) {
+        const icons = {
+            'reminder': 'fa-bell',
+            'due-date': 'fa-calendar-exclamation',
+            'overdue': 'fa-exclamation-circle',
+            'completed': 'fa-check-circle',
+            'dependency': 'fa-link',
+            'default': 'fa-info-circle'
+        };
+        return icons[type] || icons['default'];
+    }
+
+    addNotification(title, message, type = 'default') {
+        if (!this.notifications) {
+            this.notifications = [];
+        }
+        
+        const notification = {
+            _id: Date.now().toString(),
+            title,
+            message,
+            type,
+            timestamp: new Date().toISOString(),
+            read: false
+        };
+        
+        this.notifications.unshift(notification);
+        this.updateNotificationBadge();
+        
+        // Show browser notification if permitted
+        if (Notification.permission === 'granted') {
+            new Notification(title, { body: message });
+        }
+    }
+
+    markNotificationRead(id) {
+        const notification = this.notifications.find(n => n._id === id);
+        if (notification) {
+            notification.read = true;
+            this.renderNotifications();
+        }
+    }
+
+    markAllNotificationsRead() {
+        this.notifications.forEach(n => n.read = true);
+        this.renderNotifications();
+    }
+
+    clearAllNotifications() {
+        this.notifications = [];
+        this.renderNotifications();
+    }
+
+    updateNotificationBadge() {
+        const badge = document.getElementById('notificationBadge');
+        const unreadCount = this.notifications ? this.notifications.filter(n => !n.read).length : 0;
+        
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
     }
 
     showTemplatesModal() {
@@ -3389,6 +3581,23 @@ class TaskManager {
     }
 
     setupEventListeners() {
+        // Notification bell button
+        document.getElementById('notificationBellBtn').addEventListener('click', () => {
+            this.showNotificationCenter();
+        });
+
+        document.getElementById('closeNotificationCenter').addEventListener('click', () => {
+            this.hideNotificationCenter();
+        });
+
+        document.getElementById('markAllReadBtn').addEventListener('click', () => {
+            this.markAllNotificationsRead();
+        });
+
+        document.getElementById('clearAllNotificationsBtn').addEventListener('click', () => {
+            this.clearAllNotifications();
+        });
+
         // Progress input
         document.getElementById('taskProgress').addEventListener('input', (e) => {
             document.getElementById('progressValue').textContent = e.target.value + '%';
@@ -3594,6 +3803,11 @@ class TaskManager {
                 const minutes = parseInt(e.target.closest('.btn').dataset.minutes);
                 this.setQuickReminder(minutes);
             });
+        });
+
+        // Add multiple reminder button
+        document.getElementById('addMultipleReminderBtn').addEventListener('click', () => {
+            this.addMultipleReminder();
         });
 
         // Time tracking modal

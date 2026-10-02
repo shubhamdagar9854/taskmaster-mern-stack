@@ -25,6 +25,10 @@
                     <button id="darkModeToggle" class="btn-icon" title="Toggle Dark Mode">
                         <i class="fas fa-moon"></i>
                     </button>
+                    <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span id="notificationBadge" class="notification-badge hidden">0</span>
+                    </button>
                     <button id="loginBtn" class="btn btn-outline">Login</button>
                     <button id="registerBtn" class="btn btn-primary">Register</button>
                     <div id="userInfo" class="user-info hidden">
@@ -2074,6 +2078,15 @@
                                     <i class="fas fa-clock"></i> 1 day
                                 </button>
                             </div>
+                            <div class="multiple-reminders-section">
+                                <h4>Multiple Reminders</h4>
+                                <div id="multipleRemindersList" class="multiple-reminders-list">
+                                    <!-- Multiple reminders will be added here -->
+                                </div>
+                                <button id="addMultipleReminderBtn" class="btn btn-outline btn-sm">
+                                    <i class="fas fa-plus"></i> Add Another Reminder
+                                </button>
+                            </div>
                             <div class="modal-actions">
                                 <button id="setReminderBtn" class="btn btn-primary">
                                     <i class="fas fa-bell"></i> Set Reminder
@@ -2083,6 +2096,27 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Notification Center -->
+                <div id="notificationCenter" class="notification-center hidden">
+                    <div class="notification-header">
+                        <h3><i class="fas fa-bell"></i> Notifications</h3>
+                        <button id="closeNotificationCenter" class="btn-icon">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="notification-actions">
+                        <button id="markAllReadBtn" class="btn btn-outline btn-sm">
+                            <i class="fas fa-check-double"></i> Mark All Read
+                        </button>
+                        <button id="clearAllNotificationsBtn" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Clear All
+                        </button>
+                    </div>
+                    <div id="notificationList" class="notification-list">
+                        <!-- Notifications will be rendered here -->
                     </div>
                 </div>
 
