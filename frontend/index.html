@@ -1717,26 +1717,69 @@
 
                 <!-- Time Report Modal -->
                 <div id="timeReportModal" class="modal hidden">
-                    <div class="modal-content">
+                    <div class="modal-content modal-large">
                         <div class="modal-header">
-                            <h3>Time Tracking Report</h3>
+                            <h3>⏱️ Time Tracking Report</h3>
                             <button id="closeTimeReportModal" class="btn-icon">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="modal-body">
+                            <div class="report-filters">
+                                <div class="filter-group">
+                                    <label>Date Range:</label>
+                                    <select id="timeReportDateRange" class="form-select">
+                                        <option value="today">Today</option>
+                                        <option value="week">This Week</option>
+                                        <option value="month" selected>This Month</option>
+                                        <option value="all">All Time</option>
+                                    </select>
+                                </div>
+                                <button id="exportTimeReportBtn" class="btn btn-outline btn-sm">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                            </div>
                             <div class="time-report-summary">
                                 <div class="report-card">
+                                    <div class="report-icon">📊</div>
                                     <div class="report-label">Total Tasks Tracked</div>
                                     <div class="report-value" id="totalTasksTracked">0</div>
                                 </div>
                                 <div class="report-card">
+                                    <div class="report-icon">⏰</div>
                                     <div class="report-label">Total Time</div>
                                     <div class="report-value" id="totalTimeReport">0h 0m</div>
                                 </div>
+                                <div class="report-card">
+                                    <div class="report-icon">⚡</div>
+                                    <div class="report-label">Avg Time/Task</div>
+                                    <div class="report-value" id="avgTimePerTask">0h 0m</div>
+                                </div>
+                                <div class="report-card">
+                                    <div class="report-icon">🎯</div>
+                                    <div class="report-label">Productivity Score</div>
+                                    <div class="report-value" id="productivityScore">0%</div>
+                                </div>
                             </div>
-                            <div class="time-report-tasks" id="timeReportTasks">
-                                <!-- Time report tasks will be dynamically added here -->
+                            <div class="time-report-charts">
+                                <div class="chart-section">
+                                    <h4>📈 Daily Activity</h4>
+                                    <div class="chart-container">
+                                        <canvas id="dailyActivityChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="chart-section">
+                                    <h4>📂 Time by Category</h4>
+                                    <div class="chart-container">
+                                        <canvas id="categoryTimeChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="time-report-tasks">
+                                <h4>📋 Task Breakdown</h4>
+                                <div id="timeReportTasks">
+                                    <!-- Time report tasks will be dynamically added here -->
+                                </div>
                             </div>
                         </div>
                     </div>

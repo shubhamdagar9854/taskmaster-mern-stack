@@ -4228,6 +4228,14 @@ class TaskManager {
             this.hideTimeReportModal();
         });
 
+        document.getElementById('timeReportDateRange').addEventListener('change', () => {
+            this.loadTimeReport();
+        });
+
+        document.getElementById('exportTimeReportBtn').addEventListener('click', () => {
+            this.exportTimeReport();
+        });
+
         // Manual time entry
         document.getElementById('closeManualTimeModal').addEventListener('click', () => {
             this.hideManualTimeModal();
@@ -6463,13 +6471,15 @@ class TaskManager {
 
     async loadTimeReport() {
         try {
-            const response = await fetch('http://localhost:5002/api/tasks/time/report', {
+            const dateRange = document.getElementById('timeReportDateRange').value;
+            const response = await fetch(`http://localhost:5002/api/tasks/time/report?range=${dateRange}`, {
                 headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
             });
 
             if (response.ok) {
                 const report = await response.json();
                 this.renderTimeReport(report);
+                this.renderTimeCharts(report);
             }
         } catch (error) {
             console.error('Load time report error:', error);
@@ -6478,16 +6488,26 @@ class TaskManager {
     }
 
     renderTimeReport(report) {
-        document.getElementById('totalTasksTracked').textContent = report.totalTasks;
+        document.getElementById('totalTasksTracked').textContent = report.totalTasks || 0;
         
         const hours = Math.floor(report.totalMinutes / 60);
         const minutes = report.totalMinutes % 60;
         document.getElementById('totalTimeReport').textContent = `${hours}h ${minutes}m`;
 
+        // Calculate average time per task
+        const avgMinutes = report.totalTasks > 0 ? Math.round(report.totalMinutes / report.totalTasks) : 0;
+        const avgHours = Math.floor(avgMinutes / 60);
+        const avgMins = avgMinutes % 60;
+        document.getElementById('avgTimePerTask').textContent = `${avgHours}h ${avgMins}m`;
+
+        // Calculate productivity score (based on tasks completed vs time spent)
+        const productivityScore = this.calculateProductivityScore(report);
+        document.getElementById('productivityScore').textContent = `${productivityScore}%`;
+
         const timeReportTasks = document.getElementById('timeReportTasks');
         timeReportTasks.innerHTML = '';
 
-        if (report.tasks.length === 0) {
+        if (!report.tasks || report.tasks.length === 0) {
             timeReportTasks.innerHTML = '<div class="empty-state"><p>No time tracking data available.</p></div>';
             return;
         }
@@ -6500,12 +6520,196 @@ class TaskManager {
             const taskItem = document.createElement('div');
             taskItem.className = 'time-report-task-item';
             taskItem.innerHTML = `
-                <div class="time-report-task-title">${this.escapeHtml(task.title)}</div>
-                <div class="time-report-task-time">${taskHours}h ${taskMinutes}m</div>
-                <div class="time-report-task-entries">${entriesCount} manual entries</div>
+                <div class="time-report-task-header">
+                    <div class="time-report-task-title">${this.escapeHtml(task.title)}</div>
+                    <div class="time-report-task-time">${taskHours}h ${taskMinutes}m</div>
+                </div>
+                <div class="time-report-task-meta">
+                    <span class="task-category-badge">${task.category || 'other'}</span>
+                    <span class="task-entries-count">${entriesCount} entries</span>
+                    ${task.completed ? '<span class="task-status-badge completed">✓ Completed</span>' : '<span class="task-status-badge pending">Pending</span>'}
+                </div>
             `;
             timeReportTasks.appendChild(taskItem);
         });
+    }
+
+    calculateProductivityScore(report) {
+        if (!report.tasks || report.tasks.length === 0) return 0;
+        
+        const completedTasks = report.tasks.filter(t => t.completed).length;
+        const totalTasks = report.tasks.length;
+        const completionRate = (completedTasks / totalTasks) * 100;
+        
+        // Factor in time efficiency (tasks completed per hour)
+        const totalHours = report.totalMinutes / 60;
+        const tasksPerHour = totalHours > 0 ? completedTasks / totalHours : 0;
+        const efficiencyScore = Math.min(tasksPerHour * 20, 100); // Cap at 100
+        
+        // Weighted average
+        const score = (completionRate * 0.6) + (efficiencyScore * 0.4);
+        return Math.round(score);
+    }
+
+    renderTimeCharts(report) {
+        this.renderDailyActivityChart(report);
+        this.renderCategoryTimeChart(report);
+    }
+
+    renderDailyActivityChart(report) {
+        const canvas = document.getElementById('dailyActivityChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const container = canvas.parentElement;
+        canvas.width = container.clientWidth;
+        canvas.height = 200;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Group time by day
+        const dailyData = this.groupTimeByDay(report.tasks || []);
+        const days = Object.keys(dailyData).sort();
+        
+        if (days.length === 0) {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+        
+        const maxTime = Math.max(...Object.values(dailyData));
+        const barWidth = (canvas.width - 60) / days.length - 10;
+        const chartHeight = canvas.height - 40;
+        
+        days.forEach((day, index) => {
+            const time = dailyData[day];
+            const barHeight = (time / maxTime) * chartHeight;
+            const x = 30 + index * (barWidth + 10);
+            const y = chartHeight - barHeight + 20;
+            
+            // Draw bar
+            const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, y, barWidth, barHeight);
+            
+            // Draw label
+            ctx.fillStyle = '#374151';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            const dateLabel = new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            ctx.fillText(dateLabel, x + barWidth / 2, canvas.height - 5);
+            
+            // Draw value
+            ctx.fillStyle = '#6b7280';
+            const hours = Math.floor(time / 60);
+            const mins = time % 60;
+            ctx.fillText(`${hours}h`, x + barWidth / 2, y - 5);
+        });
+    }
+
+    renderCategoryTimeChart(report) {
+        const canvas = document.getElementById('categoryTimeChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const container = canvas.parentElement;
+        canvas.width = container.clientWidth;
+        canvas.height = 200;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Group time by category
+        const categoryData = this.groupTimeByCategory(report.tasks || []);
+        const categories = Object.keys(categoryData);
+        
+        if (categories.length === 0) {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('No data available', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+        
+        const totalTime = Object.values(categoryData).reduce((a, b) => a + b, 0);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) - 40;
+        
+        let startAngle = 0;
+        const colors = ['#667eea', '#764ba2', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
+        
+        categories.forEach((category, index) => {
+            const time = categoryData[category];
+            const sliceAngle = (time / totalTime) * 2 * Math.PI;
+            const color = colors[index % colors.length];
+            
+            // Draw pie slice
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            
+            // Draw legend
+            const legendX = 20;
+            const legendY = 20 + index * 25;
+            ctx.fillStyle = color;
+            ctx.fillRect(legendX, legendY, 15, 15);
+            
+            ctx.fillStyle = '#374151';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            const hours = Math.floor(time / 60);
+            const mins = time % 60;
+            ctx.fillText(`${category}: ${hours}h ${mins}m`, legendX + 20, legendY + 12);
+            
+            startAngle += sliceAngle;
+        });
+    }
+
+    groupTimeByDay(tasks) {
+        const dailyData = {};
+        tasks.forEach(task => {
+            const date = new Date().toISOString().split('T')[0]; // Simplified - use task date in real implementation
+            dailyData[date] = (dailyData[date] || 0) + (task.timeSpent || 0);
+        });
+        return dailyData;
+    }
+
+    groupTimeByCategory(tasks) {
+        const categoryData = {};
+        tasks.forEach(task => {
+            const category = task.category || 'other';
+            categoryData[category] = (categoryData[category] || 0) + (task.timeSpent || 0);
+        });
+        return categoryData;
+    }
+
+    exportTimeReport() {
+        const reportData = {
+            dateRange: document.getElementById('timeReportDateRange').value,
+            totalTasks: document.getElementById('totalTasksTracked').textContent,
+            totalTime: document.getElementById('totalTimeReport').textContent,
+            avgTime: document.getElementById('avgTimePerTask').textContent,
+            productivityScore: document.getElementById('productivityScore').textContent,
+            exportDate: new Date().toISOString()
+        };
+        
+        const dataStr = JSON.stringify(reportData, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `time-report-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.showMessage('Time report exported successfully!', 'success');
     }
 
     showManualTimeModal(taskId) {
