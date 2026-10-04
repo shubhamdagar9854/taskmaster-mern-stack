@@ -1693,24 +1693,78 @@
 
                 <!-- Share Modal -->
                 <div id="shareModal" class="modal hidden">
-                    <div class="modal-content">
+                    <div class="modal-content modal-large">
                         <div class="modal-header">
-                            <h3>Share Task</h3>
+                            <h3>🤝 Share Task</h3>
                             <button id="closeShareModal" class="btn-icon">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div class="form-group">
-                                <label for="shareEmail">Share with (email):</label>
-                                <input type="email" id="shareEmail" class="form-input" placeholder="Enter user email">
+                            <div class="share-tabs">
+                                <button class="share-tab active" data-tab="people">
+                                    <i class="fas fa-users"></i> People
+                                </button>
+                                <button class="share-tab" data-tab="link">
+                                    <i class="fas fa-link"></i> Share Link
+                                </button>
                             </div>
-                            <div class="shared-users-list" id="sharedUsersList">
-                                <!-- Shared users will be dynamically added here -->
+                            
+                            <div class="share-tab-content active" id="peopleTab">
+                                <div class="form-group">
+                                    <label for="shareEmail">Share with (email):</label>
+                                    <div class="share-input-group">
+                                        <input type="email" id="shareEmail" class="form-input" placeholder="Enter user email">
+                                        <select id="sharePermission" class="form-select">
+                                            <option value="view">Can View</option>
+                                            <option value="edit">Can Edit</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                        <button id="addShareUserBtn" class="btn btn-primary">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="shared-users-section">
+                                    <h4>People with access</h4>
+                                    <div class="shared-users-list" id="sharedUsersList">
+                                        <!-- Shared users will be dynamically added here -->
+                                    </div>
+                                </div>
                             </div>
-                            <button id="shareTaskBtn" class="btn btn-primary">
-                                <i class="fas fa-share-alt"></i> Share Task
-                            </button>
+                            
+                            <div class="share-tab-content" id="linkTab">
+                                <div class="form-group">
+                                    <label>Share Link</label>
+                                    <div class="share-link-group">
+                                        <input type="text" id="shareLink" class="form-input" readonly>
+                                        <button id="copyShareLinkBtn" class="btn btn-outline">
+                                            <i class="fas fa-copy"></i> Copy
+                                        </button>
+                                        <button id="generateShareLinkBtn" class="btn btn-primary">
+                                            <i class="fas fa-sync"></i> Generate
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="share-link-options">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="allowLinkEdit" checked>
+                                        <span>Allow editing via link</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="linkExpiry">
+                                        <span>Set expiry date</span>
+                                    </label>
+                                    <input type="date" id="linkExpiryDate" class="form-input" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <div class="share-activity-section">
+                                <h4>📋 Share Activity</h4>
+                                <div id="shareActivityLog" class="share-activity-log">
+                                    <!-- Activity log will be dynamically added here -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

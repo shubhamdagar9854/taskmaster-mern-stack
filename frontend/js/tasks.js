@@ -4209,6 +4209,37 @@ class TaskManager {
             this.shareTask();
         });
 
+        document.getElementById('addShareUserBtn').addEventListener('click', () => {
+            this.shareTask();
+        });
+
+        document.getElementById('generateShareLinkBtn').addEventListener('click', () => {
+            this.generateShareLink();
+        });
+
+        document.getElementById('copyShareLinkBtn').addEventListener('click', () => {
+            this.copyShareLink();
+        });
+
+        document.getElementById('linkExpiry').addEventListener('change', (e) => {
+            document.getElementById('linkExpiryDate').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        // Share tabs
+        document.querySelectorAll('.share-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.closest('.share-tab').dataset.tab;
+                
+                // Update active tab
+                document.querySelectorAll('.share-tab').forEach(t => t.classList.remove('active'));
+                e.target.closest('.share-tab').classList.add('active');
+                
+                // Update content
+                document.querySelectorAll('.share-tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`${tabName}Tab`).classList.add('active');
+            });
+        });
+
         // Load shared tasks when filter changes
         document.getElementById('taskFilter').addEventListener('change', (e) => {
             this.filter = e.target.value;
@@ -6258,7 +6289,10 @@ class TaskManager {
         if (!task) return;
 
         document.getElementById('shareEmail').value = '';
+        document.getElementById('sharePermission').value = 'view';
+        document.getElementById('shareLink').value = '';
         this.renderSharedUsers(task);
+        this.renderShareActivity(task);
         document.getElementById('shareModal').classList.remove('hidden');
     }
 
@@ -6269,6 +6303,8 @@ class TaskManager {
 
     async shareTask() {
         const email = document.getElementById('shareEmail').value.trim();
+        const permission = document.getElementById('sharePermission').value;
+        
         if (!email) {
             this.showMessage('Please enter an email address', 'error');
             return;
@@ -6283,7 +6319,7 @@ class TaskManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${window.authManager.getToken()}`
                 },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, permission })
             });
 
             const data = await response.json();
@@ -6305,38 +6341,153 @@ class TaskManager {
         }
     }
 
+    async removeShare(userId) {
+        if (!this.currentShareTaskId) return;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentShareTaskId}/share/${userId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                const task = this.tasks.find(t => t._id === this.currentShareTaskId);
+                if (task) {
+                    this.renderSharedUsers(task);
+                }
+                this.showMessage('Share removed successfully!', 'success');
+            } else {
+                this.showMessage('Failed to remove share', 'error');
+            }
+        } catch (error) {
+            console.error('Remove share error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     renderSharedUsers(task) {
-        const sharedUsersList = document.getElementById('sharedUsersList');
-        sharedUsersList.innerHTML = '';
+        const container = document.getElementById('sharedUsersList');
+        container.innerHTML = '';
 
         if (!task.sharedWith || task.sharedWith.length === 0) {
-            sharedUsersList.innerHTML = '<p style="color: #666; font-size: 0.9rem;">Task not shared with anyone yet.</p>';
+            container.innerHTML = '<div class="no-shared-users"><p>No users have access yet</p></div>';
             return;
         }
 
         task.sharedWith.forEach(user => {
-            const userName = user.username || 'Unknown User';
-            const userEmail = user.email || 'No email';
-            const initial = userName.charAt(0).toUpperCase();
-
             const userItem = document.createElement('div');
             userItem.className = 'shared-user-item';
             userItem.innerHTML = `
-                <div class="shared-user-info">
-                    <div class="shared-user-avatar">${initial}</div>
-                    <div>
-                        <div class="shared-user-name">${this.escapeHtml(userName)}</div>
-                        <div class="shared-user-email">${this.escapeHtml(userEmail)}</div>
-                    </div>
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
                 </div>
-                <button class="remove-share-btn" data-remove-share="${user._id}">Remove</button>
+                <div class="user-info">
+                    <div class="user-email">${this.escapeHtml(user.email)}</div>
+                    <div class="user-permission permission-${user.permission}">${this.getPermissionLabel(user.permission)}</div>
+                </div>
+                <button class="btn btn-icon btn-sm remove-share-btn" data-user-id="${user.userId}">
+                    <i class="fas fa-times"></i>
+                </button>
             `;
+            container.appendChild(userItem);
+        });
 
-            userItem.querySelector('[data-remove-share]').addEventListener('click', () => {
-                this.removeShare(task._id, user._id);
+        // Add event listeners for remove buttons
+        container.querySelectorAll('.remove-share-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const userId = e.target.closest('.remove-share-btn').dataset.userId;
+                this.removeShare(userId);
+            });
+        });
+    }
+
+    getPermissionLabel(permission) {
+        const labels = {
+            'view': 'Can View',
+            'edit': 'Can Edit',
+            'admin': 'Admin'
+        };
+        return labels[permission] || 'Can View';
+    }
+
+    renderShareActivity(task) {
+        const container = document.getElementById('shareActivityLog');
+        container.innerHTML = '';
+
+        if (!task.shareActivity || task.shareActivity.length === 0) {
+            container.innerHTML = '<div class="no-activity"><p>No share activity yet</p></div>';
+            return;
+        }
+
+        task.shareActivity.forEach(activity => {
+            const activityItem = document.createElement('div');
+            activityItem.className = 'share-activity-item';
+            activityItem.innerHTML = `
+                <div class="activity-icon">
+                    <i class="fas ${this.getActivityIcon(activity.action)}"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-text">${this.escapeHtml(activity.message)}</div>
+                    <div class="activity-time">${new Date(activity.timestamp).toLocaleString()}</div>
+                </div>
+            `;
+            container.appendChild(activityItem);
+        });
+    }
+
+    getActivityIcon(action) {
+        const icons = {
+            'shared': 'fa-share',
+            'removed': 'fa-user-minus',
+            'permission-changed': 'fa-user-shield',
+            'link-generated': 'fa-link',
+            'link-accessed': 'fa-external-link-alt'
+        };
+        return icons[action] || 'fa-info-circle';
+    }
+
+    async generateShareLink() {
+        if (!this.currentShareTaskId) return;
+
+        const allowEdit = document.getElementById('allowLinkEdit').checked;
+        const linkExpiry = document.getElementById('linkExpiry').checked;
+        const expiryDate = linkExpiry ? document.getElementById('linkExpiryDate').value : null;
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentShareTaskId}/share-link`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ allowEdit, expiryDate })
             });
 
-            sharedUsersList.appendChild(userItem);
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById('shareLink').value = data.shareLink;
+                this.showMessage('Share link generated!', 'success');
+            } else {
+                this.showMessage('Failed to generate share link', 'error');
+            }
+        } catch (error) {
+            console.error('Generate share link error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    copyShareLink() {
+        const shareLink = document.getElementById('shareLink').value;
+        if (!shareLink) {
+            this.showMessage('No share link to copy', 'error');
+            return;
+        }
+
+        navigator.clipboard.writeText(shareLink).then(() => {
+            this.showMessage('Link copied to clipboard!', 'success');
+        }).catch(() => {
+            this.showMessage('Failed to copy link', 'error');
         });
     }
 
