@@ -25,6 +25,10 @@
                     <button id="darkModeToggle" class="btn-icon" title="Toggle Dark Mode">
                         <i class="fas fa-moon"></i>
                     </button>
+                    <button id="voiceCommandBtn" class="btn-icon voice-command-btn" title="Voice Commands">
+                        <i class="fas fa-microphone"></i>
+                        <span id="voiceStatus" class="voice-status hidden"></span>
+                    </button>
                     <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span id="notificationBadge" class="notification-badge hidden">0</span>
@@ -2214,6 +2218,65 @@
                     </div>
                     <div id="notificationList" class="notification-list">
                         <!-- Notifications will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Voice Command Panel -->
+                <div id="voiceCommandPanel" class="voice-command-panel hidden">
+                    <div class="voice-command-header">
+                        <h3>🎤 Voice Commands</h3>
+                        <button id="closeVoicePanel" class="btn-icon">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="voice-command-body">
+                        <div class="voice-visualizer">
+                            <div class="voice-wave" id="voiceWave">
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                            </div>
+                        </div>
+                        <div class="voice-transcript" id="voiceTranscript">
+                            <p id="voiceStatusText">Click the microphone to start listening...</p>
+                        </div>
+                        <div class="voice-commands-list">
+                            <h4>Available Commands:</h4>
+                            <div class="command-item">
+                                <span class="command-text">"Add task [task name]"</span>
+                                <span class="command-desc">Create a new task</span>
+                            </div>
+                            <div class="command-item">
+                                <span class="command-text">"Complete task [task name]"</span>
+                                <span class="command-desc">Mark task as completed</span>
+                            </div>
+                            <div class="command-item">
+                                <span class="command-text">"Delete task [task name]"</span>
+                                <span class="command-desc">Delete a task</span>
+                            </div>
+                            <div class="command-item">
+                                <span class="command-text">"Show all tasks"</span>
+                                <span class="command-desc">Display all tasks</span>
+                            </div>
+                            <div class="command-item">
+                                <span class="command-text">"Show completed tasks"</span>
+                                <span class="command-desc">Display completed tasks</span>
+                            </div>
+                            <div class="command-item">
+                                <span class="command-text">"Show pending tasks"</span>
+                                <span class="command-desc">Display pending tasks</span>
+                            </div>
+                            <div class="command-item">
+                                <span class="command-text">"Show high priority tasks"</span>
+                                <span class="command-desc">Filter by high priority</span>
+                            </div>
+                            <div class="command-item">
+                                <span class="command-text">"Toggle dark mode"</span>
+                                <span class="command-desc">Switch dark mode on/off</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

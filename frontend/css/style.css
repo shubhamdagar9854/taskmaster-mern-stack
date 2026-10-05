@@ -8247,3 +8247,177 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .activity-icon {
     background: #4338ca;
 }
+
+/* Voice Command Styles */
+.voice-command-btn {
+    position: relative;
+}
+
+.voice-status {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 12px;
+    height: 12px;
+    background: #9ca3af;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.voice-status.listening {
+    background: #ef4444;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.voice-command-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    max-width: 90vw;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.voice-command-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.voice-command-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.voice-command-body {
+    padding: 1.5rem;
+}
+
+.voice-visualizer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.voice-visualizer:hover {
+    background: #f3f4f6;
+}
+
+.voice-wave {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.wave-bar {
+    width: 8px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    transform: scaleY(0.5);
+}
+
+@keyframes wave {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
+}
+
+.voice-transcript {
+    text-align: center;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.voice-transcript p {
+    margin: 0;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.voice-commands-list h4 {
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.command-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+}
+
+.command-text {
+    font-weight: 500;
+    color: #667eea;
+    font-size: 0.875rem;
+}
+
+.command-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Dark mode for voice commands */
+.dark-mode .voice-command-panel {
+    background: #1f2937;
+}
+
+.dark-mode .voice-command-body {
+    background: #1f2937;
+}
+
+.dark-mode .voice-visualizer {
+    background: #374151;
+}
+
+.dark-mode .voice-visualizer:hover {
+    background: #4b5563;
+}
+
+.dark-mode .voice-transcript {
+    background: #374151;
+}
+
+.dark-mode .voice-transcript p {
+    color: #e5e7eb;
+}
+
+.dark-mode .voice-commands-list h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .command-item {
+    background: #374151;
+}
+
+.dark-mode .command-desc {
+    color: #9ca3af;
+}

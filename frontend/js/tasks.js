@@ -28,6 +28,8 @@ class TaskManager {
         this.currentHistoryTaskId = null; // Track task for history modal
         this.userTags = []; // Store user's custom tags
         this.activeTagFilter = null; // Store active tag filter
+        this.isListening = false; // Track voice recognition state
+        this.recognition = null; // Speech recognition instance
         this.advancedFilters = {
             priority: '',
             category: '',
@@ -63,10 +65,8 @@ class TaskManager {
         this.initKeyboardShortcuts();
         this.setupDragAndDrop();
         this.setupQuickActions();
-        // Check reminders every minute
-        setInterval(() => this.checkReminders(), 60000);
-        // Initial check
-        this.checkReminders();
+        this.initVoiceRecognition();
+        this.loadTasks();
     }
 
     initKeyboardShortcuts() {
@@ -1347,6 +1347,284 @@ class TaskManager {
     requestNotificationPermission() {
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
+        }
+    }
+
+    initVoiceRecognition() {
+        // Check if browser supports speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.recognition = new SpeechRecognition();
+            this.recognition.continuous = false;
+            this.recognition.interimResults = true;
+            this.recognition.lang = 'en-US';
+
+            this.recognition.onstart = () => {
+                this.isListening = true;
+                this.updateVoiceUI(true);
+                document.getElementById('voiceStatusText').textContent = 'Listening...';
+                this.animateVoiceWave(true);
+            };
+
+            this.recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    document.getElementById('voiceStatusText').textContent = `Heard: "${finalTranscript}"`;
+                    this.processVoiceCommand(finalTranscript.toLowerCase());
+                } else if (interimTranscript) {
+                    document.getElementById('voiceStatusText').textContent = `Hearing: "${interimTranscript}"`;
+                }
+            };
+
+            this.recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                this.isListening = false;
+                this.updateVoiceUI(false);
+                this.animateVoiceWave(false);
+                
+                const errorMessages = {
+                    'no-speech': 'No speech detected. Please try again.',
+                    'audio-capture': 'No microphone found.',
+                    'not-allowed': 'Microphone access denied.',
+                    'network': 'Network error. Please check your connection.'
+                };
+                document.getElementById('voiceStatusText').textContent = errorMessages[event.error] || 'Error occurred. Please try again.';
+            };
+
+            this.recognition.onend = () => {
+                this.isListening = false;
+                this.updateVoiceUI(false);
+                this.animateVoiceWave(false);
+            };
+        } else {
+            console.log('Speech recognition not supported');
+            document.getElementById('voiceStatusText').textContent = 'Speech recognition not supported in this browser.';
+        }
+    }
+
+    toggleVoiceRecognition() {
+        if (!this.recognition) {
+            this.showMessage('Speech recognition not supported', 'error');
+            return;
+        }
+
+        if (this.isListening) {
+            this.recognition.stop();
+        } else {
+            this.recognition.start();
+        }
+    }
+
+    showVoicePanel() {
+        document.getElementById('voiceCommandPanel').classList.remove('hidden');
+    }
+
+    hideVoicePanel() {
+        document.getElementById('voiceCommandPanel').classList.add('hidden');
+        if (this.isListening) {
+            this.recognition.stop();
+        }
+    }
+
+    updateVoiceUI(isListening) {
+        const voiceStatus = document.getElementById('voiceStatus');
+        if (isListening) {
+            voiceStatus.classList.remove('hidden');
+            voiceStatus.classList.add('listening');
+        } else {
+            voiceStatus.classList.add('hidden');
+            voiceStatus.classList.remove('listening');
+        }
+    }
+
+    animateVoiceWave(isAnimating) {
+        const waveBars = document.querySelectorAll('.wave-bar');
+        waveBars.forEach((bar, index) => {
+            if (isAnimating) {
+                bar.style.animation = `wave 0.5s ease-in-out ${index * 0.1}s infinite`;
+            } else {
+                bar.style.animation = 'none';
+            }
+        });
+    }
+
+    processVoiceCommand(command) {
+        // Command patterns
+        const patterns = {
+            addTask: /add task (.+)/i,
+            completeTask: /complete task (.+)/i,
+            deleteTask: /delete task (.+)/i,
+            showAll: /show all tasks/i,
+            showCompleted: /show completed tasks/i,
+            showPending: /show pending tasks/i,
+            showHighPriority: /show high priority tasks/i,
+            toggleDarkMode: /toggle dark mode/i
+        };
+
+        // Add task
+        if (patterns.addTask.test(command)) {
+            const taskName = command.match(patterns.addTask)[1].trim();
+            this.addTaskByVoice(taskName);
+        }
+        // Complete task
+        else if (patterns.completeTask.test(command)) {
+            const taskName = command.match(patterns.completeTask)[1].trim();
+            this.completeTaskByVoice(taskName);
+        }
+        // Delete task
+        else if (patterns.deleteTask.test(command)) {
+            const taskName = command.match(patterns.deleteTask)[1].trim();
+            this.deleteTaskByVoice(taskName);
+        }
+        // Show all tasks
+        else if (patterns.showAll.test(command)) {
+            this.filter = 'all';
+            document.getElementById('taskFilter').value = 'all';
+            this.renderTasks();
+            this.showMessage('Showing all tasks', 'success');
+        }
+        // Show completed tasks
+        else if (patterns.showCompleted.test(command)) {
+            this.filter = 'completed';
+            document.getElementById('taskFilter').value = 'completed';
+            this.renderTasks();
+            this.showMessage('Showing completed tasks', 'success');
+        }
+        // Show pending tasks
+        else if (patterns.showPending.test(command)) {
+            this.filter = 'active';
+            document.getElementById('taskFilter').value = 'active';
+            this.renderTasks();
+            this.showMessage('Showing pending tasks', 'success');
+        }
+        // Show high priority tasks
+        else if (patterns.showHighPriority.test(command)) {
+            this.filter = 'all';
+            document.getElementById('taskFilter').value = 'all';
+            this.renderTasks();
+            this.showMessage('Filtering by high priority', 'success');
+            // Additional filtering logic would go here
+        }
+        // Toggle dark mode
+        else if (patterns.toggleDarkMode.test(command)) {
+            document.getElementById('darkModeToggle').click();
+            this.showMessage('Dark mode toggled', 'success');
+        }
+        // Unknown command
+        else {
+            this.showMessage('Command not recognized. Please try again.');
+            setTimeout(() => {
+                document.getElementById('voiceStatusText').textContent = 'Click the microphone to start listening...';
+            }, 2000);
+        }
+    }
+
+    async addTaskByVoice(taskName) {
+        const task = {
+            title: taskName,
+            description: '',
+            priority: 'medium',
+            category: 'general',
+            dueDate: null,
+            completed: false
+        };
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify(task)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.tasks.unshift(data);
+                this.renderTasks();
+                this.showMessage(`Task "${taskName}" added successfully!`, 'success');
+            } else {
+                this.showMessage('Failed to add task', 'error');
+            }
+        } catch (error) {
+            console.error('Add task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async completeTaskByVoice(taskName) {
+        const task = this.tasks.find(t => t.title.toLowerCase() === taskName.toLowerCase());
+        
+        if (!task) {
+            this.showMessage(`Task "${taskName}" not found`, 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${task._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ completed: true })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const index = this.tasks.findIndex(t => t._id === task._id);
+                if (index !== -1) {
+                    this.tasks[index] = data;
+                }
+                this.renderTasks();
+                this.showMessage(`Task "${taskName}" marked as completed!`, 'success');
+            } else {
+                this.showMessage('Failed to complete task', 'error');
+            }
+        } catch (error) {
+            console.error('Complete task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async deleteTaskByVoice(taskName) {
+        const task = this.tasks.find(t => t.title.toLowerCase() === taskName.toLowerCase());
+        
+        if (!task) {
+            this.showMessage(`Task "${taskName}" not found`, 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${task._id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+            });
+
+            if (response.ok) {
+                this.tasks = this.tasks.filter(t => t._id !== task._id);
+                this.renderTasks();
+                this.showMessage(`Task "${taskName}" deleted successfully!`, 'success');
+            } else {
+                this.showMessage('Failed to delete task', 'error');
+            }
+        } catch (error) {
+            console.error('Delete task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
         }
     }
 
@@ -3581,6 +3859,22 @@ class TaskManager {
     }
 
     setupEventListeners() {
+        // Voice command button
+        document.getElementById('voiceCommandBtn').addEventListener('click', () => {
+            this.showVoicePanel();
+        });
+
+        document.getElementById('closeVoicePanel').addEventListener('click', () => {
+            this.hideVoicePanel();
+        });
+
+        // Start/stop voice recognition when clicking the panel
+        document.getElementById('voiceCommandPanel').addEventListener('click', (e) => {
+            if (e.target.closest('.voice-visualizer')) {
+                this.toggleVoiceRecognition();
+            }
+        });
+
         // Notification bell button
         document.getElementById('notificationBellBtn').addEventListener('click', () => {
             this.showNotificationCenter();
