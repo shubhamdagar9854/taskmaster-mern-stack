@@ -30,6 +30,15 @@ class TaskManager {
         this.activeTagFilter = null; // Store active tag filter
         this.isListening = false; // Track voice recognition state
         this.recognition = null; // Speech recognition instance
+        this.gamification = {
+            totalPoints: 0,
+            currentLevel: 1,
+            tasksCompleted: 0,
+            streakDays: 0,
+            badges: [],
+            achievements: [],
+            recentActivity: []
+        };
         this.advancedFilters = {
             priority: '',
             category: '',
@@ -1626,6 +1635,246 @@ class TaskManager {
             console.error('Delete task error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         }
+    }
+
+    showGamificationModal() {
+        this.loadGamificationData();
+        document.getElementById('gamificationModal').classList.remove('hidden');
+    }
+
+    hideGamificationModal() {
+        document.getElementById('gamificationModal').classList.add('hidden');
+    }
+
+    loadGamificationData() {
+        // Calculate stats from tasks
+        const completedTasks = this.tasks.filter(t => t.completed);
+        this.gamification.tasksCompleted = completedTasks.length;
+        
+        // Calculate points (10 points per completed task)
+        this.gamification.totalPoints = completedTasks.length * 10;
+        
+        // Calculate level (every 100 points = 1 level)
+        this.gamification.currentLevel = Math.floor(this.gamification.totalPoints / 100) + 1;
+        
+        // Calculate streak (simplified - just count days with activity)
+        this.gamification.streakDays = this.calculateStreak();
+        
+        // Initialize badges
+        this.initializeBadges();
+        
+        // Initialize achievements
+        this.initializeAchievements();
+        
+        // Render all gamification data
+        this.renderGamificationStats();
+        this.renderBadges();
+        this.renderAchievements();
+        this.renderRecentActivity();
+    }
+
+    calculateStreak() {
+        // Simplified streak calculation
+        const today = new Date();
+        let streak = 0;
+        
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            const hasActivity = this.tasks.some(t => {
+                const taskDate = new Date(t.createdAt).toISOString().split('T')[0];
+                return taskDate === dateStr;
+            });
+            
+            if (hasActivity) {
+                streak++;
+            } else if (i > 0) {
+                break;
+            }
+        }
+        
+        return streak;
+    }
+
+    initializeBadges() {
+        this.gamification.badges = [
+            { id: 'first-task', name: 'First Steps', icon: '🎯', description: 'Complete your first task', unlocked: this.gamification.tasksCompleted >= 1 },
+            { id: 'ten-tasks', name: 'Getting Started', icon: '🌟', description: 'Complete 10 tasks', unlocked: this.gamification.tasksCompleted >= 10 },
+            { id: 'fifty-tasks', name: 'Task Master', icon: '🏆', description: 'Complete 50 tasks', unlocked: this.gamification.tasksCompleted >= 50 },
+            { id: 'hundred-tasks', name: 'Legendary', icon: '👑', description: 'Complete 100 tasks', unlocked: this.gamification.tasksCompleted >= 100 },
+            { id: 'streak-7', name: 'Week Warrior', icon: '🔥', description: '7 day streak', unlocked: this.gamification.streakDays >= 7 },
+            { id: 'streak-30', name: 'Month Master', icon: '💪', description: '30 day streak', unlocked: this.gamification.streakDays >= 30 },
+            { id: 'level-5', name: 'Rising Star', icon: '⭐', description: 'Reach level 5', unlocked: this.gamification.currentLevel >= 5 },
+            { id: 'level-10', name: 'Champion', icon: '🎖️', description: 'Reach level 10', unlocked: this.gamification.currentLevel >= 10 }
+        ];
+    }
+
+    initializeAchievements() {
+        this.gamification.achievements = [
+            { id: 'early-bird', name: 'Early Bird', description: 'Complete a task before 9 AM', progress: 0, total: 1, unlocked: false },
+            { id: 'night-owl', name: 'Night Owl', description: 'Complete a task after 9 PM', progress: 0, total: 1, unlocked: false },
+            { id: 'speed-demon', name: 'Speed Demon', description: 'Complete 5 tasks in one day', progress: 0, total: 5, unlocked: false },
+            { id: 'perfectionist', name: 'Perfectionist', description: 'Complete 10 tasks with high priority', progress: 0, total: 10, unlocked: false },
+            { id: 'organizer', name: 'Organizer', description: 'Use 5 different categories', progress: 0, total: 5, unlocked: false },
+            { id: 'social-butterfly', name: 'Social Butterfly', description: 'Share 5 tasks', progress: 0, total: 5, unlocked: false }
+        ];
+    }
+
+    renderGamificationStats() {
+        document.getElementById('totalPoints').textContent = this.gamification.totalPoints;
+        document.getElementById('currentLevel').textContent = this.gamification.currentLevel;
+        document.getElementById('tasksCompleted').textContent = this.gamification.tasksCompleted;
+        document.getElementById('streakDays').textContent = this.gamification.streakDays;
+        
+        // Update level progress
+        const pointsInCurrentLevel = this.gamification.totalPoints % 100;
+        const progressPercentage = pointsInCurrentLevel;
+        document.getElementById('levelProgressBar').style.width = `${progressPercentage}%`;
+        document.getElementById('levelProgressText').textContent = `${pointsInCurrentLevel} / 100 XP`;
+    }
+
+    renderBadges() {
+        const container = document.getElementById('badgesList');
+        container.innerHTML = '';
+        
+        this.gamification.badges.forEach(badge => {
+            const badgeItem = document.createElement('div');
+            badgeItem.className = `badge-item ${badge.unlocked ? 'unlocked' : 'locked'}`;
+            badgeItem.innerHTML = `
+                <div class="badge-icon">${badge.icon}</div>
+                <div class="badge-info">
+                    <div class="badge-name">${badge.name}</div>
+                    <div class="badge-description">${badge.description}</div>
+                </div>
+                ${badge.unlocked ? '<div class="badge-status">✓</div>' : '<div class="badge-status">🔒</div>'}
+            `;
+            container.appendChild(badgeItem);
+        });
+    }
+
+    renderAchievements() {
+        const container = document.getElementById('achievementsList');
+        container.innerHTML = '';
+        
+        this.gamification.achievements.forEach(achievement => {
+            const achievementItem = document.createElement('div');
+            achievementItem.className = `achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}`;
+            achievementItem.innerHTML = `
+                <div class="achievement-header">
+                    <div class="achievement-name">${achievement.name}</div>
+                    <div class="achievement-status">${achievement.unlocked ? '✓ Unlocked' : '🔒 Locked'}</div>
+                </div>
+                <div class="achievement-description">${achievement.description}</div>
+                <div class="achievement-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${(achievement.progress / achievement.total) * 100}%"></div>
+                    </div>
+                    <div class="progress-text">${achievement.progress} / ${achievement.total}</div>
+                </div>
+            `;
+            container.appendChild(achievementItem);
+        });
+    }
+
+    renderRecentActivity() {
+        const container = document.getElementById('recentActivityList');
+        container.innerHTML = '';
+        
+        // Generate some sample recent activity
+        const activities = [
+            { type: 'task-completed', message: 'Completed "Review project proposal"', points: 10, time: '2 hours ago' },
+            { type: 'badge-earned', message: 'Earned "First Steps" badge', points: 0, time: '5 hours ago' },
+            { type: 'level-up', message: 'Reached Level 2', points: 0, time: '1 day ago' },
+            { type: 'task-completed', message: 'Completed "Update documentation"', points: 10, time: '1 day ago' }
+        ];
+        
+        activities.forEach(activity => {
+            const activityItem = document.createElement('div');
+            activityItem.className = 'activity-item';
+            activityItem.innerHTML = `
+                <div class="activity-icon">${this.getActivityIconForType(activity.type)}</div>
+                <div class="activity-content">
+                    <div class="activity-message">${activity.message}</div>
+                    <div class="activity-meta">
+                        <span class="activity-points">${activity.points > 0 ? `+${activity.points} XP` : ''}</span>
+                        <span class="activity-time">${activity.time}</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(activityItem);
+        });
+    }
+
+    getActivityIconForType(type) {
+        const icons = {
+            'task-completed': '✅',
+            'badge-earned': '🎖️',
+            'level-up': '⬆️',
+            'streak': '🔥'
+        };
+        return icons[type] || '📌';
+    }
+
+    awardPoints(points, reason) {
+        this.gamification.totalPoints += points;
+        this.gamification.recentActivity.unshift({
+            type: 'points-earned',
+            message: reason,
+            points: points,
+            time: 'Just now'
+        });
+        
+        // Check for level up
+        const newLevel = Math.floor(this.gamification.totalPoints / 100) + 1;
+        if (newLevel > this.gamification.currentLevel) {
+            this.gamification.currentLevel = newLevel;
+            this.showMessage(`🎉 Level Up! You reached Level ${newLevel}!`, 'success');
+        }
+        
+        // Check for new badges
+        this.checkBadges();
+    }
+
+    checkBadges() {
+        this.gamification.badges.forEach(badge => {
+            if (!badge.unlocked) {
+                let shouldUnlock = false;
+                
+                switch(badge.id) {
+                    case 'first-task':
+                        shouldUnlock = this.gamification.tasksCompleted >= 1;
+                        break;
+                    case 'ten-tasks':
+                        shouldUnlock = this.gamification.tasksCompleted >= 10;
+                        break;
+                    case 'fifty-tasks':
+                        shouldUnlock = this.gamification.tasksCompleted >= 50;
+                        break;
+                    case 'hundred-tasks':
+                        shouldUnlock = this.gamification.tasksCompleted >= 100;
+                        break;
+                    case 'streak-7':
+                        shouldUnlock = this.gamification.streakDays >= 7;
+                        break;
+                    case 'streak-30':
+                        shouldUnlock = this.gamification.streakDays >= 30;
+                        break;
+                    case 'level-5':
+                        shouldUnlock = this.gamification.currentLevel >= 5;
+                        break;
+                    case 'level-10':
+                        shouldUnlock = this.gamification.currentLevel >= 10;
+                        break;
+                }
+                
+                if (shouldUnlock) {
+                    badge.unlocked = true;
+                    this.showMessage(`🎖️ Badge Unlocked: ${badge.name}!`, 'success');
+                }
+            }
+        });
     }
 
     showTemplatesModal() {
@@ -3873,6 +4122,15 @@ class TaskManager {
             if (e.target.closest('.voice-visualizer')) {
                 this.toggleVoiceRecognition();
             }
+        });
+
+        // Gamification button
+        document.getElementById('gamificationBtn').addEventListener('click', () => {
+            this.showGamificationModal();
+        });
+
+        document.getElementById('closeGamificationModal').addEventListener('click', () => {
+            this.hideGamificationModal();
         });
 
         // Notification bell button

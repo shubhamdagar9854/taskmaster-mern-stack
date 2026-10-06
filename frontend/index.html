@@ -29,6 +29,9 @@
                         <i class="fas fa-microphone"></i>
                         <span id="voiceStatus" class="voice-status hidden"></span>
                     </button>
+                    <button id="gamificationBtn" class="btn-icon gamification-btn" title="Achievements">
+                        <i class="fas fa-trophy"></i>
+                    </button>
                     <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span id="notificationBadge" class="notification-badge hidden">0</span>
@@ -2275,6 +2278,73 @@
                             <div class="command-item">
                                 <span class="command-text">"Toggle dark mode"</span>
                                 <span class="command-desc">Switch dark mode on/off</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gamification Modal -->
+                <div id="gamificationModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>🏆 Achievements & Points</h3>
+                            <button id="closeGamificationModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="gamification-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon">⭐</div>
+                                    <div class="stat-value" id="totalPoints">0</div>
+                                    <div class="stat-label">Total Points</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">🎯</div>
+                                    <div class="stat-value" id="currentLevel">1</div>
+                                    <div class="stat-label">Level</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">📊</div>
+                                    <div class="stat-value" id="tasksCompleted">0</div>
+                                    <div class="stat-label">Tasks Completed</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">🔥</div>
+                                    <div class="stat-value" id="streakDays">0</div>
+                                    <div class="stat-label">Day Streak</div>
+                                </div>
+                            </div>
+                            
+                            <div class="level-progress">
+                                <div class="progress-label">
+                                    <span>Level Progress</span>
+                                    <span id="levelProgressText">0 / 100 XP</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="levelProgressBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="gamification-section">
+                                <h4>🎖️ Badges</h4>
+                                <div id="badgesList" class="badges-grid">
+                                    <!-- Badges will be dynamically added here -->
+                                </div>
+                            </div>
+
+                            <div class="gamification-section">
+                                <h4>🏅 Achievements</h4>
+                                <div id="achievementsList" class="achievements-list">
+                                    <!-- Achievements will be dynamically added here -->
+                                </div>
+                            </div>
+
+                            <div class="gamification-section">
+                                <h4>📈 Recent Activity</h4>
+                                <div id="recentActivityList" class="recent-activity-list">
+                                    <!-- Recent activity will be dynamically added here -->
+                                </div>
                             </div>
                         </div>
                     </div>
