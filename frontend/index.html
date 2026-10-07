@@ -32,6 +32,9 @@
                     <button id="gamificationBtn" class="btn-icon gamification-btn" title="Achievements">
                         <i class="fas fa-trophy"></i>
                     </button>
+                    <button id="exportImportBtn" class="btn-icon export-import-btn" title="Export/Import">
+                        <i class="fas fa-file-export"></i>
+                    </button>
                     <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span id="notificationBadge" class="notification-badge hidden">0</span>
@@ -2345,6 +2348,80 @@
                                 <div id="recentActivityList" class="recent-activity-list">
                                     <!-- Recent activity will be dynamically added here -->
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export/Import Modal -->
+                <div id="exportImportModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>📤 Export/Import Tasks</h3>
+                            <button id="closeExportImportModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="export-import-tabs">
+                                <button class="export-import-tab active" data-tab="export">
+                                    <i class="fas fa-file-export"></i> Export
+                                </button>
+                                <button class="export-import-tab" data-tab="import">
+                                    <i class="fas fa-file-import"></i> Import
+                                </button>
+                            </div>
+
+                            <div class="export-import-tab-content active" id="exportTab">
+                                <div class="form-group">
+                                    <label>Export Format</label>
+                                    <select id="exportFormat" class="form-select">
+                                        <option value="json">JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Export Options</label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="exportCompleted" checked>
+                                        <span>Include completed tasks</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="exportArchived">
+                                        <span>Include archived tasks</span>
+                                    </label>
+                                </div>
+                                <button id="exportBtn" class="btn btn-primary" style="width: 100%;">
+                                    <i class="fas fa-download"></i> Export Tasks
+                                </button>
+                            </div>
+
+                            <div class="export-import-tab-content" id="importTab">
+                                <div class="form-group">
+                                    <label>Import Format</label>
+                                    <select id="importFormat" class="form-select">
+                                        <option value="json">JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Select File</label>
+                                    <input type="file" id="importFile" class="form-input" accept=".json,.csv">
+                                </div>
+                                <div class="form-group">
+                                    <label>Import Options</label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="importOverwrite">
+                                        <span>Overwrite existing tasks</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="importMerge" checked>
+                                        <span>Merge with existing tasks</span>
+                                    </label>
+                                </div>
+                                <button id="importBtn" class="btn btn-primary" style="width: 100%;">
+                                    <i class="fas fa-upload"></i> Import Tasks
+                                </button>
                             </div>
                         </div>
                     </div>

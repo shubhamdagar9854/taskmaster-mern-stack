@@ -1877,6 +1877,209 @@ class TaskManager {
         });
     }
 
+    showExportImportModal() {
+        document.getElementById('exportImportModal').classList.remove('hidden');
+    }
+
+    hideExportImportModal() {
+        document.getElementById('exportImportModal').classList.add('hidden');
+    }
+
+    exportTasks() {
+        const format = document.getElementById('exportFormat').value;
+        const includeCompleted = document.getElementById('exportCompleted').checked;
+        const includeArchived = document.getElementById('exportArchived').checked;
+
+        let tasksToExport = this.tasks;
+
+        if (!includeCompleted) {
+            tasksToExport = tasksToExport.filter(t => !t.completed);
+        }
+
+        if (!includeArchived) {
+            tasksToExport = tasksToExport.filter(t => !t.isArchived);
+        }
+
+        if (format === 'json') {
+            this.exportAsJSON(tasksToExport);
+        } else if (format === 'csv') {
+            this.exportAsCSV(tasksToExport);
+        }
+    }
+
+    exportAsJSON(tasks) {
+        const dataStr = JSON.stringify(tasks, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tasks-export-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        this.showMessage('Tasks exported successfully!', 'success');
+    }
+
+    exportAsCSV(tasks) {
+        if (tasks.length === 0) {
+            this.showMessage('No tasks to export', 'error');
+            return;
+        }
+
+        const headers = ['Title', 'Description', 'Priority', 'Category', 'Status', 'Due Date', 'Created At'];
+        const csvContent = [
+            headers.join(','),
+            ...tasks.map(task => [
+                `"${task.title.replace(/"/g, '""')}"`,
+                `"${(task.description || '').replace(/"/g, '""')}"`,
+                task.priority,
+                task.category,
+                task.completed ? 'Completed' : 'Pending',
+                task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+                new Date(task.createdAt).toISOString().split('T')[0]
+            ].join(','))
+        ].join('\n');
+
+        const dataBlob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `tasks-export-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        this.showMessage('Tasks exported successfully!', 'success');
+    }
+
+    async importTasks() {
+        const format = document.getElementById('importFormat').value;
+        const fileInput = document.getElementById('importFile');
+        const overwrite = document.getElementById('importOverwrite').checked;
+        const merge = document.getElementById('importMerge').checked;
+
+        if (!fileInput.files.length) {
+            this.showMessage('Please select a file to import', 'error');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            try {
+                let importedTasks = [];
+
+                if (format === 'json') {
+                    importedTasks = JSON.parse(e.target.result);
+                } else if (format === 'csv') {
+                    importedTasks = this.parseCSV(e.target.result);
+                }
+
+                if (!Array.isArray(importedTasks)) {
+                    this.showMessage('Invalid file format', 'error');
+                    return;
+                }
+
+                if (overwrite) {
+                    // Delete all existing tasks
+                    for (const task of this.tasks) {
+                        await fetch(`http://localhost:5002/api/tasks/${task._id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+                        });
+                    }
+                    this.tasks = [];
+                }
+
+                // Import new tasks
+                let importedCount = 0;
+                for (const task of importedTasks) {
+                    const newTask = {
+                        title: task.title || 'Untitled Task',
+                        description: task.description || '',
+                        priority: task.priority || 'medium',
+                        category: task.category || 'general',
+                        dueDate: task.dueDate || null,
+                        completed: task.completed || false
+                    };
+
+                    try {
+                        const response = await fetch('http://localhost:5002/api/tasks', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${window.authManager.getToken()}`
+                            },
+                            body: JSON.stringify(newTask)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.tasks.unshift(data);
+                            importedCount++;
+                        }
+                    } catch (error) {
+                        console.error('Error importing task:', error);
+                    }
+                }
+
+                this.renderTasks();
+                this.showMessage(`Successfully imported ${importedCount} tasks!`, 'success');
+                fileInput.value = '';
+            } catch (error) {
+                console.error('Import error:', error);
+                this.showMessage('Failed to import tasks. Please check the file format.', 'error');
+            }
+        };
+
+        reader.readAsText(file);
+    }
+
+    parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        const tasks = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+
+            const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+            const task = {};
+
+            headers.forEach((header, index) => {
+                const value = values[index];
+                switch(header.toLowerCase()) {
+                    case 'title':
+                        task.title = value;
+                        break;
+                    case 'description':
+                        task.description = value;
+                        break;
+                    case 'priority':
+                        task.priority = value.toLowerCase();
+                        break;
+                    case 'category':
+                        task.category = value.toLowerCase();
+                        break;
+                    case 'status':
+                        task.completed = value.toLowerCase() === 'completed';
+                        break;
+                    case 'due date':
+                        task.dueDate = value ? new Date(value).toISOString() : null;
+                        break;
+                }
+            });
+
+            if (task.title) {
+                tasks.push(task);
+            }
+        }
+
+        return tasks;
+    }
+
     showTemplatesModal() {
         this.loadTemplates();
         document.getElementById('templatesModal').classList.remove('hidden');
@@ -4131,6 +4334,38 @@ class TaskManager {
 
         document.getElementById('closeGamificationModal').addEventListener('click', () => {
             this.hideGamificationModal();
+        });
+
+        // Export/Import button
+        document.getElementById('exportImportBtn').addEventListener('click', () => {
+            this.showExportImportModal();
+        });
+
+        document.getElementById('closeExportImportModal').addEventListener('click', () => {
+            this.hideExportImportModal();
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            this.exportTasks();
+        });
+
+        document.getElementById('importBtn').addEventListener('click', () => {
+            this.importTasks();
+        });
+
+        // Export/Import tabs
+        document.querySelectorAll('.export-import-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.closest('.export-import-tab').dataset.tab;
+                
+                // Update active tab
+                document.querySelectorAll('.export-import-tab').forEach(t => t.classList.remove('active'));
+                e.target.closest('.export-import-tab').classList.add('active');
+                
+                // Update content
+                document.querySelectorAll('.export-import-tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`${tabName}Tab`).classList.add('active');
+            });
         });
 
         // Notification bell button

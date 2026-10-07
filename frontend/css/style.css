@@ -8695,3 +8695,62 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .activity-time {
     color: #9ca3af;
 }
+
+/* Export/Import Styles */
+.export-import-btn {
+    position: relative;
+}
+
+.export-import-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.export-import-tab {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.export-import-tab:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.export-import-tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.export-import-tab-content {
+    display: none;
+}
+
+.export-import-tab-content.active {
+    display: block;
+}
+
+/* Dark mode for export/import */
+.dark-mode .export-import-tabs {
+    border-color: #4b5563;
+}
+
+.dark-mode .export-import-tab {
+    color: #9ca3af;
+}
+
+.dark-mode .export-import-tab:hover {
+    background: #374151;
+    color: #e5e7eb;
+}
