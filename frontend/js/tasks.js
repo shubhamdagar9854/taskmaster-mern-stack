@@ -2080,6 +2080,496 @@ class TaskManager {
         return tasks;
     }
 
+    showAiSuggestionsModal() {
+        this.generateAISuggestions();
+        document.getElementById('aiSuggestionsModal').classList.remove('hidden');
+    }
+
+    hideAiSuggestionsModal() {
+        document.getElementById('aiSuggestionsModal').classList.add('hidden');
+    }
+
+    generateAISuggestions() {
+        this.generateSmartTaskSuggestions();
+        this.generateRecurringTaskSuggestions();
+        this.generatePriorityRecommendations();
+        this.generateTimeBasedSuggestions();
+        this.generateProductivityInsights();
+        this.generateGoalProgress();
+    }
+
+    generateSmartTaskSuggestions() {
+        const container = document.getElementById('smartTaskSuggestions');
+        container.innerHTML = '';
+
+        const suggestions = this.getSmartTaskSuggestions();
+
+        if (suggestions.length === 0) {
+            container.innerHTML = '<div class="no-suggestions"><p>No suggestions available. Complete more tasks to get personalized suggestions!</p></div>';
+            return;
+        }
+
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'suggestion-item';
+            suggestionItem.innerHTML = `
+                <div class="suggestion-icon">💡</div>
+                <div class="suggestion-content">
+                    <div class="suggestion-title">${suggestion.title}</div>
+                    <div class="suggestion-reason">${suggestion.reason}</div>
+                </div>
+                <button class="btn btn-sm btn-primary add-suggestion-btn" data-task-title="${suggestion.title}">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+            `;
+            container.appendChild(suggestionItem);
+        });
+
+        // Add event listeners for add buttons
+        container.querySelectorAll('.add-suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const taskTitle = e.target.closest('.add-suggestion-btn').dataset.taskTitle;
+                this.addSuggestedTask(taskTitle);
+            });
+        });
+    }
+
+    getSmartTaskSuggestions() {
+        const suggestions = [];
+        const categories = [...new Set(this.tasks.map(t => t.category))];
+        const completedTasks = this.tasks.filter(t => t.completed);
+        const pendingTasks = this.tasks.filter(t => !t.completed);
+
+        // Suggest follow-up tasks based on completed tasks
+        if (completedTasks.length > 0) {
+            const lastCompleted = completedTasks[0];
+            if (lastCompleted.category === 'work') {
+                suggestions.push({
+                    title: 'Review completed work tasks',
+                    reason: 'Based on your recent work activity'
+                });
+            }
+        }
+
+        // Suggest tasks based on pending tasks
+        if (pendingTasks.length > 5) {
+            suggestions.push({
+                title: 'Focus on high priority tasks',
+                reason: 'You have many pending tasks'
+            });
+        }
+
+        // Suggest category-based tasks
+        if (categories.includes('work') && !categories.includes('personal')) {
+            suggestions.push({
+                title: 'Add personal tasks for work-life balance',
+                reason: 'Balance your task categories'
+            });
+        }
+
+        // Suggest based on time of day
+        const hour = new Date().getHours();
+        if (hour >= 9 && hour < 12) {
+            suggestions.push({
+                title: 'Plan your day\'s priorities',
+                reason: 'Morning is a great time for planning'
+            });
+        } else if (hour >= 17) {
+            suggestions.push({
+                title: 'Review today\'s progress',
+                reason: 'End of day review time'
+            });
+        }
+
+        return suggestions;
+    }
+
+    generateRecurringTaskSuggestions() {
+        const container = document.getElementById('recurringTaskSuggestions');
+        container.innerHTML = '';
+
+        const suggestions = this.getRecurringTaskSuggestions();
+
+        if (suggestions.length === 0) {
+            container.innerHTML = '<div class="no-suggestions"><p>No recurring patterns detected yet.</p></div>';
+            return;
+        }
+
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'suggestion-item';
+            suggestionItem.innerHTML = `
+                <div class="suggestion-icon">🔄</div>
+                <div class="suggestion-content">
+                    <div class="suggestion-title">${suggestion.title}</div>
+                    <div class="suggestion-reason">${suggestion.reason}</div>
+                </div>
+                <button class="btn btn-sm btn-primary add-suggestion-btn" data-task-title="${suggestion.title}">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+            `;
+            container.appendChild(suggestionItem);
+        });
+
+        // Add event listeners for add buttons
+        container.querySelectorAll('.add-suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const taskTitle = e.target.closest('.add-suggestion-btn').dataset.taskTitle;
+                this.addSuggestedTask(taskTitle);
+            });
+        });
+    }
+
+    getRecurringTaskSuggestions() {
+        const suggestions = [];
+        const today = new Date().getDay();
+
+        // Weekly suggestions based on day
+        const daySuggestions = {
+            0: [{ title: 'Weekly review and planning', reason: 'Sunday is perfect for weekly planning' }],
+            1: [{ title: 'Set weekly goals', reason: 'Monday goal setting' }],
+            5: [{ title: 'Weekly wrap-up', reason: 'Friday is great for wrapping up the week' }]
+        };
+
+        if (daySuggestions[today]) {
+            suggestions.push(...daySuggestions[today]);
+        }
+
+        // Daily recurring tasks
+        suggestions.push({
+            title: 'Check emails',
+            reason: 'Daily recurring task'
+        });
+
+        suggestions.push({
+            title: 'Update task list',
+            reason: 'Daily task management'
+        });
+
+        return suggestions;
+    }
+
+    generatePriorityRecommendations() {
+        const container = document.getElementById('priorityRecommendations');
+        container.innerHTML = '';
+
+        const recommendations = this.getPriorityRecommendations();
+
+        recommendations.forEach(rec => {
+            const recItem = document.createElement('div');
+            recItem.className = 'recommendation-item';
+            recItem.innerHTML = `
+                <div class="recommendation-icon">${rec.icon}</div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">${rec.title}</div>
+                    <div class="recommendation-description">${rec.description}</div>
+                </div>
+                <div class="recommendation-priority priority-${rec.priority}">
+                    ${rec.priority.toUpperCase()}
+                </div>
+            `;
+            container.appendChild(recItem);
+        });
+    }
+
+    getPriorityRecommendations() {
+        const recommendations = [];
+        const pendingTasks = this.tasks.filter(t => !t.completed);
+        const overdueTasks = pendingTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date());
+
+        // Overdue tasks
+        if (overdueTasks.length > 0) {
+            recommendations.push({
+                icon: '⚠️',
+                title: `${overdueTasks.length} overdue task(s)`,
+                description: 'Complete these tasks immediately',
+                priority: 'high'
+            });
+        }
+
+        // High priority tasks
+        const highPriorityTasks = pendingTasks.filter(t => t.priority === 'high');
+        if (highPriorityTasks.length > 0) {
+            recommendations.push({
+                icon: '🔴',
+                title: `${highPriorityTasks.length} high priority task(s)`,
+                description: 'Focus on these tasks first',
+                priority: 'high'
+            });
+        }
+
+        // Medium priority tasks
+        const mediumPriorityTasks = pendingTasks.filter(t => t.priority === 'medium');
+        if (mediumPriorityTasks.length > 3) {
+            recommendations.push({
+                icon: '🟡',
+                title: `${mediumPriorityTasks.length} medium priority task(s)`,
+                description: 'Consider prioritizing some of these',
+                priority: 'medium'
+            });
+        }
+
+        // Tasks due today
+        const dueToday = pendingTasks.filter(t => {
+            if (!t.dueDate) return false;
+            const dueDate = new Date(t.dueDate).toDateString();
+            const today = new Date().toDateString();
+            return dueDate === today;
+        });
+
+        if (dueToday.length > 0) {
+            recommendations.push({
+                icon: '📅',
+                title: `${dueToday.length} task(s) due today`,
+                description: 'Complete these before the day ends',
+                priority: 'high'
+            });
+        }
+
+        return recommendations;
+    }
+
+    generateTimeBasedSuggestions() {
+        const container = document.getElementById('timeBasedSuggestions');
+        container.innerHTML = '';
+
+        const suggestions = this.getTimeBasedSuggestions();
+
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'time-suggestion-item';
+            suggestionItem.innerHTML = `
+                <div class="time-icon">${suggestion.icon}</div>
+                <div class="time-content">
+                    <div class="time-title">${suggestion.title}</div>
+                    <div class="time-suggestion">${suggestion.suggestion}</div>
+                </div>
+            `;
+            container.appendChild(suggestionItem);
+        });
+    }
+
+    getTimeBasedSuggestions() {
+        const suggestions = [];
+        const hour = new Date().getHours();
+        const day = new Date().getDay();
+
+        // Morning suggestions
+        if (hour >= 6 && hour < 12) {
+            suggestions.push({
+                icon: '🌅',
+                title: 'Morning Block',
+                suggestion: 'Tackle your most challenging tasks now'
+            });
+        }
+        // Afternoon suggestions
+        else if (hour >= 12 && hour < 17) {
+            suggestions.push({
+                icon: '☀️',
+                title: 'Afternoon Block',
+                suggestion: 'Good time for meetings and collaborative tasks'
+            });
+        }
+        // Evening suggestions
+        else if (hour >= 17 && hour < 21) {
+            suggestions.push({
+                icon: '🌆',
+                title: 'Evening Block',
+                suggestion: 'Review progress and plan for tomorrow'
+            });
+        }
+        // Night suggestions
+        else {
+            suggestions.push({
+                icon: '🌙',
+                title: 'Night Block',
+                suggestion: 'Best for low-energy tasks and planning'
+            });
+        }
+
+        // Day-based suggestions
+        if (day === 1) {
+            suggestions.push({
+                icon: '📋',
+                title: 'Monday Planning',
+                suggestion: 'Set your weekly goals today'
+            });
+        } else if (day === 5) {
+            suggestions.push({
+                icon: '✅',
+                title: 'Friday Review',
+                suggestion: 'Review your weekly accomplishments'
+            });
+        }
+
+        return suggestions;
+    }
+
+    generateProductivityInsights() {
+        const container = document.getElementById('productivityInsights');
+        container.innerHTML = '';
+
+        const insights = this.getProductivityInsights();
+
+        insights.forEach(insight => {
+            const insightItem = document.createElement('div');
+            insightItem.className = 'insight-item';
+            insightItem.innerHTML = `
+                <div class="insight-icon">${insight.icon}</div>
+                <div class="insight-content">
+                    <div class="insight-title">${insight.title}</div>
+                    <div class="insight-value">${insight.value}</div>
+                    <div class="insight-description">${insight.description}</div>
+                </div>
+            `;
+            container.appendChild(insightItem);
+        });
+    }
+
+    getProductivityInsights() {
+        const insights = [];
+        const completedTasks = this.tasks.filter(t => t.completed);
+        const pendingTasks = this.tasks.filter(t => !t.completed);
+        const totalTasks = this.tasks.length;
+
+        // Completion rate
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks.length / totalTasks) * 100) : 0;
+        insights.push({
+            icon: '📊',
+            title: 'Completion Rate',
+            value: `${completionRate}%`,
+            description: completionRate >= 70 ? 'Great productivity!' : 'Room for improvement'
+        });
+
+        // Task categories
+        const categories = [...new Set(this.tasks.map(t => t.category))];
+        insights.push({
+            icon: '🏷️',
+            title: 'Categories Used',
+            value: categories.length.toString(),
+            description: categories.length >= 3 ? 'Good variety!' : 'Try using more categories'
+        });
+
+        // Average tasks per day (simplified)
+        const daysActive = Math.min(30, this.tasks.length);
+        const avgTasksPerDay = daysActive > 0 ? (totalTasks / daysActive).toFixed(1) : 0;
+        insights.push({
+            icon: '📈',
+            title: 'Avg Tasks/Day',
+            value: avgTasksPerDay,
+            description: avgTasksPerDay >= 3 ? 'Consistent productivity!' : 'Try to be more consistent'
+        });
+
+        // High priority completion
+        const highPriorityCompleted = completedTasks.filter(t => t.priority === 'high').length;
+        const highPriorityTotal = this.tasks.filter(t => t.priority === 'high').length;
+        const highPriorityRate = highPriorityTotal > 0 ? Math.round((highPriorityCompleted / highPriorityTotal) * 100) : 0;
+        insights.push({
+            icon: '🎯',
+            title: 'High Priority Completion',
+            value: `${highPriorityRate}%`,
+            description: 'Focus on completing high priority tasks'
+        });
+
+        return insights;
+    }
+
+    generateGoalProgress() {
+        const container = document.getElementById('goalProgress');
+        container.innerHTML = '';
+
+        const goals = this.getGoalProgress();
+
+        goals.forEach(goal => {
+            const goalItem = document.createElement('div');
+            goalItem.className = 'goal-item';
+            goalItem.innerHTML = `
+                <div class="goal-header">
+                    <div class="goal-title">${goal.title}</div>
+                    <div class="goal-percentage">${goal.percentage}%</div>
+                </div>
+                <div class="goal-progress-bar">
+                    <div class="goal-progress-fill" style="width: ${goal.percentage}%"></div>
+                </div>
+                <div class="goal-description">${goal.description}</div>
+            `;
+            container.appendChild(goalItem);
+        });
+    }
+
+    getGoalProgress() {
+        const goals = [];
+        const completedTasks = this.tasks.filter(t => t.completed).length;
+        const totalTasks = this.tasks.length;
+
+        // Weekly completion goal
+        const weeklyGoal = Math.min(10, totalTasks);
+        const weeklyProgress = Math.min(100, Math.round((completedTasks / weeklyGoal) * 100));
+        goals.push({
+            title: 'Weekly Task Goal',
+            percentage: weeklyProgress,
+            description: `${completedTasks}/${weeklyGoal} tasks completed this week`
+        });
+
+        // Category diversity goal
+        const categories = [...new Set(this.tasks.map(t => t.category))];
+        const categoryGoal = 5;
+        const categoryProgress = Math.min(100, Math.round((categories.length / categoryGoal) * 100));
+        goals.push({
+            title: 'Category Diversity',
+            percentage: categoryProgress,
+            description: `${categories.length}/${categoryGoal} categories used`
+        });
+
+        // High priority completion goal
+        const highPriorityCompleted = this.tasks.filter(t => t.completed && t.priority === 'high').length;
+        const highPriorityTotal = this.tasks.filter(t => t.priority === 'high').length;
+        const highPriorityProgress = highPriorityTotal > 0 ? Math.round((highPriorityCompleted / highPriorityTotal) * 100) : 0;
+        goals.push({
+            title: 'High Priority Completion',
+            percentage: highPriorityProgress,
+            description: `${highPriorityCompleted}/${highPriorityTotal} high priority tasks completed`
+        });
+
+        return goals;
+    }
+
+    async addSuggestedTask(title) {
+        const task = {
+            title: title,
+            description: '',
+            priority: 'medium',
+            category: 'general',
+            dueDate: null,
+            completed: false
+        };
+
+        try {
+            const response = await fetch('http://localhost:5002/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify(task)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.tasks.unshift(data);
+                this.renderTasks();
+                this.showMessage(`Task "${title}" added successfully!`, 'success');
+                this.hideAiSuggestionsModal();
+            } else {
+                this.showMessage('Failed to add task', 'error');
+            }
+        } catch (error) {
+            console.error('Add task error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     showTemplatesModal() {
         this.loadTemplates();
         document.getElementById('templatesModal').classList.remove('hidden');
@@ -4364,6 +4854,30 @@ class TaskManager {
                 
                 // Update content
                 document.querySelectorAll('.export-import-tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`${tabName}Tab`).classList.add('active');
+            });
+        });
+
+        // AI Suggestions button
+        document.getElementById('aiSuggestionsBtn').addEventListener('click', () => {
+            this.showAiSuggestionsModal();
+        });
+
+        document.getElementById('closeAiSuggestionsModal').addEventListener('click', () => {
+            this.hideAiSuggestionsModal();
+        });
+
+        // AI Suggestions tabs
+        document.querySelectorAll('.ai-suggestions-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.closest('.ai-suggestions-tab').dataset.tab;
+                
+                // Update active tab
+                document.querySelectorAll('.ai-suggestions-tab').forEach(t => t.classList.remove('active'));
+                e.target.closest('.ai-suggestions-tab').classList.add('active');
+                
+                // Update content
+                document.querySelectorAll('.ai-suggestions-tab-content').forEach(c => c.classList.remove('active'));
                 document.getElementById(`${tabName}Tab`).classList.add('active');
             });
         });

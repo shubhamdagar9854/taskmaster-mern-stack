@@ -35,6 +35,9 @@
                     <button id="exportImportBtn" class="btn-icon export-import-btn" title="Export/Import">
                         <i class="fas fa-file-export"></i>
                     </button>
+                    <button id="aiSuggestionsBtn" class="btn-icon ai-suggestions-btn" title="AI Suggestions">
+                        <i class="fas fa-lightbulb"></i>
+                    </button>
                     <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span id="notificationBadge" class="notification-badge hidden">0</span>
@@ -2422,6 +2425,76 @@
                                 <button id="importBtn" class="btn btn-primary" style="width: 100%;">
                                     <i class="fas fa-upload"></i> Import Tasks
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Suggestions Modal -->
+                <div id="aiSuggestionsModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>🤖 AI Suggestions</h3>
+                            <button id="closeAiSuggestionsModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="ai-suggestions-tabs">
+                                <button class="ai-suggestions-tab active" data-tab="smart-tasks">
+                                    <i class="fas fa-lightbulb"></i> Smart Tasks
+                                </button>
+                                <button class="ai-suggestions-tab" data-tab="priorities">
+                                    <i class="fas fa-sort-amount-down"></i> Priority Suggestions
+                                </button>
+                                <button class="ai-suggestions-tab" data-tab="insights">
+                                    <i class="fas fa-chart-line"></i> Insights
+                                </button>
+                            </div>
+
+                            <div class="ai-suggestions-tab-content active" id="smart-tasksTab">
+                                <div class="ai-suggestion-section">
+                                    <h4>💡 Suggested Tasks Based on Your Activity</h4>
+                                    <div id="smartTaskSuggestions" class="suggestions-list">
+                                        <!-- Smart task suggestions will be dynamically added here -->
+                                    </div>
+                                </div>
+                                <div class="ai-suggestion-section">
+                                    <h4>🔄 Recurring Task Suggestions</h4>
+                                    <div id="recurringTaskSuggestions" class="suggestions-list">
+                                        <!-- Recurring task suggestions will be dynamically added here -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-suggestions-tab-content" id="prioritiesTab">
+                                <div class="ai-suggestion-section">
+                                    <h4>📊 Priority Recommendations</h4>
+                                    <div id="priorityRecommendations" class="suggestions-list">
+                                        <!-- Priority recommendations will be dynamically added here -->
+                                    </div>
+                                </div>
+                                <div class="ai-suggestion-section">
+                                    <h4>⏰ Time-Based Suggestions</h4>
+                                    <div id="timeBasedSuggestions" class="suggestions-list">
+                                        <!-- Time-based suggestions will be dynamically added here -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ai-suggestions-tab-content" id="insightsTab">
+                                <div class="ai-suggestion-section">
+                                    <h4>📈 Productivity Insights</h4>
+                                    <div id="productivityInsights" class="insights-list">
+                                        <!-- Productivity insights will be dynamically added here -->
+                                    </div>
+                                </div>
+                                <div class="ai-suggestion-section">
+                                    <h4>🎯 Goal Progress</h4>
+                                    <div id="goalProgress" class="goal-progress-list">
+                                        <!-- Goal progress will be dynamically added here -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
