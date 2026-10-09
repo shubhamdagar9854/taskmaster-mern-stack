@@ -2570,6 +2570,183 @@ class TaskManager {
         }
     }
 
+    showAnalyticsModal() {
+        this.generateAnalytics();
+        document.getElementById('analyticsModal').classList.remove('hidden');
+    }
+
+    hideAnalyticsModal() {
+        document.getElementById('analyticsModal').classList.add('hidden');
+    }
+
+    generateAnalytics() {
+        this.updateAnalyticsOverview();
+        this.updatePriorityChart();
+        this.updateCategoryChart();
+        this.updateWeeklyActivityChart();
+        this.updateCompletionTimeStats();
+        this.updateProductivityScore();
+    }
+
+    updateAnalyticsOverview() {
+        const totalTasks = this.tasks.length;
+        const completedTasks = this.tasks.filter(t => t.completed).length;
+        const pendingTasks = totalTasks - completedTasks;
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        document.getElementById('totalTasksAnalytics').textContent = totalTasks;
+        document.getElementById('completedTasksAnalytics').textContent = completedTasks;
+        document.getElementById('pendingTasksAnalytics').textContent = pendingTasks;
+        document.getElementById('completionRateAnalytics').textContent = `${completionRate}%`;
+    }
+
+    updatePriorityChart() {
+        const highPriority = this.tasks.filter(t => t.priority === 'high').length;
+        const mediumPriority = this.tasks.filter(t => t.priority === 'medium').length;
+        const lowPriority = this.tasks.filter(t => t.priority === 'low').length;
+        const total = this.tasks.length;
+
+        const highPercent = total > 0 ? (highPriority / total) * 100 : 0;
+        const mediumPercent = total > 0 ? (mediumPriority / total) * 100 : 0;
+        const lowPercent = total > 0 ? (lowPriority / total) * 100 : 0;
+
+        document.getElementById('highPriorityBar').style.width = `${highPercent}%`;
+        document.getElementById('mediumPriorityBar').style.width = `${mediumPercent}%`;
+        document.getElementById('lowPriorityBar').style.width = `${lowPercent}%`;
+    }
+
+    updateCategoryChart() {
+        const container = document.getElementById('categoryChart');
+        container.innerHTML = '';
+
+        const categories = {};
+        this.tasks.forEach(task => {
+            const category = task.category || 'general';
+            categories[category] = (categories[category] || 0) + 1;
+        });
+
+        const total = this.tasks.length;
+        const sortedCategories = Object.entries(categories).sort((a, b) => b[1] - a[1]);
+
+        sortedCategories.forEach(([category, count]) => {
+            const percent = total > 0 ? (count / total) * 100 : 0;
+            const categoryItem = document.createElement('div');
+            categoryItem.className = 'category-bar';
+            categoryItem.innerHTML = `
+                <div class="category-label">${category}</div>
+                <div class="category-bar-fill" style="width: ${percent}%"></div>
+                <div class="category-count">${count}</div>
+            `;
+            container.appendChild(categoryItem);
+        });
+    }
+
+    updateWeeklyActivityChart() {
+        const container = document.getElementById('weeklyActivityChart');
+        container.innerHTML = '';
+
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const today = new Date();
+        const weekData = [];
+
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            const tasksOnDay = this.tasks.filter(t => {
+                const taskDate = new Date(t.createdAt).toISOString().split('T')[0];
+                return taskDate === dateStr;
+            }).length;
+
+            weekData.push({
+                day: days[date.getDay()],
+                count: tasksOnDay
+            });
+        }
+
+        const maxCount = Math.max(...weekData.map(d => d.count), 1);
+
+        weekData.forEach(data => {
+            const height = (data.count / maxCount) * 100;
+            const dayItem = document.createElement('div');
+            dayItem.className = 'weekly-bar';
+            dayItem.innerHTML = `
+                <div class="weekly-bar-fill" style="height: ${height}%"></div>
+                <div class="weekly-bar-label">${data.day}</div>
+                <div class="weekly-bar-count">${data.count}</div>
+            `;
+            container.appendChild(dayItem);
+        });
+    }
+
+    updateCompletionTimeStats() {
+        const completedTasks = this.tasks.filter(t => t.completed && t.createdAt && t.updatedAt);
+        
+        if (completedTasks.length === 0) {
+            document.getElementById('avgCompletionTime').textContent = '0 days';
+            document.getElementById('fastestCompletion').textContent = '0 days';
+            document.getElementById('slowestCompletion').textContent = '0 days';
+            return;
+        }
+
+        const completionTimes = completedTasks.map(task => {
+            const created = new Date(task.createdAt);
+            const completed = new Date(task.updatedAt);
+            const diffTime = Math.abs(completed - created);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        });
+
+        const avgTime = Math.round(completionTimes.reduce((a, b) => a + b, 0) / completionTimes.length);
+        const fastestTime = Math.min(...completionTimes);
+        const slowestTime = Math.max(...completionTimes);
+
+        document.getElementById('avgCompletionTime').textContent = `${avgTime} days`;
+        document.getElementById('fastestCompletion').textContent = `${fastestTime} days`;
+        document.getElementById('slowestCompletion').textContent = `${slowestTime} days`;
+    }
+
+    updateProductivityScore() {
+        const totalTasks = this.tasks.length;
+        const completedTasks = this.tasks.filter(t => t.completed).length;
+        const highPriorityCompleted = this.tasks.filter(t => t.completed && t.priority === 'high').length;
+        const highPriorityTotal = this.tasks.filter(t => t.priority === 'high').length;
+
+        // Task completion score (0-40)
+        const completionScore = totalTasks > 0 ? Math.min(40, (completedTasks / totalTasks) * 40) : 0;
+
+        // Consistency score (0-30) - based on weekly activity
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const today = new Date();
+        let activeDays = 0;
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            const hasActivity = this.tasks.some(t => {
+                const taskDate = new Date(t.createdAt).toISOString().split('T')[0];
+                return taskDate === dateStr;
+            });
+            
+            if (hasActivity) activeDays++;
+        }
+        
+        const consistencyScore = (activeDays / 7) * 30;
+
+        // Priority focus score (0-30)
+        const priorityFocusScore = highPriorityTotal > 0 ? (highPriorityCompleted / highPriorityTotal) * 30 : 0;
+
+        const totalScore = Math.round(completionScore + consistencyScore + priorityFocusScore);
+
+        document.getElementById('productivityScore').textContent = totalScore;
+        document.getElementById('taskCompletionScore').textContent = Math.round(completionScore);
+        document.getElementById('consistencyScore').textContent = Math.round(consistencyScore);
+        document.getElementById('priorityFocusScore').textContent = Math.round(priorityFocusScore);
+    }
+
     showTemplatesModal() {
         this.loadTemplates();
         document.getElementById('templatesModal').classList.remove('hidden');
@@ -4880,6 +5057,15 @@ class TaskManager {
                 document.querySelectorAll('.ai-suggestions-tab-content').forEach(c => c.classList.remove('active'));
                 document.getElementById(`${tabName}Tab`).classList.add('active');
             });
+        });
+
+        // Analytics button
+        document.getElementById('analyticsBtn').addEventListener('click', () => {
+            this.showAnalyticsModal();
+        });
+
+        document.getElementById('closeAnalyticsModal').addEventListener('click', () => {
+            this.hideAnalyticsModal();
         });
 
         // Notification bell button

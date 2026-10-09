@@ -38,6 +38,9 @@
                     <button id="aiSuggestionsBtn" class="btn-icon ai-suggestions-btn" title="AI Suggestions">
                         <i class="fas fa-lightbulb"></i>
                     </button>
+                    <button id="analyticsBtn" class="btn-icon analytics-btn" title="Analytics">
+                        <i class="fas fa-chart-bar"></i>
+                    </button>
                     <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span id="notificationBadge" class="notification-badge hidden">0</span>
@@ -2493,6 +2496,118 @@
                                     <h4>🎯 Goal Progress</h4>
                                     <div id="goalProgress" class="goal-progress-list">
                                         <!-- Goal progress will be dynamically added here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Dashboard Modal -->
+                <div id="analyticsModal" class="modal hidden">
+                    <div class="modal-content modal-large">
+                        <div class="modal-header">
+                            <h3>📊 Analytics Dashboard</h3>
+                            <button id="closeAnalyticsModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="analytics-overview">
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">📋</div>
+                                    <div class="analytics-value" id="totalTasksAnalytics">0</div>
+                                    <div class="analytics-label">Total Tasks</div>
+                                </div>
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">✅</div>
+                                    <div class="analytics-value" id="completedTasksAnalytics">0</div>
+                                    <div class="analytics-label">Completed</div>
+                                </div>
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">⏳</div>
+                                    <div class="analytics-value" id="pendingTasksAnalytics">0</div>
+                                    <div class="analytics-label">Pending</div>
+                                </div>
+                                <div class="analytics-card">
+                                    <div class="analytics-icon">📈</div>
+                                    <div class="analytics-value" id="completionRateAnalytics">0%</div>
+                                    <div class="analytics-label">Completion Rate</div>
+                                </div>
+                            </div>
+
+                            <div class="analytics-charts">
+                                <div class="chart-section">
+                                    <h4>📊 Tasks by Priority</h4>
+                                    <div id="priorityChart" class="chart-container">
+                                        <div class="chart-bar">
+                                            <div class="bar-fill" id="highPriorityBar" style="width: 0%"></div>
+                                            <div class="bar-label">High</div>
+                                        </div>
+                                        <div class="chart-bar">
+                                            <div class="bar-fill" id="mediumPriorityBar" style="width: 0%"></div>
+                                            <div class="bar-label">Medium</div>
+                                        </div>
+                                        <div class="chart-bar">
+                                            <div class="bar-fill" id="lowPriorityBar" style="width: 0%"></div>
+                                            <div class="bar-label">Low</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="chart-section">
+                                    <h4>🏷️ Tasks by Category</h4>
+                                    <div id="categoryChart" class="category-chart">
+                                        <!-- Category bars will be dynamically added here -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="analytics-section">
+                                <h4>📅 Weekly Activity</h4>
+                                <div id="weeklyActivityChart" class="weekly-chart">
+                                    <!-- Weekly activity bars will be dynamically added here -->
+                                </div>
+                            </div>
+
+                            <div class="analytics-section">
+                                <h4>⏱️ Task Completion Time</h4>
+                                <div class="time-stats">
+                                    <div class="time-stat">
+                                        <div class="time-label">Average Completion Time</div>
+                                        <div class="time-value" id="avgCompletionTime">0 days</div>
+                                    </div>
+                                    <div class="time-stat">
+                                        <div class="time-label">Fastest Completion</div>
+                                        <div class="time-value" id="fastestCompletion">0 days</div>
+                                    </div>
+                                    <div class="time-stat">
+                                        <div class="time-label">Slowest Completion</div>
+                                        <div class="time-value" id="slowestCompletion">0 days</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="analytics-section">
+                                <h4>🎯 Productivity Score</h4>
+                                <div class="productivity-score">
+                                    <div class="score-circle">
+                                        <div class="score-value" id="productivityScore">0</div>
+                                        <div class="score-label">Score</div>
+                                    </div>
+                                    <div class="score-breakdown">
+                                        <div class="score-item">
+                                            <span class="score-item-label">Task Completion</span>
+                                            <span class="score-item-value" id="taskCompletionScore">0</span>
+                                        </div>
+                                        <div class="score-item">
+                                            <span class="score-item-label">Consistency</span>
+                                            <span class="score-item-value" id="consistencyScore">0</span>
+                                        </div>
+                                        <div class="score-item">
+                                            <span class="score-item-label">Priority Focus</span>
+                                            <span class="score-item-value" id="priorityFocusScore">0</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
