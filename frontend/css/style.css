@@ -9359,3 +9359,107 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .score-item-label {
     color: #e5e7eb;
 }
+
+/* Reminders Styles */
+.reminders-btn {
+    position: relative;
+}
+
+.reminders-list-section {
+    margin-top: 1.5rem;
+}
+
+.reminders-list-section h4 {
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.reminders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.reminder-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+}
+
+.reminder-icon {
+    font-size: 1.5rem;
+}
+
+.reminder-content {
+    flex: 1;
+}
+
+.reminder-task {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.reminder-time {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.125rem;
+}
+
+.reminder-type {
+    font-size: 0.625rem;
+    color: #667eea;
+    font-weight: 500;
+    margin-top: 0.125rem;
+    text-transform: capitalize;
+}
+
+.reminder-notes {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+.reminder-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.no-reminders {
+    padding: 1rem;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* Dark mode for reminders */
+.dark-mode .reminders-list-section h4 {
+    color: #e5e7eb;
+}
+
+.dark-mode .reminder-item {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.dark-mode .reminder-task {
+    color: #e5e7eb;
+}
+
+.dark-mode .reminder-time,
+.dark-mode .reminder-notes,
+.dark-mode .no-reminders {
+    color: #9ca3af;
+}
+
+.dark-mode .reminder-type {
+    color: #a78bfa;
+}

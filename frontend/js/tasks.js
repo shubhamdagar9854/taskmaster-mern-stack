@@ -39,6 +39,7 @@ class TaskManager {
             achievements: [],
             recentActivity: []
         };
+        this.reminders = []; // Store reminders
         this.advancedFilters = {
             priority: '',
             category: '',
@@ -2747,6 +2748,176 @@ class TaskManager {
         document.getElementById('priorityFocusScore').textContent = Math.round(priorityFocusScore);
     }
 
+    showRemindersModal() {
+        this.loadReminderTasks();
+        this.renderReminders();
+        document.getElementById('remindersModal').classList.remove('hidden');
+    }
+
+    hideRemindersModal() {
+        document.getElementById('remindersModal').classList.add('hidden');
+    }
+
+    loadReminderTasks() {
+        const select = document.getElementById('reminderTaskSelect');
+        select.innerHTML = '<option value="">Select a task...</option>';
+        
+        this.tasks.forEach(task => {
+            if (!task.completed) {
+                const option = document.createElement('option');
+                option.value = task._id;
+                option.textContent = task.title;
+                select.appendChild(option);
+            }
+        });
+    }
+
+    addReminder() {
+        const taskId = document.getElementById('reminderTaskSelect').value;
+        const reminderTime = document.getElementById('reminderTime').value;
+        const reminderType = document.getElementById('reminderType').value;
+        const notes = document.getElementById('reminderNotes').value;
+
+        if (!taskId) {
+            this.showMessage('Please select a task', 'error');
+            return;
+        }
+
+        if (!reminderTime) {
+            this.showMessage('Please set a reminder time', 'error');
+            return;
+        }
+
+        const task = this.tasks.find(t => t._id === taskId);
+        const reminder = {
+            id: Date.now().toString(),
+            taskId: taskId,
+            taskTitle: task.title,
+            time: reminderTime,
+            type: reminderType,
+            notes: notes,
+            active: true
+        };
+
+        this.reminders.push(reminder);
+        this.renderReminders();
+        this.scheduleReminder(reminder);
+        this.showMessage('Reminder added successfully!', 'success');
+
+        // Clear form
+        document.getElementById('reminderTaskSelect').value = '';
+        document.getElementById('reminderTime').value = '';
+        document.getElementById('reminderType').value = 'once';
+        document.getElementById('reminderNotes').value = '';
+    }
+
+    renderReminders() {
+        const container = document.getElementById('remindersList');
+        container.innerHTML = '';
+
+        if (this.reminders.length === 0) {
+            container.innerHTML = '<div class="no-reminders"><p>No active reminders</p></div>';
+            return;
+        }
+
+        this.reminders.forEach(reminder => {
+            const reminderItem = document.createElement('div');
+            reminderItem.className = 'reminder-item';
+            
+            const reminderDate = new Date(reminder.time);
+            const formattedDate = reminderDate.toLocaleString();
+            
+            reminderItem.innerHTML = `
+                <div class="reminder-icon">⏰</div>
+                <div class="reminder-content">
+                    <div class="reminder-task">${reminder.taskTitle}</div>
+                    <div class="reminder-time">${formattedDate}</div>
+                    <div class="reminder-type">${reminder.type}</div>
+                    ${reminder.notes ? `<div class="reminder-notes">${reminder.notes}</div>` : ''}
+                </div>
+                <div class="reminder-actions">
+                    <button class="btn btn-sm btn-danger delete-reminder-btn" data-reminder-id="${reminder.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(reminderItem);
+        });
+
+        // Add event listeners for delete buttons
+        container.querySelectorAll('.delete-reminder-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const reminderId = e.target.closest('.delete-reminder-btn').dataset.reminderId;
+                this.deleteReminder(reminderId);
+            });
+        });
+    }
+
+    deleteReminder(reminderId) {
+        this.reminders = this.reminders.filter(r => r.id !== reminderId);
+        this.renderReminders();
+        this.showMessage('Reminder deleted', 'success');
+    }
+
+    scheduleReminder(reminder) {
+        const reminderTime = new Date(reminder.time);
+        const now = new Date();
+        const timeUntilReminder = reminderTime - now;
+
+        if (timeUntilReminder > 0) {
+            setTimeout(() => {
+                this.triggerReminder(reminder);
+            }, timeUntilReminder);
+        }
+    }
+
+    triggerReminder(reminder) {
+        // Show browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Task Reminder', {
+                body: `${reminder.taskTitle} - ${reminder.notes || 'Time to complete this task!'}`,
+                icon: '/favicon.ico'
+            });
+        }
+
+        // Show in-app notification
+        this.showMessage(`⏰ Reminder: ${reminder.taskTitle}`, 'info');
+
+        // Handle recurring reminders
+        if (reminder.type === 'daily') {
+            const nextDay = new Date(reminder.time);
+            nextDay.setDate(nextDay.getDate() + 1);
+            reminder.time = nextDay.toISOString().slice(0, 16);
+            this.scheduleReminder(reminder);
+        } else if (reminder.type === 'weekly') {
+            const nextWeek = new Date(reminder.time);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            reminder.time = nextWeek.toISOString().slice(0, 16);
+            this.scheduleReminder(reminder);
+        } else {
+            // One-time reminder - remove after triggering
+            this.reminders = this.reminders.filter(r => r.id !== reminder.id);
+            this.renderReminders();
+        }
+    }
+
+    checkReminders() {
+        const now = new Date();
+        this.reminders.forEach(reminder => {
+            const reminderTime = new Date(reminder.time);
+            if (reminderTime <= now && reminder.active) {
+                this.triggerReminder(reminder);
+            }
+        });
+    }
+
+    initReminderChecker() {
+        // Check for reminders every minute
+        setInterval(() => {
+            this.checkReminders();
+        }, 60000);
+    }
+
     showTemplatesModal() {
         this.loadTemplates();
         document.getElementById('templatesModal').classList.remove('hidden');
@@ -5067,6 +5238,22 @@ class TaskManager {
         document.getElementById('closeAnalyticsModal').addEventListener('click', () => {
             this.hideAnalyticsModal();
         });
+
+        // Reminders button
+        document.getElementById('remindersBtn').addEventListener('click', () => {
+            this.showRemindersModal();
+        });
+
+        document.getElementById('closeRemindersModal').addEventListener('click', () => {
+            this.hideRemindersModal();
+        });
+
+        document.getElementById('addReminderBtn').addEventListener('click', () => {
+            this.addReminder();
+        });
+
+        // Initialize reminder checker
+        this.initReminderChecker();
 
         // Notification bell button
         document.getElementById('notificationBellBtn').addEventListener('click', () => {

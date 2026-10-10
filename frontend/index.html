@@ -41,6 +41,9 @@
                     <button id="analyticsBtn" class="btn-icon analytics-btn" title="Analytics">
                         <i class="fas fa-chart-bar"></i>
                     </button>
+                    <button id="remindersBtn" class="btn-icon reminders-btn" title="Reminders">
+                        <i class="fas fa-bell"></i>
+                    </button>
                     <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span id="notificationBadge" class="notification-badge hidden">0</span>
@@ -2609,6 +2612,52 @@
                                             <span class="score-item-value" id="priorityFocusScore">0</span>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reminders Modal -->
+                <div id="remindersModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>⏰ Task Reminders</h3>
+                            <button id="closeRemindersModal" class="btn-icon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Select Task</label>
+                                <select id="reminderTaskSelect" class="form-select">
+                                    <option value="">Select a task...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Reminder Time</label>
+                                <input type="datetime-local" id="reminderTime" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Reminder Type</label>
+                                <select id="reminderType" class="form-select">
+                                    <option value="once">One-time</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <textarea id="reminderNotes" class="form-input" rows="2" placeholder="Add notes for this reminder..."></textarea>
+                            </div>
+                            <button id="addReminderBtn" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-plus"></i> Add Reminder
+                            </button>
+
+                            <div class="reminders-list-section">
+                                <h4>Active Reminders</h4>
+                                <div id="remindersList" class="reminders-list">
+                                    <!-- Reminders will be dynamically added here -->
                                 </div>
                             </div>
                         </div>
