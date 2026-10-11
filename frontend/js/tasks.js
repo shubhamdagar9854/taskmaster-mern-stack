@@ -2918,6 +2918,177 @@ class TaskManager {
         }, 60000);
     }
 
+    showQuickActionsMenu() {
+        document.getElementById('quickActionsMenu').classList.remove('hidden');
+    }
+
+    hideQuickActionsMenu() {
+        document.getElementById('quickActionsMenu').classList.add('hidden');
+    }
+
+    executeQuickAction(action) {
+        switch(action) {
+            case 'add-task':
+                this.showTaskModal();
+                break;
+            case 'search':
+                document.getElementById('searchInput').focus();
+                break;
+            case 'filter':
+                this.showAdvancedFilters();
+                break;
+            case 'complete-all':
+                this.completeAllVisibleTasks();
+                break;
+            case 'archive-all':
+                this.archiveCompletedTasks();
+                break;
+            case 'clear-completed':
+                this.clearCompletedTasks();
+                break;
+            case 'toggle-dark':
+                this.toggleDarkMode();
+                break;
+            case 'voice':
+                this.toggleVoiceRecognition();
+                break;
+            case 'analytics':
+                this.showAnalyticsModal();
+                break;
+        }
+        this.hideQuickActionsMenu();
+    }
+
+    completeAllVisibleTasks() {
+        const visibleTasks = this.getVisibleTasks();
+        let completedCount = 0;
+
+        visibleTasks.forEach(task => {
+            if (!task.completed) {
+                this.toggleTaskComplete(task._id);
+                completedCount++;
+            }
+        });
+
+        if (completedCount > 0) {
+            this.showMessage(`Completed ${completedCount} tasks!`, 'success');
+        } else {
+            this.showMessage('No tasks to complete', 'info');
+        }
+    }
+
+    archiveCompletedTasks() {
+        const completedTasks = this.tasks.filter(t => t.completed);
+        
+        if (completedTasks.length === 0) {
+            this.showMessage('No completed tasks to archive', 'info');
+            return;
+        }
+
+        completedTasks.forEach(task => {
+            task.isArchived = true;
+        });
+
+        this.renderTasks();
+        this.showMessage(`Archived ${completedTasks.length} completed tasks`, 'success');
+    }
+
+    clearCompletedTasks() {
+        const completedTasks = this.tasks.filter(t => t.completed);
+        
+        if (completedTasks.length === 0) {
+            this.showMessage('No completed tasks to clear', 'info');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to delete ${completedTasks.length} completed tasks?`)) {
+            completedTasks.forEach(task => {
+                this.deleteTask(task._id);
+            });
+            this.showMessage(`Cleared ${completedTasks.length} completed tasks`, 'success');
+        }
+    }
+
+    getVisibleTasks() {
+        // Return tasks that are currently visible based on filters
+        return this.tasks.filter(task => {
+            if (this.currentFilter === 'all') return !task.isArchived;
+            if (this.currentFilter === 'active') return !task.completed && !task.isArchived;
+            if (this.currentFilter === 'completed') return task.completed && !task.isArchived;
+            if (this.currentFilter === 'archived') return task.isArchived;
+            return !task.isArchived;
+        });
+    }
+
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Don't trigger shortcuts when typing in input fields
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+
+            // Ctrl+N - Add new task
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                this.showTaskModal();
+            }
+            // Ctrl+F - Search
+            else if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+            // Ctrl+G - Filter
+            else if (e.ctrlKey && e.key === 'g') {
+                e.preventDefault();
+                this.showAdvancedFilters();
+            }
+            // Ctrl+Shift+C - Complete all visible
+            else if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                this.completeAllVisibleTasks();
+            }
+            // Ctrl+Shift+A - Archive completed
+            else if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+                e.preventDefault();
+                this.archiveCompletedTasks();
+            }
+            // Ctrl+Shift+D - Clear completed
+            else if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                this.clearCompletedTasks();
+            }
+            // Ctrl+D - Toggle dark mode
+            else if (e.ctrlKey && e.key === 'd') {
+                e.preventDefault();
+                this.toggleDarkMode();
+            }
+            // Ctrl+V - Voice commands
+            else if (e.ctrlKey && e.key === 'v') {
+                e.preventDefault();
+                this.toggleVoiceRecognition();
+            }
+            // Ctrl+A - Analytics
+            else if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                this.showAnalyticsModal();
+            }
+            // Escape - Close modals/menus
+            else if (e.key === 'Escape') {
+                this.hideQuickActionsMenu();
+                this.hideTaskModal();
+                this.hideRemindersModal();
+                this.hideAnalyticsModal();
+                this.hideAiSuggestionsModal();
+                this.hideExportImportModal();
+            }
+            // Ctrl+K - Quick actions menu
+            else if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                this.showQuickActionsMenu();
+            }
+        });
+    }
+
     showTemplatesModal() {
         this.loadTemplates();
         document.getElementById('templatesModal').classList.remove('hidden');
@@ -5254,6 +5425,26 @@ class TaskManager {
 
         // Initialize reminder checker
         this.initReminderChecker();
+
+        // Quick Actions button
+        document.getElementById('quickActionsBtn').addEventListener('click', () => {
+            this.showQuickActionsMenu();
+        });
+
+        document.getElementById('closeQuickActionsMenu').addEventListener('click', () => {
+            this.hideQuickActionsMenu();
+        });
+
+        // Quick action items
+        document.querySelectorAll('.quick-action-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const action = e.target.closest('.quick-action-item').dataset.action;
+                this.executeQuickAction(action);
+            });
+        });
+
+        // Initialize keyboard shortcuts
+        this.initKeyboardShortcuts();
 
         // Notification bell button
         document.getElementById('notificationBellBtn').addEventListener('click', () => {

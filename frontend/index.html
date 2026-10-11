@@ -44,6 +44,9 @@
                     <button id="remindersBtn" class="btn-icon reminders-btn" title="Reminders">
                         <i class="fas fa-bell"></i>
                     </button>
+                    <button id="quickActionsBtn" class="btn-icon quick-actions-btn" title="Quick Actions">
+                        <i class="fas fa-bolt"></i>
+                    </button>
                     <button id="notificationBellBtn" class="btn-icon notification-bell-btn" title="Notifications">
                         <i class="fas fa-bell"></i>
                         <span id="notificationBadge" class="notification-badge hidden">0</span>
@@ -2661,6 +2664,64 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Menu -->
+                <div id="quickActionsMenu" class="quick-actions-menu hidden">
+                    <div class="quick-actions-header">
+                        <h3>⚡ Quick Actions</h3>
+                        <button id="closeQuickActionsMenu" class="btn-icon">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="quick-actions-list">
+                        <button class="quick-action-item" data-action="add-task">
+                            <i class="fas fa-plus"></i>
+                            <span>Add New Task</span>
+                            <span class="shortcut">Ctrl+N</span>
+                        </button>
+                        <button class="quick-action-item" data-action="search">
+                            <i class="fas fa-search"></i>
+                            <span>Search Tasks</span>
+                            <span class="shortcut">Ctrl+F</span>
+                        </button>
+                        <button class="quick-action-item" data-action="filter">
+                            <i class="fas fa-filter"></i>
+                            <span>Filter Tasks</span>
+                            <span class="shortcut">Ctrl+G</span>
+                        </button>
+                        <button class="quick-action-item" data-action="complete-all">
+                            <i class="fas fa-check-double"></i>
+                            <span>Complete All Visible</span>
+                            <span class="shortcut">Ctrl+Shift+C</span>
+                        </button>
+                        <button class="quick-action-item" data-action="archive-all">
+                            <i class="fas fa-archive"></i>
+                            <span>Archive Completed</span>
+                            <span class="shortcut">Ctrl+Shift+A</span>
+                        </button>
+                        <button class="quick-action-item" data-action="clear-completed">
+                            <i class="fas fa-trash"></i>
+                            <span>Clear Completed</span>
+                            <span class="shortcut">Ctrl+Shift+D</span>
+                        </button>
+                        <div class="quick-actions-divider"></div>
+                        <button class="quick-action-item" data-action="toggle-dark">
+                            <i class="fas fa-moon"></i>
+                            <span>Toggle Dark Mode</span>
+                            <span class="shortcut">Ctrl+D</span>
+                        </button>
+                        <button class="quick-action-item" data-action="voice">
+                            <i class="fas fa-microphone"></i>
+                            <span>Voice Commands</span>
+                            <span class="shortcut">Ctrl+V</span>
+                        </button>
+                        <button class="quick-action-item" data-action="analytics">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>View Analytics</span>
+                            <span class="shortcut">Ctrl+A</span>
+                        </button>
                     </div>
                 </div>
 
