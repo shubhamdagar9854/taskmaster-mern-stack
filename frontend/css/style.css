@@ -9577,3 +9577,72 @@ input[type="range"]::-moz-range-thumb {
 .dark-mode .quick-actions-divider {
     background: #4b5563;
 }
+
+/* Task Notes Styles */
+.task-notes {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f9fafb;
+    border-radius: 0.25rem;
+    border-left: 3px solid #667eea;
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.task-notes i {
+    margin-right: 0.5rem;
+    color: #667eea;
+}
+
+.task-notes strong {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.task-notes em {
+    font-style: italic;
+    color: #4b5563;
+}
+
+.task-notes code {
+    background: #e5e7eb;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.125rem;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #dc2626;
+}
+
+.task-notes ul {
+    margin: 0.25rem 0;
+    padding-left: 1.25rem;
+}
+
+.task-notes li {
+    margin: 0.125rem 0;
+}
+
+/* Dark mode for task notes */
+.dark-mode .task-notes {
+    background: #374151;
+    border-left-color: #a78bfa;
+    color: #9ca3af;
+}
+
+.dark-mode .task-notes i {
+    color: #a78bfa;
+}
+
+.dark-mode .task-notes strong {
+    color: #e5e7eb;
+}
+
+.dark-mode .task-notes em {
+    color: #d1d5db;
+}
+
+.dark-mode .task-notes code {
+    background: #4b5563;
+    color: #f87171;
+}

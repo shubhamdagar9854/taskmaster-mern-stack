@@ -3089,6 +3089,36 @@ class TaskManager {
         });
     }
 
+    formatNotes(notes) {
+        if (!notes) return '';
+        
+        // Simple markdown parsing
+        let formatted = notes;
+        
+        // Bold: **text** -> <strong>text</strong>
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Italic: *text* -> <em>text</em>
+        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Code: `text` -> <code>text</code>
+        formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>');
+        
+        // Lists: - text -> <li>text</li>
+        formatted = formatted.replace(/^- (.*)$/gm, '<li>$1</li>');
+        
+        // Wrap lists in ul
+        if (formatted.includes('<li>')) {
+            formatted = formatted.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
+            formatted = formatted.replace(/<\/ul><ul>/g, '');
+        }
+        
+        // Line breaks
+        formatted = formatted.replace(/\n/g, '<br>');
+        
+        return formatted;
+    }
+
     showTemplatesModal() {
         this.loadTemplates();
         document.getElementById('templatesModal').classList.remove('hidden');
@@ -7170,18 +7200,20 @@ class TaskManager {
         document.getElementById('taskFormElement').reset();
         document.getElementById('subtasksContainer').innerHTML = '';
         this.currentSubtasks = [];
-        document.getElementById('taskReminderEnabled').checked = false;
-        document.getElementById('taskReminderTime').style.display = 'none';
-        document.getElementById('taskReminderType').style.display = 'none';
-        this.currentTags = [];
-        document.getElementById('taskTags').innerHTML = '';
-        document.getElementById('taskTimeTrackingEnabled').checked = false;
+        document.getElementById('taskNotes').value = '';
         document.getElementById('taskAttachment').value = '';
         document.getElementById('taskIsTemplate').checked = false;
         document.getElementById('templateNameGroup').style.display = 'none';
         document.getElementById('taskRecurringEnabled').checked = false;
         document.getElementById('recurringOptionsGroup').style.display = 'none';
         document.getElementById('recurringIntervalGroup').style.display = 'none';
+    }
+
+    clearNotifications() {
+        this.notifications = [];
+        this.updateNotificationBadge();
+        this.renderNotifications();
+        document.getElementById('notificationsDropdown').classList.add('hidden');
     }
 
     async loadTasks() {
@@ -7201,7 +7233,10 @@ class TaskManager {
             const data = await response.json();
 
             if (response.ok) {
-                this.tasks = data;
+                this.tasks = data.map(task => ({
+                    ...task,
+                    formattedNotes: this.formatNotes(task.notes)
+                }));
                 this.renderTasks();
                 this.loadUserTags();
             } else {
@@ -8389,7 +8424,11 @@ class TaskManager {
             });
 
             if (response.ok) {
-                this.tasks = await response.json();
+                const data = await response.json();
+                this.tasks = data.map(task => ({
+                    ...task,
+                    formattedNotes: this.formatNotes(task.notes)
+                }));
                 this.renderTasks();
                 this.loadStatistics(); // Load statistics after tasks
                 this.loadTags(); // Load tag colors for rendering
