@@ -12,6 +12,7 @@ class TaskManager {
         this.currentEditTags = []; // For edit form
         this.timers = {}; // Store running timers
         this.currentCommentTaskId = null; // Track current task for comments
+        this.comments = []; // Store comments
         this.templates = []; // Store templates
         this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
         this.bulkMode = false; // Track bulk selection mode
@@ -67,6 +68,15 @@ class TaskManager {
         this.searchQuery = '';
         this.advancedFilters = {};
         this.draggedTask = null;
+        this.currentFilter = 'all';
+        this.currentEditTaskId = null;
+        this.currentSubtasks = [];
+        this.currentEditSubtasks = [];
+        this.currentTags = [];
+        this.currentEditTags = [];
+        this.reminders = [];
+        this.comments = [];
+        this.currentCommentsTaskId = null;
         this.init();
     }
 
@@ -2918,6 +2928,129 @@ class TaskManager {
         }, 60000);
     }
 
+    showCommentsModal(taskId) {
+        this.currentCommentTaskId = taskId;
+        const task = this.tasks.find(t => t._id === taskId);
+        if (task) {
+            document.getElementById('commentsTaskTitle').textContent = task.title;
+            this.loadComments(taskId);
+            document.getElementById('commentsModal').classList.remove('hidden');
+        }
+    }
+
+    hideCommentsModal() {
+        document.getElementById('commentsModal').classList.add('hidden');
+        document.getElementById('newCommentText').value = '';
+        this.currentCommentTaskId = null;
+    }
+
+    async loadComments(taskId) {
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/comments`, {
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.comments = data;
+                this.renderComments();
+            } else {
+                this.showMessage('Failed to load comments', 'error');
+            }
+        } catch (error) {
+            console.error('Load comments error:', error);
+            this.comments = [];
+            this.renderComments();
+        }
+    }
+
+    renderComments() {
+        const commentsList = document.getElementById('commentsList');
+        
+        if (this.comments.length === 0) {
+            commentsList.innerHTML = '<div class="no-comments">No comments yet. Be the first to comment!</div>';
+            return;
+        }
+
+        commentsList.innerHTML = this.comments.map(comment => `
+            <div class="comment-item">
+                <div class="comment-header">
+                    <span class="comment-author">${this.escapeHtml(comment.author || 'Anonymous')}</span>
+                    <span class="comment-date">${new Date(comment.createdAt).toLocaleString()}</span>
+                </div>
+                <div class="comment-text">${this.escapeHtml(comment.text)}</div>
+                <div class="comment-actions">
+                    <button class="btn btn-outline btn-sm" data-action="delete-comment" data-comment-id="${comment._id}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async addComment() {
+        const text = document.getElementById('newCommentText').value.trim();
+        
+        if (!text) {
+            this.showMessage('Comment cannot be empty', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentCommentTaskId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                },
+                body: JSON.stringify({ text })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.comments.push(data);
+                this.renderComments();
+                document.getElementById('newCommentText').value = '';
+                this.showMessage('Comment added successfully!', 'success');
+            } else {
+                this.showMessage(data.message || 'Failed to add comment', 'error');
+            }
+        } catch (error) {
+            console.error('Add comment error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
+    async deleteComment(commentId) {
+        if (!confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/tasks/${this.currentCommentTaskId}/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${window.authManager.getToken()}`
+                }
+            });
+
+            if (response.ok) {
+                this.comments = this.comments.filter(c => c._id !== commentId);
+                this.renderComments();
+                this.showMessage('Comment deleted successfully!', 'success');
+            } else {
+                this.showMessage('Failed to delete comment', 'error');
+            }
+        } catch (error) {
+            console.error('Delete comment error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        }
+    }
+
     showQuickActionsMenu() {
         document.getElementById('quickActionsMenu').classList.remove('hidden');
     }
@@ -5465,6 +5598,15 @@ class TaskManager {
             this.hideQuickActionsMenu();
         });
 
+        // Comments modal
+        document.getElementById('closeCommentsModal').addEventListener('click', () => {
+            this.hideCommentsModal();
+        });
+
+        document.getElementById('addCommentBtn').addEventListener('click', () => {
+            this.addComment();
+        });
+
         // Quick action items
         document.querySelectorAll('.quick-action-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -7777,6 +7919,10 @@ class TaskManager {
                     break;
                 case 'delete':
                     this.deleteTask(taskId);
+                    break;
+                case 'delete-comment':
+                    const commentId = e.target.closest('[data-comment-id]').dataset.commentId;
+                    this.deleteComment(commentId);
                     break;
                 case 'favorite':
                     this.toggleFavorite(taskId);
