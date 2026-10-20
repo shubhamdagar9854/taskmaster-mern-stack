@@ -13,6 +13,7 @@ class TaskManager {
         this.timers = {}; // Store running timers
         this.currentCommentTaskId = null; // Track current task for comments
         this.comments = []; // Store comments
+        this.history = []; // Store task history
         this.templates = []; // Store templates
         this.selectedTasks = new Set(); // Store selected task IDs for bulk actions
         this.bulkMode = false; // Track bulk selection mode
@@ -909,59 +910,16 @@ class TaskManager {
     }
 
     showActivityHistory(taskId) {
-        this.currentActivityHistoryTaskId = taskId;
+        this.currentHistoryTaskId = taskId;
         const task = this.tasks.find(t => t._id === taskId);
-        if (!task) return;
-
-        this.renderActivityHistory(task);
-        document.getElementById('activityHistoryModal').classList.remove('hidden');
+        if (task) {
+            document.getElementById('historyTaskTitle').textContent = task.title;
+            this.showTaskHistoryModal(taskId);
+        }
     }
 
     hideActivityHistory() {
-        document.getElementById('activityHistoryModal').classList.add('hidden');
-        this.currentActivityHistoryTaskId = null;
-    }
-
-    renderActivityHistory(task) {
-        const container = document.getElementById('activityHistoryContent');
-        const history = task.history || [];
-
-        if (history.length === 0) {
-            container.innerHTML = '<p class="no-activity">No activity history available</p>';
-            return;
-        }
-
-        // Sort by timestamp descending
-        const sortedHistory = [...history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-        container.innerHTML = sortedHistory.map(entry => {
-            const date = new Date(entry.timestamp);
-            const formattedDate = date.toLocaleDateString();
-            const formattedTime = date.toLocaleTimeString();
-
-            return `
-                <div class="activity-entry">
-                    <div class="activity-icon">
-                        <i class="fas ${this.getActivityIcon(entry.action)}"></i>
-                    </div>
-                    <div class="activity-details">
-                        <div class="activity-action">${entry.action}</div>
-                        <div class="activity-description">${entry.description}</div>
-                        <div class="activity-timestamp">${formattedDate} at ${formattedTime}</div>
-                        ${entry.changes && entry.changes.size > 0 ? `
-                            <div class="activity-changes">
-                                ${Array.from(entry.changes.entries()).map(([key, value]) => `
-                                    <div class="activity-change">
-                                        <span class="change-key">${key}:</span>
-                                        <span class="change-value">${value}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
+        this.hideTaskHistoryModal();
     }
 
     getActivityIcon(action) {
@@ -5607,6 +5565,11 @@ class TaskManager {
             this.addComment();
         });
 
+        // History modal
+        document.getElementById('closeHistoryModal').addEventListener('click', () => {
+            this.hideHistoryModal();
+        });
+
         // Quick action items
         document.querySelectorAll('.quick-action-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -6403,93 +6366,137 @@ class TaskManager {
 
     async showTaskHistoryModal(taskId) {
         this.currentHistoryTaskId = taskId;
-        try {
-            const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/history`, {
-                headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
-            });
+        const task = this.tasks.find(t => t._id === taskId);
+        if (task) {
+            document.getElementById('historyTaskTitle').textContent = task.title;
+            try {
+                const response = await fetch(`http://localhost:5002/api/tasks/${taskId}/history`, {
+                    headers: { 'Authorization': `Bearer ${window.authManager.getToken()}` }
+                });
 
-            if (response.ok) {
-                const history = await response.json();
-                this.renderTaskHistory(history);
-                document.getElementById('taskHistoryModal').classList.remove('hidden');
-            } else {
-                this.showMessage('Failed to load task history', 'error');
+                if (response.ok) {
+                    const history = await response.json();
+                    this.history = history;
+                    this.renderHistory();
+                    document.getElementById('historyModal').classList.remove('hidden');
+                } else {
+                    this.showMessage('Failed to load task history', 'error');
+                }
+            } catch (error) {
+                console.error('Load task history error:', error);
+                this.showMessage('Network error. Please try again.', 'error');
             }
-        } catch (error) {
-            console.error('Load task history error:', error);
-            this.showMessage('Network error. Please try again.', 'error');
         }
     }
 
     hideTaskHistoryModal() {
-        document.getElementById('taskHistoryModal').classList.add('hidden');
+        document.getElementById('historyModal').classList.add('hidden');
         this.currentHistoryTaskId = null;
     }
 
     renderTaskHistory(history) {
-        const historyList = document.getElementById('taskHistoryList');
+        const historyList = document.getElementById('historyList');
         
         if (!history || history.length === 0) {
-            historyList.innerHTML = `
-                <div class="task-history-empty">
-                    <i class="fas fa-history"></i>
-                    <p>No history available</p>
-                </div>
-            `;
+            historyList.innerHTML = '<div class="no-history">No history available for this task.</div>';
             return;
         }
 
-        historyList.innerHTML = history.map(entry => {
-            const iconClass = this.getHistoryIconClass(entry.action);
-            const icon = this.getHistoryIcon(entry.action);
-            const timestamp = new Date(entry.timestamp).toLocaleString();
-            
-            return `
-                <div class="task-history-item">
-                    <div class="task-history-icon ${iconClass}">
-                        <i class="fas fa-${icon}"></i>
-                    </div>
-                    <div class="task-history-content">
-                        <div class="task-history-action">${this.formatAction(entry.action)}</div>
-                        <div class="task-history-description">${entry.description}</div>
-                        <div class="task-history-timestamp">${timestamp}</div>
-                    </div>
+        historyList.innerHTML = history.map(entry => `
+            <div class="history-item">
+                <div class="history-icon">
+                    <i class="fas ${this.getHistoryIcon(entry.action)}"></i>
                 </div>
-            `;
-        }).join('');
-    }
-
-    getHistoryIconClass(action) {
-        const iconMap = {
-            'task_created': 'created',
-            'task_updated': 'updated',
-            'task_toggled': 'completed',
-            'task_archived': 'archived',
-            'task_favorited': 'favorited'
-        };
-        return iconMap[action] || '';
+                <div class="history-content">
+                    <div class="history-header">
+                        <span class="history-action">${this.getHistoryActionText(entry.action)}</span>
+                        <span class="history-date">${new Date(entry.timestamp).toLocaleString()}</span>
+                    </div>
+                    ${entry.changes ? `<div class="history-changes">${this.formatHistoryChanges(entry.changes)}</div>` : ''}
+                    ${entry.user ? `<div class="history-user">by ${this.escapeHtml(entry.user)}</div>` : ''}
+                </div>
+            </div>
+        `).join('');
     }
 
     getHistoryIcon(action) {
-        const iconMap = {
-            'task_created': 'plus',
-            'task_updated': 'edit',
-            'task_toggled': 'check',
-            'task_archived': 'archive',
-            'task_favorited': 'star'
+        const icons = {
+            'created': 'fa-plus-circle',
+            'updated': 'fa-edit',
+            'completed': 'fa-check-circle',
+            'uncompleted': 'fa-undo',
+            'deleted': 'fa-trash',
+            'archived': 'fa-archive',
+            'unarchived': 'fa-box-open',
+            'favorite_added': 'fa-star',
+            'favorite_removed': 'fa-star-o',
+            'comment_added': 'fa-comment',
+            'comment_deleted': 'fa-comment-slash',
+            'attachment_added': 'fa-paperclip',
+            'attachment_removed': 'fa-paperclip',
+            'subtask_added': 'fa-list-ul',
+            'subtask_completed': 'fa-check',
+            'subtask_deleted': 'fa-minus',
+            'priority_changed': 'fa-flag',
+            'category_changed': 'fa-folder',
+            'due_date_changed': 'fa-calendar',
+            'reminder_added': 'fa-bell',
+            'reminder_removed': 'fa-bell-slash'
         };
-        return iconMap[action] || 'clock';
+        return icons[action] || 'fa-circle';
     }
 
-    formatAction(action) {
-        const actionMap = {
-            'task_created': 'Task Created',
-            'task_updated': 'Task Updated',
-            'task_toggled': 'Status Changed',
-            'task_archived': 'Archive Changed',
-            'task_favorited': 'Favorite Changed'
+    getHistoryActionText(action) {
+        const texts = {
+            'created': 'Task Created',
+            'updated': 'Task Updated',
+            'completed': 'Task Completed',
+            'uncompleted': 'Task Uncompleted',
+            'deleted': 'Task Deleted',
+            'archived': 'Task Archived',
+            'unarchived': 'Task Unarchived',
+            'favorite_added': 'Added to Favorites',
+            'favorite_removed': 'Removed from Favorites',
+            'comment_added': 'Comment Added',
+            'comment_deleted': 'Comment Deleted',
+            'attachment_added': 'Attachment Added',
+            'attachment_removed': 'Attachment Removed',
+            'subtask_added': 'Subtask Added',
+            'subtask_completed': 'Subtask Completed',
+            'subtask_deleted': 'Subtask Deleted',
+            'priority_changed': 'Priority Changed',
+            'category_changed': 'Category Changed',
+            'due_date_changed': 'Due Date Changed',
+            'reminder_added': 'Reminder Added',
+            'reminder_removed': 'Reminder Removed'
         };
-        return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return texts[action] || 'Unknown Action';
+    }
+
+    formatHistoryChanges(changes) {
+        if (typeof changes === 'string') {
+            return this.escapeHtml(changes);
+        }
+        
+        if (Array.isArray(changes)) {
+            return changes.map(change => {
+                if (typeof change === 'string') {
+                    return this.escapeHtml(change);
+                }
+                if (change.field && change.oldValue !== undefined && change.newValue !== undefined) {
+                    return `<strong>${this.escapeHtml(change.field)}:</strong> ${this.escapeHtml(String(change.oldValue))} → ${this.escapeHtml(String(change.newValue))}`;
+                }
+                return this.escapeHtml(JSON.stringify(change));
+            }).join('<br>');
+        }
+        
+        if (typeof changes === 'object') {
+            return Object.entries(changes).map(([key, value]) => {
+                return `<strong>${this.escapeHtml(key)}:</strong> ${this.escapeHtml(String(value))}`;
+            }).join('<br>');
+        }
+        
+        return this.escapeHtml(String(changes));
     }
 
     async scheduleReminder(taskId, time, type) {

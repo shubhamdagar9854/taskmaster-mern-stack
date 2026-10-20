@@ -9765,3 +9765,114 @@ input[type="range"]::-moz-range-thumb {
     border-color: #a78bfa;
     box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
 }
+
+/* History Modal Styles */
+.history-task-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.history-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.no-history {
+    text-align: center;
+    color: #9ca3af;
+    padding: 2rem;
+    font-style: italic;
+}
+
+.history-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    border-left: 3px solid #667eea;
+}
+
+.history-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.875rem;
+}
+
+.history-content {
+    flex: 1;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.history-action {
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.875rem;
+}
+
+.history-date {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.history-changes {
+    color: #374151;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background: #f3f4f6;
+    border-radius: 0.25rem;
+}
+
+.history-user {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Dark mode for history */
+.dark-mode .history-task-title {
+    color: #e5e7eb;
+    border-color: #4b5563;
+}
+
+.dark-mode .history-item {
+    background: #374151;
+    border-left-color: #a78bfa;
+}
+
+.dark-mode .history-icon {
+    background: #a78bfa;
+}
+
+.dark-mode .history-action {
+    color: #d1d5db;
+}
+
+.dark-mode .history-changes {
+    color: #e5e7eb;
+    background: #4b5563;
+}
+
+.dark-mode .history-user {
+    color: #9ca3af;
+}
